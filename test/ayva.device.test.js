@@ -1,6 +1,6 @@
 import 'chai/register-should.js';
 import sinon from 'sinon';
-import { Ayva } from '../src/ayva.js';
+import Ayva from '../src/ayva.js';
 
 /**
  * Contains all tests for Ayva's Device API.
@@ -20,7 +20,7 @@ describe('Device Protocols', function () {
       const testAddDevice = function (device) {
         return function () {
           ayva.addOutputDevices(device);
-        }
+        };
       };
 
       testAddDevice().should.throw(Error, 'Invalid device: undefined');
@@ -29,7 +29,7 @@ describe('Device Protocols', function () {
       testAddDevice({ write: 42 }).should.throw(Error, 'Invalid device: [object Object]');
 
       // Happy path.
-      testAddDevice({ write: () => {} }).should.not.throw(Error);
+      testAddDevice({ write: function () {} }).should.not.throw(Error);
     });
   });
 
@@ -40,7 +40,7 @@ describe('Device Protocols', function () {
     const testWrite = function (command) {
       return function () {
         ayva.write(command);
-      }
+      };
     };
 
     it('should throw an error when there are no output devices', function () {
@@ -48,7 +48,7 @@ describe('Device Protocols', function () {
     });
 
     it('should throw an error when there is an output device but an invalid command is passed', function () {
-      ayva.addOutputDevices({ write: () => {} });
+      ayva.addOutputDevices({ write: function () {} });
 
       // Falsey Values
       testWrite().should.throw(Error, 'Invalid command: undefined');
@@ -73,11 +73,11 @@ describe('Device Protocols', function () {
       const COMMAND_COUNT = 5;
 
       const device = {
-        write: sinon.fake()
+        write: sinon.fake(),
       };
 
       const anotherDevice = {
-        write: sinon.fake()
+        write: sinon.fake(),
       };
 
       ayva.addOutputDevices(device, anotherDevice);

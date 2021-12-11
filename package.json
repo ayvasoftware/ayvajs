@@ -7,7 +7,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "docs": "jsdoc -c jsdoc.json"
+    "docs": "jsdoc -c jsdoc.json",
+    "lint": "eslint --format html -o test-output/eslint.html --fix src/* test/* "
   },
   "repository": {
     "type": "git",
@@ -28,7 +29,8 @@
   "devDependencies": {
     "better-docs": "2.3.2",
     "chai": "4.3.4",
-    "chai-as-promised": "7.1.1",
+    "eslint": "^8.4.1",
+    "eslint-config-airbnb": "^19.0.2",
     "jsdoc": "3.6.7",
     "mocha": "9.1.3",
     "sinon": "12.0.1"
