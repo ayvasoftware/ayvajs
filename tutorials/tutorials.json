@@ -1,0 +1,8 @@
+{
+  "configuration": { 
+    "title": "Configuration" 
+  },
+  "command-api": { 
+    "title": "Command API" 
+  }
+}

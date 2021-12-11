@@ -1,0 +1,36 @@
+{
+  "name": "ayvajs",
+  "version": "0.0.1",
+  "description": "A lightweight, behavior-based JavaScript API for controlling Open Source Multi Axis Stroker Robots.",
+  "author": "soritesparadox",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "docs": "jsdoc -c jsdoc.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayvajs/ayva.git"
+  },
+  "keywords": [
+    "osr2",
+    "sr6",
+    "stroker",
+    "multi-axis",
+    "robot"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ayvajs/ayva/issues"
+  },
+  "homepage": "https://github.com/ayvajs/ayva#readme",
+  "devDependencies": {
+    "better-docs": "2.3.2",
+    "chai": "4.3.4",
+    "chai-as-promised": "7.1.1",
+    "jsdoc": "3.6.7",
+    "mocha": "9.1.3",
+    "sinon": "12.0.1"
+  }
+}

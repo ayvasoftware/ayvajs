@@ -1,2 +1,2 @@
 # ayva
-A behavior-based JavaScript API for controlling Open Source Stroker Robots.
+A lightweight, behavior-based JavaScript API for controlling Open Source Multi Axis Stroker Robots.
