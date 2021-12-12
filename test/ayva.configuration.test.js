@@ -8,12 +8,15 @@ import { OSR2 } from '../src/ayva-configs.js';
  * Contains all tests for Ayva's Axis Configuration.
  */
 describe('Configuration Tests', function () {
+  const DEFAULT_VALUE = 0.5; // The default value for linear, auxiliary, and rotation axes.
+
   describe('#constructor', function () {
     it('should set a valid configuration', function () {
       const ayva = new Ayva(OSR2);
 
       expect(ayva.name).to.equal('OSR2');
       expect(ayva.defaultAxis).to.equal('L0');
+      expect(ayva.getFrequency()).to.equal(50);
 
       for (const axis of OSR2.axes) {
         const storedAxis = ayva.getAxis(axis.name);
@@ -30,6 +33,7 @@ describe('Configuration Tests', function () {
 
   describe('#configureAxis', function () {
     let config;
+    let expectedConfig;
     let ayva;
 
     const invalidConfigMessage = 'Invalid configuration object';
@@ -50,6 +54,8 @@ describe('Configuration Tests', function () {
         max: 1,
         min: 0,
       };
+
+      expectedConfig = { ...config, value: DEFAULT_VALUE };
 
       ayva = new Ayva();
     });
@@ -97,34 +103,35 @@ describe('Configuration Tests', function () {
 
       expect(axis).to.not.be.null;
       expect(axis).to.not.be.undefined;
-      axis.should.deep.equal(config);
+      axis.should.deep.equal(expectedConfig);
 
       axis = ayva.getAxis('stroke');
 
       expect(axis).to.not.be.null;
       expect(axis).to.not.be.undefined;
-      axis.should.deep.equal(config);
+      axis.should.deep.equal(expectedConfig);
     });
 
     it('should not keep a reference to the config parameter', function () {
       ayva.configureAxis(config);
       const axis = ayva.getAxis('stroke');
-      axis.should.deep.equal(config);
+      axis.should.deep.equal(expectedConfig);
 
       config.alias = 'newAlias';
-      axis.should.not.deep.equal(config);
+      axis.alias.should.not.equal(config.alias);
     });
 
     it('should remove old alias when updating configuration with a new alias', function () {
       ayva.configureAxis(config);
       const axis = ayva.getAxis('stroke');
-      axis.should.deep.equal(config);
+      axis.should.deep.equal(expectedConfig);
 
       config.alias = 'newAlias';
+      expectedConfig.alias = config.alias;
       ayva.configureAxis(config);
 
       expect(ayva.getAxis('stroke')).to.be.undefined;
-      expect(ayva.getAxis('newAlias')).to.deep.equal(config);
+      expect(ayva.getAxis('newAlias')).to.deep.equal(expectedConfig);
     });
 
     it('should set default values for max and min when not present', function () {
@@ -170,12 +177,11 @@ describe('Configuration Tests', function () {
     it('should disallow changing configuration through object', function () {
       ayva.configureAxis(config);
       const fetchedConfig = ayva.getAxis(config.name);
-      expect(fetchedConfig).to.deep.equal(config);
-      fetchedConfig.alias = 'newAlias';
+      expect(fetchedConfig).to.deep.equal(expectedConfig);
 
-      const fetchedConfig2 = ayva.getAxis(config.name);
-      expect(fetchedConfig).to.not.deep.equal(fetchedConfig2);
-      expect(fetchedConfig2).to.deep.equal(config);
+      Object.keys(fetchedConfig).forEach((key) => {
+        (function () { fetchedConfig[key] = 'CHANGE'; }).should.throw(Error, /Cannot assign to read only property.*/);
+      });
     });
 
     it('should disallow alias name clashes with other axes', function () {

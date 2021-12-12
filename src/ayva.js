@@ -1,7 +1,11 @@
+import util from './util.js';
+
 class Ayva {
   #devices = [];
 
   #axes = {};
+
+  #frequency = 50; // Hz
 
   /**
    * Create a new instance of Ayva with the specified configuration.
@@ -16,6 +20,7 @@ class Ayva {
     if (config) {
       this.name = config.name;
       this.defaultAxis = config.defaultAxis;
+      this.#frequency = (config.frequency || this.#frequency);
 
       if (config.axes) {
         config.axes.forEach((axis) => {
@@ -23,6 +28,20 @@ class Ayva {
         });
       }
     }
+  }
+
+  /**
+   * Moves all linear and rotation axes to the neutral position (0.5), or to
+   * the value specified.
+   *
+   * @param {Number}
+   */
+  home (value = 0.5) {
+    if (typeof value !== 'number') {
+      throw new Error(`Invalid value: ${value}`);
+    }
+
+    // TODO: Implement.
   }
 
   /**
@@ -36,11 +55,12 @@ class Ayva {
    *   to: 0,
    *   speed: 1,
    * });
+   *
    * @param  {Object} movements
    * @return {Promise} a promise that resolves when all movements have finished
    */
-  async move (...movements) { // eslint-disable-line no-unused-vars
-    throw new Error('Not yet implemented.');
+  move (...movements) { // eslint-disable-line no-unused-vars
+
   }
 
   /**
@@ -85,19 +105,32 @@ class Ayva {
   }
 
   /**
-   * Fetch the configuration for an axis.
+   * Fetch an immutable object containing the properties for an axis.
    *
    * @param {String} name - the name or alias of the axis to get.
-   * @return {Object} axisConfig
+   * @return {Object} axisConfig - an immutable object of axis properties.
    */
   getAxis (name) {
-    const axis = this.#axes[name];
+    const fetchedAxis = this.#axes[name];
 
-    if (axis) {
-      return { ...axis };
+    if (fetchedAxis) {
+      const axis = {};
+
+      Object.keys(fetchedAxis).forEach((key) => {
+        util.createConstant(axis, key, fetchedAxis[key]);
+      });
+
+      return axis;
     }
 
     return undefined;
+  }
+
+  /**
+   * Return Ayva's device update frequency in Hz.
+   */
+  getFrequency () {
+    return this.#frequency;
   }
 
   /**
@@ -113,6 +146,16 @@ class Ayva {
     }
 
     this.#devices.push(...devices);
+  }
+
+  /**
+   * Registers new output devices. Ayva outputs commands to all connected devices.
+   * Alias for #addOutputDevices()
+   *
+   * @param {...Object} device - object with a write method.
+   */
+  addOutputDevice (...devices) {
+    this.addOutputDevices(...devices);
   }
 
   /**
@@ -202,6 +245,7 @@ class Ayva {
       ...axisConfig,
       max: axisConfig.max || 1,
       min: axisConfig.min || 0,
+      value: axisConfig.type === 'boolean' ? false : 0.5, // Default value. 0.5 is home position for linear, rotation, and auxiliary.
     };
 
     if (resultConfig.max === resultConfig.min || resultConfig.min > resultConfig.max) {

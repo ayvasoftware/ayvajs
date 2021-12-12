@@ -12,6 +12,10 @@ describe('Device Protocols', function () {
     ayva = new Ayva();
   });
 
+  afterEach(function () {
+    sinon.restore();
+  });
+
   /**
    * Adding Devices
    */
