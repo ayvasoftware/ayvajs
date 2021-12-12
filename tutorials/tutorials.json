@@ -1,8 +1,11 @@
 {
+  "getting-started": { 
+    "title": "Getting Started" 
+  },
+  "motion-api": { 
+    "title": "Motion API" 
+  },
   "configuration": { 
     "title": "Configuration" 
-  },
-  "command-api": { 
-    "title": "Command API" 
   }
 }
