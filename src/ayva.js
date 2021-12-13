@@ -32,16 +32,28 @@ class Ayva {
 
   /**
    * Moves all linear and rotation axes to the neutral position (0.5), or to
-   * the value specified.
+   * the value specified. The default speed is also 0.5 units/second.
    *
    * @param {Number}
+   * @return {Promise} A promise that resolves when the movements are finished.
    */
   home (value = 0.5) {
     if (typeof value !== 'number') {
       throw new Error(`Invalid value: ${value}`);
     }
 
-    // TODO: Implement.
+    const to = util.clamp(value, 0, 1); // TODO: Move this down into the move method.
+    const speed = 0.5;
+
+    const movements = this.#getAxesArray()
+      .filter((axis) => axis.type === 'linear' || axis.type === 'rotation')
+      .map((axis) => ({ to, speed, axis: axis.name }));
+
+    if (movements.length) {
+      return this.move(...movements);
+    }
+
+    return Promise.resolve();
   }
 
   /**
@@ -253,6 +265,24 @@ class Ayva {
     }
 
     return resultConfig;
+  }
+
+  #getAxesArray () {
+    const uniqueAxes = {};
+
+    Object.values(this.#axes).forEach((axis) => {
+      uniqueAxes[axis.name] = axis;
+    });
+
+    function sortByName (a, b) {
+      if (a.name > b.name) {
+        return 1;
+      }
+
+      return a.name < b.name ? -1 : 0;
+    }
+
+    return Object.values(uniqueAxes).sort(sortByName);
   }
 }
 
