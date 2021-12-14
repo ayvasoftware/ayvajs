@@ -70,7 +70,7 @@ describe('Motion API Tests', function () {
       testHome({}).should.throw(Error, 'Invalid value: [object Object]');
     });
 
-    it('should call move() with each axis with a default position', async function () {
+    it('should call move() with each axis with a default position', function () {
       const move = sinon.replace(ayva, 'move', sinon.fake.returns(Promise.resolve()));
 
       ayva.home();
@@ -89,56 +89,50 @@ describe('Motion API Tests', function () {
 
   describe('#move() (invalid movements)', function () {
     it('should throw an error if invalid movement is passed', function () {
+      const invalidValues = [1, null, 'bad', '', false, true];
+
+      const testInvalidMovePromises = invalidValues.map((
+        value
+      ) => ayva.move(value).should.be.rejectedWith(Error, `Invalid movement: ${value}`));
+
       return Promise.all([
         ayva.move().should.be.rejectedWith(Error, 'Must supply at least one movement.'),
-        ayva.move(1).should.be.rejectedWith(Error, 'Invalid movement: 1'),
-        ayva.move(null).should.be.rejectedWith(Error, 'Invalid movement: null'),
-        ayva.move('bad').should.be.rejectedWith(Error, 'Invalid movement: bad'),
-        ayva.move('').should.be.rejectedWith(Error, 'Invalid movement: '),
-        ayva.move(false).should.be.rejectedWith(Error, 'Invalid movement: false'),
-        ayva.move(true).should.be.rejectedWith(Error, 'Invalid movement: true'),
+        ...testInvalidMovePromises,
       ]);
     });
 
     it('should throw an error if \'to\' parameter is missing or invalid', function () {
-      const invalidError = 'Invalid parameter \'to\'';
+      const invalidValues = [null, 'bad', '', false, true, -1, 2];
+
+      const testInvalidMovePromises = invalidValues.map(
+        (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid parameter 'to': ${value}`)
+      );
+
       return Promise.all([
         ayva.move({}).should.be.rejectedWith(Error, 'Missing parameter \'to\'.'),
-        ayva.move({ to: null }).should.be.rejectedWith(Error, `${invalidError}: null`),
-        ayva.move({ to: 'bad' }).should.be.rejectedWith(Error, `${invalidError}: bad`),
-        ayva.move({ to: '' }).should.be.rejectedWith(Error, `${invalidError}: `),
-        ayva.move({ to: false }).should.be.rejectedWith(Error, `${invalidError}: false`),
-        ayva.move({ to: true }).should.be.rejectedWith(Error, `${invalidError}: true`),
-        ayva.move({ to: -1 }).should.be.rejectedWith(Error, `${invalidError}: -1`),
-        ayva.move({ to: 2 }).should.be.rejectedWith(Error, `${invalidError}: 2`),
         ayva.move({ to: 0 }).should.be.rejectedWith(Error, 'At least one movement must have a speed or duration.'),
+        ...testInvalidMovePromises,
       ]);
     });
 
     it('should throw an error if \'speed\' is invalid', function () {
-      const invalidError = 'Invalid parameter \'speed\'';
-      return Promise.all([
-        ayva.move({ to: 0, speed: null }).should.be.rejectedWith(Error, `${invalidError}: null`),
-        ayva.move({ to: 0, speed: 'bad' }).should.be.rejectedWith(Error, `${invalidError}: bad`),
-        ayva.move({ to: 0, speed: '' }).should.be.rejectedWith(Error, `${invalidError}: `),
-        ayva.move({ to: 0, speed: false }).should.be.rejectedWith(Error, `${invalidError}: false`),
-        ayva.move({ to: 0, speed: true }).should.be.rejectedWith(Error, `${invalidError}: true`),
-        ayva.move({ to: 0, speed: -1 }).should.be.rejectedWith(Error, `${invalidError}: -1`),
-        ayva.move({ to: 0, speed: 0 }).should.be.rejectedWith(Error, `${invalidError}: 0`),
-      ]);
+      const invalidValues = [null, 'bad', '', false, true, -1, 0];
+
+      const testInvalidMovePromises = invalidValues.map(
+        (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid parameter 'speed': ${value}`)
+      );
+
+      return Promise.all(testInvalidMovePromises);
     });
 
     it('should throw an error if \'duration\' is invalid', function () {
-      const invalidError = 'Invalid parameter \'duration\'';
-      return Promise.all([
-        ayva.move({ to: 0, duration: null }).should.be.rejectedWith(Error, `${invalidError}: null`),
-        ayva.move({ to: 0, duration: 'bad' }).should.be.rejectedWith(Error, `${invalidError}: bad`),
-        ayva.move({ to: 0, duration: '' }).should.be.rejectedWith(Error, `${invalidError}: `),
-        ayva.move({ to: 0, duration: false }).should.be.rejectedWith(Error, `${invalidError}: false`),
-        ayva.move({ to: 0, duration: true }).should.be.rejectedWith(Error, `${invalidError}: true`),
-        ayva.move({ to: 0, duration: -1 }).should.be.rejectedWith(Error, `${invalidError}: -1`),
-        ayva.move({ to: 0, duration: 0 }).should.be.rejectedWith(Error, `${invalidError}: 0`),
-      ]);
+      const invalidValues = [null, 'bad', '', false, true, -1, 0];
+
+      const testInvalidMovePromises = invalidValues.map(
+        (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid parameter 'duration': ${value}`)
+      );
+
+      return Promise.all(testInvalidMovePromises);
     });
 
     it('should not allow specifying both speed and duration', function () {
@@ -154,15 +148,15 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if axis is invalid', function () {
-      const invalidError = 'Invalid parameter \'axis\'';
+      const invalidValues = [null, '', false, true, 0, 1, -1];
+
+      const testInvalidMovePromises = invalidValues.map(
+        (value) => ayva.move({ to: 0, speed: 1, axis: value }).should.be.rejectedWith(Error, `Invalid parameter 'axis': ${value}`)
+      );
+
       return Promise.all([
-        ayva.move({ to: 0, speed: 1, axis: null }).should.be.rejectedWith(Error, `${invalidError}: null`),
         ayva.move({ to: 0, speed: 1, axis: 'bad' }).should.be.rejectedWith(Error, 'Unknown axis \'bad\'.'),
-        ayva.move({ to: 0, speed: 1, axis: '' }).should.be.rejectedWith(Error, `${invalidError}: `),
-        ayva.move({ to: 0, speed: 1, axis: false }).should.be.rejectedWith(Error, `${invalidError}: false`),
-        ayva.move({ to: 0, speed: 1, axis: true }).should.be.rejectedWith(Error, `${invalidError}: true`),
-        ayva.move({ to: 0, speed: 1, axis: 0 }).should.be.rejectedWith(Error, `${invalidError}: 0`),
-        ayva.move({ to: 0, speed: 1, axis: 1 }).should.be.rejectedWith(Error, `${invalidError}: 1`),
+        ...testInvalidMovePromises,
       ]);
     });
 
@@ -171,16 +165,13 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if velocity is not a function', function () {
-      const invalidError = '\'velocity\' must be a function.';
-      return Promise.all([
-        ayva.move({ to: 0, speed: 1, velocity: null }).should.be.rejectedWith(Error, invalidError),
-        ayva.move({ to: 0, speed: 1, velocity: 'bad' }).should.be.rejectedWith(Error, invalidError),
-        ayva.move({ to: 0, speed: 1, velocity: '' }).should.be.rejectedWith(Error, invalidError),
-        ayva.move({ to: 0, speed: 1, velocity: false }).should.be.rejectedWith(Error, invalidError),
-        ayva.move({ to: 0, speed: 1, velocity: true }).should.be.rejectedWith(Error, invalidError),
-        ayva.move({ to: 0, speed: 1, velocity: 0 }).should.be.rejectedWith(Error, invalidError),
-        ayva.move({ to: 0, speed: 1, velocity: 1 }).should.be.rejectedWith(Error, invalidError),
-      ]);
+      const invalidValues = [null, 'bad', '', false, true, 0, 1, -1];
+
+      const testInvalidMovePromises = invalidValues.map(
+        (value) => ayva.move({ to: 0, speed: 1, velocity: value }).should.be.rejectedWith(Error, '\'velocity\' must be a function.')
+      );
+
+      return Promise.all(testInvalidMovePromises);
     });
 
     it('should throw an error if both \'to\' and \'velocity\' are functions.', function () {
