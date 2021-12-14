@@ -17,6 +17,11 @@ const TEST_CONFIG = () => ({
       alias: 'stroke',
     },
     {
+      name: 'L1',
+      type: 'linear',
+      alias: 'left',
+    },
+    {
       name: 'R0',
       type: 'rotation',
       alias: 'twist',
@@ -30,6 +35,11 @@ const TEST_CONFIG = () => ({
       name: 'A0',
       type: 'auxiliary',
       alias: 'valve',
+    },
+    {
+      name: 'A1',
+      type: 'boolean',
+      alias: 'lube',
     },
   ],
 });
@@ -80,10 +90,11 @@ describe('Motion API Tests', function () {
       const { args } = move.getCall(0);
       const expectedParams = { to: 0.5, speed: 0.5 };
 
-      args.length.should.equal(3);
+      args.length.should.equal(4);
       args[0].should.deep.equal({ axis: 'L0', ...expectedParams });
-      args[1].should.deep.equal({ axis: 'R0', ...expectedParams });
-      args[2].should.deep.equal({ axis: 'R1', ...expectedParams });
+      args[1].should.deep.equal({ axis: 'L1', ...expectedParams });
+      args[2].should.deep.equal({ axis: 'R0', ...expectedParams });
+      args[3].should.deep.equal({ axis: 'R1', ...expectedParams });
     });
   });
 
@@ -105,7 +116,7 @@ describe('Motion API Tests', function () {
       const invalidValues = [null, 'bad', '', false, true, -1, 2];
 
       const testInvalidMovePromises = invalidValues.map(
-        (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid parameter 'to': ${value}`)
+        (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'to': ${value}`)
       );
 
       return Promise.all([
@@ -119,7 +130,7 @@ describe('Motion API Tests', function () {
       const invalidValues = [null, 'bad', '', false, true, -1, 0];
 
       const testInvalidMovePromises = invalidValues.map(
-        (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid parameter 'speed': ${value}`)
+        (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'speed': ${value}`)
       );
 
       return Promise.all(testInvalidMovePromises);
@@ -129,7 +140,7 @@ describe('Motion API Tests', function () {
       const invalidValues = [null, 'bad', '', false, true, -1, 0];
 
       const testInvalidMovePromises = invalidValues.map(
-        (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid parameter 'duration': ${value}`)
+        (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'duration': ${value}`)
       );
 
       return Promise.all(testInvalidMovePromises);
@@ -148,10 +159,10 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if axis is invalid', function () {
-      const invalidValues = [null, '', false, true, 0, 1, -1];
+      const invalidValues = [null, '', '  ', false, true, 0, 1, -1];
 
       const testInvalidMovePromises = invalidValues.map(
-        (value) => ayva.move({ to: 0, speed: 1, axis: value }).should.be.rejectedWith(Error, `Invalid parameter 'axis': ${value}`)
+        (value) => ayva.move({ to: 0, speed: 1, axis: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'axis': ${value}`)
       );
 
       return Promise.all([
@@ -187,6 +198,70 @@ describe('Motion API Tests', function () {
       ]);
     });
 
-    // TODO: Implement 'sync' validators (datatype, combination with other properties, and cycle detection)
+    it('should throw an error if the sync property is invalid data type', function () {
+      const invalidValues = [null, '  ', '', false, true, 0, 1, -1];
+
+      const testInvalidMovePromises = invalidValues.map(
+        (value) => ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: value })
+          .should.be.rejectedWith(Error, `Invalid value for parameter 'sync': ${value}`)
+      );
+
+      return Promise.all(testInvalidMovePromises);
+    });
+
+    it('should throw an error if the sync property is invalid', function () {
+      const syncCycleError = 'Sync axes cannot form a cycle.';
+      return Promise.all([
+        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' })
+          .should.be.rejectedWith(Error, 'Cannot sync with axis not specified in movement: twist -> roll'),
+        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'twist' })
+          .should.be.rejectedWith(Error, syncCycleError),
+        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' }, { axis: 'roll', to: 0, sync: 'twist' })
+          .should.be.rejectedWith(Error, syncCycleError),
+        ayva.move(
+          { to: 0, speed: 1 },
+          { axis: 'twist', to: 0, sync: 'roll' },
+          { axis: 'roll', to: 0, sync: 'left' },
+          { axis: 'left', to: 0, sync: 'twist' },
+        )
+          .should.be.rejectedWith(Error, syncCycleError),
+
+      ]);
+    });
+
+    it('should throw an error if the sync property is specified with a speed or duration', function () {
+      return Promise.all([
+        ayva.move({ to: 0, speed: 1 }, {
+          axis: 'twist', to: 0, speed: 1, sync: 'stroke',
+        })
+          .should.be.rejectedWith(Error, 'Cannot specify a speed or duration when sync property is present: twist'),
+        ayva.move({ to: 0, speed: 1 }, {
+          axis: 'roll', to: 0, duration: 1, sync: 'stroke',
+        })
+          .should.be.rejectedWith(Error, 'Cannot specify a speed or duration when sync property is present: roll'),
+      ]);
+    });
+
+    it('should allow boolean values for axis type boolean', function () {
+      return Promise.all([
+        ayva.move({ axis: 'lube', to: true }).should.be.fulfilled,
+        ayva.move({ axis: 'lube', to: false }).should.be.fulfilled,
+      ]);
+    });
+
+    it('should throw an error if speed or velocity are specified for type boolean', function () {
+      const errorMessage = 'Cannot specify speed or velocity for boolean axes: lube';
+
+      return Promise.all([
+        ayva.move({ axis: 'lube', to: true, speed: 1 }).should.be.rejectedWith(Error, errorMessage),
+        ayva.move({
+          axis: 'lube', to: false, duration: 1, velocity: () => {},
+        }).should.be.rejectedWith(Error, errorMessage),
+        ayva.move({
+          axis: 'lube', to: false, duration: 1,
+        }).should.be.rejectedWith(Error, 'Cannot specify a duration for a boolean axis movement with constant value.'),
+        ayva.move({ axis: 'lube', to: () => {}, duration: 1 }).should.be.fulfilled,
+      ]);
+    });
   });
 });

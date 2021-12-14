@@ -77,8 +77,10 @@ class Ayva {
     // TODO: Implement.
     // const valueSuppliers = [];
 
+    // const movementsByAxis = movements.reduce((map, m) => (map[m.axis] = m, map), {}); ????
+
     // for (let movement of movements) {
-    //   valueSuppliers.push(this.#createValueSupplier(movement));
+    //   valueSuppliers.push(this.#createValueSupplier(movement, movementsByAxis));
     // }
   }
 
@@ -204,16 +206,18 @@ class Ayva {
 
   /**
    * All the validation on movement descriptors :O
-   * 
+   *
+   * TODO: Clean this up and maybe move some of this out into a generic, parameterizable validator.
+   *
    * @param {*} movements
    */
   #validateMovements (movements) {
-    // TODO: Implement sync validation.
     if (!movements || !movements.length) {
       throw new Error('Must supply at least one movement.');
     }
 
     let atLeastOneDuration = false;
+    let allBooleanType = true;
     const seenAxes = {};
     const has = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
 
@@ -222,16 +226,24 @@ class Ayva {
         throw new Error(`Invalid movement: ${movement}`);
       }
 
+      if (!has(movement, 'axis') && !this.defaultAxis) {
+        throw new Error('No default axis configured. Must specify an axis for each movement.');
+      }
+
+      const axis = movement.axis || this.defaultAxis;
+
       if (!has(movement, 'to')) {
         throw new Error('Missing parameter \'to\'.');
       }
 
       if ((typeof movement.to !== 'number' && typeof movement.to !== 'function')) {
-        throw new Error(`Invalid parameter 'to': ${movement.to}`);
+        if (!(typeof movement.to === 'boolean' && this.#axes[axis].type === 'boolean')) {
+          throw new Error(`Invalid value for parameter 'to': ${movement.to}`);
+        }
       }
 
       if (typeof movement.to === 'number' && (movement.to < 0 || movement.to > 1)) {
-        throw new Error(`Invalid parameter 'to': ${movement.to}`);
+        throw new Error(`Invalid value for parameter 'to': ${movement.to}`);
       }
 
       if (has(movement, 'speed') || has(movement, 'duration')) {
@@ -239,11 +251,11 @@ class Ayva {
 
         if (has(movement, 'speed')) {
           if (typeof movement.speed !== 'number' || movement.speed <= 0) {
-            throw new Error(`Invalid parameter 'speed': ${movement.speed}`);
+            throw new Error(`Invalid value for parameter 'speed': ${movement.speed}`);
           }
         } else if (has(movement, 'duration')) {
           if (typeof movement.duration !== 'number' || movement.duration <= 0) {
-            throw new Error(`Invalid parameter 'duration': ${movement.duration}`);
+            throw new Error(`Invalid value for parameter 'duration': ${movement.duration}`);
           }
         }
 
@@ -252,13 +264,9 @@ class Ayva {
         }
       }
 
-      if (!has(movement, 'axis') && !this.defaultAxis) {
-        throw new Error('No default axis configured. Must specify an axis for each movement.');
-      }
-
       if (has(movement, 'axis')) {
         if (typeof movement.axis !== 'string' || !movement.axis.trim()) {
-          throw new Error(`Invalid parameter 'axis': ${movement.axis}`);
+          throw new Error(`Invalid value for parameter 'axis': ${movement.axis}`);
         }
 
         if (!this.#axes[movement.axis]) {
@@ -278,16 +286,53 @@ class Ayva {
         throw new Error('Cannot provide both a value and velocity function.');
       }
 
-      const axis = movement.axis || this.defaultAxis;
-
       if (seenAxes[axis]) {
         throw new Error(`Duplicate axis movement: ${axis}`);
       }
 
-      seenAxes[axis] = true;
+      seenAxes[axis] = movement;
+
+      if (has(movement, 'sync')) {
+        if (typeof movement.sync !== 'string' || !movement.sync.trim()) {
+          throw new Error(`Invalid value for parameter 'sync': ${movement.sync}`);
+        }
+
+        if (has(movement, 'speed') || has(movement, 'duration')) {
+          throw new Error(`Cannot specify a speed or duration when sync property is present: ${movement.axis}`);
+        }
+      }
+
+      if (this.#axes[axis].type !== 'boolean') {
+        allBooleanType = false;
+      } else {
+        if (has(movement, 'speed') || has(movement, 'velocity')) {
+          throw new Error(`Cannot specify speed or velocity for boolean axes: ${axis}`);
+        }
+
+        if (has(movement, 'duration') && typeof movement.to !== 'function') {
+          throw new Error('Cannot specify a duration for a boolean axis movement with constant value.');
+        }
+      }
     });
 
-    if (!atLeastOneDuration) {
+    movements.forEach((movement) => {
+      let nextMovement = movement;
+      const originalMovementAxis = movement.axis;
+
+      while (has(nextMovement, 'sync')) {
+        if (!seenAxes[nextMovement.sync]) {
+          throw new Error(`Cannot sync with axis not specified in movement: ${nextMovement.axis} -> ${nextMovement.sync}`);
+        }
+
+        nextMovement = seenAxes[nextMovement.sync];
+
+        if (nextMovement.sync === originalMovementAxis) {
+          throw new Error('Sync axes cannot form a cycle.');
+        }
+      }
+    });
+
+    if (!atLeastOneDuration && !allBooleanType) {
       throw new Error('At least one movement must have a speed or duration.');
     }
   }
