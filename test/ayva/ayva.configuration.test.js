@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-expressions */
-import 'chai/register-should.js';
-import 'chai/register-expect.js';
-import Ayva from '../src/ayva.js';
-import { OSR2 } from '../src/ayva-configs.js';
+import '../setup-chai.js';
+import Ayva from '../../src/ayva.js';
+import { OSR2 } from '../../src/ayva-configs.js';
 
 /**
  * Contains all tests for Ayva's Axis Configuration.

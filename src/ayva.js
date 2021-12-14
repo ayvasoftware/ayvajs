@@ -31,8 +31,8 @@ class Ayva {
   }
 
   /**
-   * Moves all linear and rotation axes to the neutral position (0.5), or to
-   * the value specified. The default speed is also 0.5 units/second.
+   * Moves all linear and rotation axes to their neutral positions (0.5) or to
+   * the value specified at the default speed of 0.5 units/second.
    *
    * @param {Number}
    * @return {Promise} A promise that resolves when the movements are finished.
@@ -71,8 +71,15 @@ class Ayva {
    * @param  {Object} movements
    * @return {Promise} a promise that resolves when all movements have finished
    */
-  move (...movements) { // eslint-disable-line no-unused-vars
+  async move (...movements) {
+    this.#validateMovements(movements);
 
+    // TODO: Implement.
+    // const valueSuppliers = [];
+
+    // for (let movement of movements) {
+    //   valueSuppliers.push(this.#createValueSupplier(movement));
+    // }
   }
 
   /**
@@ -196,11 +203,100 @@ class Ayva {
   }
 
   /**
+   * All the validation on movement descriptors :O
+   * 
+   * @param {*} movements
+   */
+  #validateMovements (movements) {
+    // TODO: Implement sync validation.
+    if (!movements || !movements.length) {
+      throw new Error('Must supply at least one movement.');
+    }
+
+    let atLeastOneDuration = false;
+    const seenAxes = {};
+    const has = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+
+    movements.forEach((movement) => {
+      if (!movement || typeof movement !== 'object') {
+        throw new Error(`Invalid movement: ${movement}`);
+      }
+
+      if (!has(movement, 'to')) {
+        throw new Error('Missing parameter \'to\'.');
+      }
+
+      if ((typeof movement.to !== 'number' && typeof movement.to !== 'function')) {
+        throw new Error(`Invalid parameter 'to': ${movement.to}`);
+      }
+
+      if (typeof movement.to === 'number' && (movement.to < 0 || movement.to > 1)) {
+        throw new Error(`Invalid parameter 'to': ${movement.to}`);
+      }
+
+      if (has(movement, 'speed') || has(movement, 'duration')) {
+        atLeastOneDuration = true;
+
+        if (has(movement, 'speed')) {
+          if (typeof movement.speed !== 'number' || movement.speed <= 0) {
+            throw new Error(`Invalid parameter 'speed': ${movement.speed}`);
+          }
+        } else if (has(movement, 'duration')) {
+          if (typeof movement.duration !== 'number' || movement.duration <= 0) {
+            throw new Error(`Invalid parameter 'duration': ${movement.duration}`);
+          }
+        }
+
+        if (has(movement, 'speed') && has(movement, 'duration')) {
+          throw new Error('Cannot supply both speed and duration.');
+        }
+      }
+
+      if (!has(movement, 'axis') && !this.defaultAxis) {
+        throw new Error('No default axis configured. Must specify an axis for each movement.');
+      }
+
+      if (has(movement, 'axis')) {
+        if (typeof movement.axis !== 'string' || !movement.axis.trim()) {
+          throw new Error(`Invalid parameter 'axis': ${movement.axis}`);
+        }
+
+        if (!this.#axes[movement.axis]) {
+          throw new Error(`Unknown axis '${movement.axis}'.`);
+        }
+      }
+
+      if (typeof movement.to === 'function') {
+        if (!has(movement, 'duration')) {
+          throw new Error('Must provide a duration when \'to\' is a function.');
+        }
+      }
+
+      if (has(movement, 'velocity') && typeof movement.velocity !== 'function') {
+        throw new Error('\'velocity\' must be a function.');
+      } else if (has(movement, 'velocity') && typeof movement.to === 'function') {
+        throw new Error('Cannot provide both a value and velocity function.');
+      }
+
+      const axis = movement.axis || this.defaultAxis;
+
+      if (seenAxes[axis]) {
+        throw new Error(`Duplicate axis movement: ${axis}`);
+      }
+
+      seenAxes[axis] = true;
+    });
+
+    if (!atLeastOneDuration) {
+      throw new Error('At least one movement must have a speed or duration.');
+    }
+  }
+
+  /**
    * Ensure all required fields are present in the configuration and that all are of valid types.
    *
    * TODO: Move some of this out into a generic validator that takes a validation spec.
    * @param {Object} axisConfig
-   * @private
    */
   #validateAxisConfig (axisConfig) {
     if (!axisConfig || typeof axisConfig !== 'object') {

@@ -1,6 +1,6 @@
-import 'chai/register-should.js';
+import '../setup-chai.js';
 import sinon from 'sinon';
-import Ayva from '../src/ayva.js';
+import Ayva from '../../src/ayva.js';
 
 /**
  * Contains all tests for Ayva's Device API.
