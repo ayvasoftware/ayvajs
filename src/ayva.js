@@ -7,8 +7,8 @@ class Ayva {
 
   #frequency = 50; // Hz
 
-  get #step () {
-    return Math.floor(1 / this.#frequency);
+  get #stepSeconds () {
+    return 1 / this.#frequency;
   }
 
   /**
@@ -76,9 +76,60 @@ class Ayva {
    * @return {Promise} a promise that resolves when all movements have finished
    */
   async move (...movements) {
+    this.#validateMovements(movements);
     const suppliers = this.#createValueSuppliers(movements);
+    const stepCountList = suppliers.filter((s) => !!s.parameters.totalSteps).map((s) => s.parameters.totalSteps);
+    const totalSteps = Math.max(stepCountList);
 
-    // TODO: Implement
+    // TODO: Perform immediate moves (duration = 0 or undefined)
+    for (let stepIndex = 0; stepIndex < totalSteps; stepIndex++) {
+      // TODO: Not performing a movement when it is passed its totalSteps.
+      // TODO: Think about what time should be if I am planning ahead... ?
+      const time = stepIndex * this.#stepSeconds;
+
+      const axisValues = suppliers.map((supplier) => {
+        const { parameters, valueSupplier } = supplier;
+
+        const nextValue = valueSupplier({
+          ...parameters,
+          time,
+          stepIndex,
+          stepSeconds: this.#stepSeconds,
+          value: this.#axes[parameters.axis].value,
+          progress: Math.round((time * 1000) / parameters.duration) / 1000, // Round percentage to 3 decimals...
+        });
+
+        // TODO: Perform a little validation on the value here.
+        // Instead of silently ignoring invalid values.
+
+        return {
+          axis: parameters.axis,
+          value: nextValue,
+        };
+      }).filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
+
+      const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, value));
+
+      if (tcodes.length) {
+        this.write(`${tcodes.join(' ')}\n`);
+        axisValues.forEach(({ axis, value }) => {
+          this.#axes[axis].value = value;
+        });
+      }
+
+      await this.sleep(this.#stepSeconds); // eslint-disable-line no-await-in-loop
+    }
+  }
+
+  /**
+   * Asynchronously sleep for the specified number of seconds.
+   * @param {*} seconds
+   * @returns
+   */
+  async sleep (seconds) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, seconds * 1000);
+    });
   }
 
   /**
@@ -201,63 +252,83 @@ class Ayva {
     }
   }
 
+  /**
+   * Converts the value into a standard TCode string for the specified axis. (i.e. 0.5 -> L0500)
+   * If the axis is a boolean axis, true values get mapped to 999 and false gets mapped to 000.
+   *
+   * @param {*} axis
+   * @param {*} value
+   * @returns
+   */
+  #tcode (axis, value) {
+    let valueText;
+
+    if (typeof value === 'boolean') {
+      valueText = value ? '999' : '000';
+    } else {
+      // TODO: Scale to within limit range here.
+      valueText = `${Math.round(util.clamp(value * 1000, 0, 999))}`.padStart(3, '0');
+    }
+
+    return `${this.#axes[axis].name}${valueText}`;
+  }
+
+  /**
+   * Create value suppliers with initial parameters.
+   *
+   * Precondition: Each movement is a valid movement per the Motion API.
+   * @param {*} movements
+   * @returns
+   */
   #createValueSuppliers (movements) {
-    this.#validateMovements(movements);
+    const { fail, has } = util;
     let maxDuration = 0;
 
     const computedMovements = movements.map((movement) => {
-      // First pass is to fill in or compute all parameters that we can initially.
+      // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
 
       const result = {
+        ...movement,
         axis,
         from: this.#axes[axis].value,
-        value: this.#axes[axis].value,
-        index: 0,
-        time: 0,
-        percentage: 0,
+        stepSeconds: this.#stepSeconds,
       };
 
-      if (util.has(movement, 'duration') && typeof movement.to !== 'function') {
-        // If a duration with a constant target has been passed, we can compute the speed.
+      if (has(movement, 'duration') && typeof movement.to !== 'function') {
+        // { to: <number>, duration: <number> }
+        // So we can compute the speed from distance / time.
         result.speed = Math.abs(movement.to - result.from) / movement.duration;
-      } else if (util.has(movement, 'speed')) {
-        // If a speed has been passed we must be working with constant value (variable value with constant speed is invalid)
-        // So we can compute the duration (duration could not have also been passed because of validation)
+      } else if (has(movement, 'speed')) {
+        // { to: <function> , speed: <any> } and { to: <boolean>, speed: <any> } are invalid.
+        // So we know 'to' must be numerical here and we can therefore compute the duration from distance / speed.
         result.duration = Math.abs(movement.to - result.from) / movement.speed;
       }
 
-      if (util.has(movement, 'velocity')) {
-        // If a velocity function has been passed we must be working with constant value (variable value with velocity function is invalid)
-        const difference = movement.to - result.from;
-
-        if (difference > 0) {
-          result.direction = 1;
-        } else if (difference < 0) {
-          result.direction = -1;
-        } else {
-          result.direction = 0;
-        }
+      if (has(movement, 'velocity')) {
+        // { to: <function>, velocity: <function> } and { to: <boolean>, velocity: <function> } are invalid.
+        // So we know 'to' must be numerical here and we can compute a direction for the velocity.
+        const distance = movement.to - result.from;
+        result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
       }
 
-      if (util.has(movement, 'sync')) {
-        result.sync = movement.sync;
-      }
-
-      result.to = movement.to;
-
-      if (util.has(result, 'duration')) {
+      if (has(result, 'duration')) {
         maxDuration = result.duration > maxDuration ? result.duration : maxDuration;
       }
 
       return result;
     });
 
-    const movementsByAxis = computedMovements.reduce((map, p) => (map[p.axis] = p, map), {});
+    const movementsByAxis = computedMovements.reduce((map, p) => {
+      map[p.axis] = p;
+      return map;
+    }, {});
 
-    // Fill in the durations and step count for any remaining axes (such as sync axes)
     computedMovements.forEach((movement) => {
-      if (util.has(movement, 'sync')) {
+      // We need to compute the duration for any we couldn't do in the first pass.
+      // This will be either implicit or explicit sync movements.
+      if (has(movement, 'sync')) {
+        // Excplicit sync.
         let syncMovement = movement;
 
         while (has(syncMovement, 'sync')) {
@@ -267,18 +338,24 @@ class Ayva {
         movement.duration = syncMovement.duration || maxDuration;
 
         if (typeof movement.to !== 'function') {
+          // Now we can compute a speed.
           movement.speed = (movement.to - movement.from) / movement.duration;
         }
-      } else if (!util.has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
+      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
+        // Implicit sync to max duration.
         movement.duration = maxDuration;
       }
 
-      if (util.has(movement, 'duration')) {
+      if (has(movement, 'duration')) {
         movement.totalSteps = Math.round(movement.duration * this.#frequency);
+      } else if (this.#axes[movement.axis].type !== 'boolean') {
+        // By this point, the only movements without a duration should be boolean.
+        // This should literally never happen because of validation. But including here for debugging and clarity.
+        fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
       }
     });
 
-    // Create final value suppliers.
+    // Create the actual value suppliers.
     return computedMovements.map((movement) => {
       const supplier = {};
 
@@ -286,7 +363,7 @@ class Ayva {
         // Create a value supplier from parameters.
         if (this.#axes[movement.axis].type === 'boolean') {
           supplier.valueSupplier = () => movement.to;
-        } else if (util.has(movement, 'velocity')) {
+        } else if (has(movement, 'velocity')) {
           const deltaFunction = movement.velocity;
           supplier.valueSupplier = (params) => params.value + deltaFunction(params);
         } else {
@@ -301,6 +378,7 @@ class Ayva {
 
       delete movement.sync;
       supplier.parameters = movement;
+
       return supplier;
     });
   }

@@ -54,6 +54,9 @@ describe('Motion API Tests', function () {
   beforeEach(function () {
     ayva = new Ayva(TEST_CONFIG());
 
+    // Do not actually sleep.
+    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+
     device = {
       write: sinon.fake(),
     };
@@ -281,36 +284,50 @@ describe('Motion API Tests', function () {
   });
 
   describe('#move (valid single-axis)', function () {
-    it('should be able to omit duration if at least one other movement has an implicit duration', function () {
-      return Promise.all([
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
-        ayva.move({ to: 0, duration: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
-      ]);
+    it('should send valid movements using value provider', async function () {
+      const axis = ayva.getAxis('R0');
+      axis.value.should.equal(0.5);
+
+      const values = [0.475, 0.450, 0.425, 0.400, 0.375];
+      const valueProvider = sinon.fake((parameters) => values[parameters.stepIndex]);
+
+      await ayva.move({
+        axis: 'R0',
+        to: valueProvider,
+        duration: 0.1,
+      });
+
+      // Travelling for 0.1 seconds with 50hz means five steps (0.02s, or 20ms per step)
+      valueProvider.callCount.should.equal(5);
+
+      const expectedConstantParameters = {
+        axis: 'R0',
+        duration: 0.1,
+        from: 0.5,
+        stepSeconds: 0.02,
+        totalSteps: 5,
+      };
+
+      const expectedProviderValues = [0.5, ...values]; // Will initially pass the current value.
+
+      values.forEach((value, index) => {
+        valueProvider.getCall(index).args[0].should.deep.equal({
+          ...expectedConstantParameters,
+          value: expectedProviderValues[index],
+          time: 0.02 * index,
+          progress: Math.round(0.2 * 1000 * index) / 1000,
+          stepIndex: index,
+        });
+      });
+
+      device.write.callCount.should.equal(5);
+      values.forEach((value, index) => {
+        device.write.args[index][0].should.equal(`R0${value * 1000}\n`);
+      });
+
+      // Should now be at the last value provided.
+      ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
-
-    // it('should send valid movements using value provider', async function () {
-    //   const axis = ayva.getAxis('R0');
-    //   axis.value.should.equal(0.5);
-
-    //   const values = [475, 450, 425, 400, 375];
-    //   const valueProvider = sinon.fake((parameters) => values[parameters.index]);
-
-    //   await ayva.move({
-    //     axis: 'R0',
-    //     to: valueProvider,
-    //     duration: 0.1,
-    //   });
-
-    //   // Travelling for 0.1 seconds with 50hz means five steps (0.02s, or 20ms per step)
-    //   device.write.callCount.should.equal(5);
-    //   valueProvider.callCount.should.equal(5);
-
-    //   for (let i = 0; i < value.length; i++) {
-    //     device.write.args[i][0].should.equal(`R0${values}`);
-    //   }
-
-    //   ayva.getAxis(testAxis).value.should.equal(values[values.length - 1]);
-    // });
 
     // it('should send valid movements when constant position and speed', async function () {
     //   const axis = ayva.getAxis('R0');
@@ -332,6 +349,13 @@ describe('Motion API Tests', function () {
     //   device.write.args[4][0].should.equal('R0400\n');
 
     //   ayva.getAxis(testAxis).value.should.equal(0.4);
+    // });
+
+    // it('should be able to omit duration if at least one other movement has an implicit duration', function () {
+    //   return Promise.all([
+    //     ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
+    //     ayva.move({ to: 0, duration: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
+    //   ]);
     // });
   });
 });
