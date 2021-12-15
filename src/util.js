@@ -28,4 +28,22 @@ export default {
   randomCount (max) {
     return Math.ceil(Math.random() * max);
   },
+
+  /**
+   * Shorthand for Object.prototype.hasOwnProperty.call()
+   * @param {*} obj
+   * @param {*} prop
+   * @returns
+   */
+  has (obj, prop) {
+    return Object.prototype.hasOwnProperty.call(obj, prop);
+  },
+
+  /**
+   * Shorthand for throwing an error during validation.
+   * @param {*} error
+   */
+  fail (error) {
+    throw new Error(error);
+  },
 };

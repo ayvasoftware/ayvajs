@@ -6,7 +6,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --recursive",
+    "test": "c8 --all --src src --reporter html -o test-output/coverage mocha --recursive --reporter mochawesome --reporter-options reportDir=test-output,reportFilename=test-results",
     "docs": "jsdoc -c jsdoc.json",
     "lint": "eslint --format html -o test-output/eslint.html --fix src/* test/* "
   },
@@ -28,6 +28,7 @@
   "homepage": "https://github.com/ayvajs/ayva#readme",
   "devDependencies": {
     "better-docs": "2.3.2",
+    "c8": "^7.10.0",
     "chai": "4.3.4",
     "chai-as-promised": "^7.1.1",
     "eslint": "^8.4.1",
@@ -35,6 +36,7 @@
     "eslint-plugin-import": "^2.25.3",
     "jsdoc": "3.6.7",
     "mocha": "9.1.3",
+    "mochawesome": "^7.0.1",
     "sinon": "12.0.1"
   }
 }
