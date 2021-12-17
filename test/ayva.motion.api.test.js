@@ -1,48 +1,8 @@
 /* eslint-disable no-unused-expressions */
-import '../setup-chai.js';
+import './test-util/setup-chai.js';
 import sinon from 'sinon';
-import Ayva from '../../src/ayva.js';
-
-/**
- * Return a simple OSR2 test configuration.
- */
-const TEST_CONFIG = () => ({
-  name: 'OSR2',
-  defaultAxis: 'stroke',
-  frequency: 50,
-  axes: [
-    {
-      name: 'L0',
-      type: 'linear',
-      alias: 'stroke',
-    },
-    {
-      name: 'L1',
-      type: 'linear',
-      alias: 'left',
-    },
-    {
-      name: 'R0',
-      type: 'rotation',
-      alias: 'twist',
-    },
-    {
-      name: 'R1',
-      type: 'rotation',
-      alias: 'roll',
-    },
-    {
-      name: 'A0',
-      type: 'auxiliary',
-      alias: 'valve',
-    },
-    {
-      name: 'A1',
-      type: 'boolean',
-      alias: 'lube',
-    },
-  ],
-});
+import Ayva from '../src/ayva.js';
+import { TEST_CONFIG, createFunctionBinder } from './test-util/test-util.js';
 
 /**
  * Contains all tests for Ayva's Motion API.
@@ -68,13 +28,19 @@ describe('Motion API Tests', function () {
     sinon.restore();
   });
 
+  describe('#the-reason-why', function () {
+    function throwsStuff (err) {
+      throw new Error(err);
+    }
+
+    it('because', function () {
+      throwsStuff.bind(throwsStuff, 'nope').should.throw(Error, 'nope');
+    });
+  });
+
   describe('#home()', function () {
     it('should throw an error when called with invalid values', function () {
-      const testHome = function (value) {
-        return function () {
-          return ayva.home(value);
-        };
-      };
+      const testHome = createFunctionBinder(ayva, 'home');
 
       testHome(null).should.throw(Error, 'Invalid value: null');
       testHome(false).should.throw(Error, 'Invalid value: false');
@@ -297,65 +263,125 @@ describe('Motion API Tests', function () {
         duration: 0.1,
       });
 
-      // Travelling for 0.1 seconds with 50hz means five steps (0.02s, or 20ms per step)
-      valueProvider.callCount.should.equal(5);
-
-      const expectedConstantParameters = {
-        axis: 'R0',
-        duration: 0.1,
-        from: 0.5,
-        stepSeconds: 0.02,
-        totalSteps: 5,
-      };
-
-      const expectedProviderValues = [0.5, ...values]; // Will initially pass the current value.
-
-      values.forEach((value, index) => {
-        valueProvider.getCall(index).args[0].should.deep.equal({
-          ...expectedConstantParameters,
-          value: expectedProviderValues[index],
-          time: 0.02 * index,
-          progress: Math.round(0.2 * 1000 * index) / 1000,
-          stepIndex: index,
-        });
-      });
-
       device.write.callCount.should.equal(5);
       values.forEach((value, index) => {
         device.write.args[index][0].should.equal(`R0${value * 1000}\n`);
       });
 
-      // Should now be at the last value provided.
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
 
-    // it('should send valid movements when constant position and speed', async function () {
-    //   const axis = ayva.getAxis('R0');
+    it('should send valid movements when constant position and speed', async function () {
+      const axis = ayva.getAxis('R0');
 
-    //   axis.value.should.equal(0.5);
+      axis.value.should.equal(0.5);
 
-    //   await ayva.move({
-    //     axis: 'R0',
-    //     to: 0.4,
-    //     speed: 1,
-    //   });
+      await ayva.move({
+        axis: 'R0',
+        to: 0.4,
+        speed: 1,
+      });
 
-    //   // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
-    //   device.write.callCount.should.equal(5);
-    //   device.write.args[0][0].should.equal('R0480\n');
-    //   device.write.args[1][0].should.equal('R0460\n');
-    //   device.write.args[2][0].should.equal('R0440\n');
-    //   device.write.args[3][0].should.equal('R0420\n');
-    //   device.write.args[4][0].should.equal('R0400\n');
+      // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal('R0480\n');
+      device.write.args[1][0].should.equal('R0460\n');
+      device.write.args[2][0].should.equal('R0440\n');
+      device.write.args[3][0].should.equal('R0420\n');
+      device.write.args[4][0].should.equal('R0400\n');
 
-    //   ayva.getAxis(testAxis).value.should.equal(0.4);
-    // });
+      ayva.getAxis('R0').value.should.equal(0.4);
+    });
 
-    // it('should be able to omit duration if at least one other movement has an implicit duration', function () {
-    //   return Promise.all([
-    //     ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
-    //     ayva.move({ to: 0, duration: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
-    //   ]);
-    // });
+    it('should send valid movements when constant position and duration', async function () {
+      const axis = ayva.getAxis('R0');
+
+      axis.value.should.equal(0.5);
+
+      await ayva.move({
+        axis: 'R0',
+        to: 0.4,
+        duration: 0.1,
+      });
+
+      // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal('R0480\n');
+      device.write.args[1][0].should.equal('R0460\n');
+      device.write.args[2][0].should.equal('R0440\n');
+      device.write.args[3][0].should.equal('R0420\n');
+      device.write.args[4][0].should.equal('R0400\n');
+
+      ayva.getAxis('R0').value.should.equal(0.4);
+    });
+
+    it('should be able to omit duration if at least one other movement has an implicit duration', function () {
+      return Promise.all([
+        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
+        ayva.move({ to: 0, duration: 1 }, { axis: 'twist', to: () => {} }).should.be.fulfilled,
+      ]);
+    });
+  });
+
+  describe('#move (valid multi-axis)', function () {
+    it('should send valid movements using value providers', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+
+      const strokeValues = [0.475, 0.450, 0.425, 0.400, 0.375];
+      const twistValues = [0.480, 0.460, 0.440, 0.420, 0.400];
+
+      const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.stepIndex]);
+      const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.stepIndex]);
+
+      await ayva.move({
+        axis: 'L0',
+        to: strokeValueProvider,
+        duration: 0.1,
+      }, {
+        axis: 'R0',
+        to: twistValueProvider,
+        duration: 0.1,
+      });
+
+      device.write.callCount.should.equal(5);
+      strokeValues.forEach((value, index) => {
+        device.write.args[index][0].should.equal(`L0${value * 1000} R0${twistValues[index] * 1000}\n`);
+      });
+
+      ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
+      ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 1]);
+    });
+
+    it('should complete movements that are shorter than the total duration', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+
+      const strokeValues = [0.475, 0.450, 0.425, 0.400, 0.375];
+      const twistValues = [0.480, 0.460, 0.440, 0.420, 0.400];
+
+      const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.stepIndex]);
+      const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.stepIndex]);
+
+      await ayva.move({
+        axis: 'L0',
+        to: strokeValueProvider,
+        duration: 0.1,
+      }, {
+        axis: 'R0',
+        to: twistValueProvider,
+        duration: 0.06,
+      });
+
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${twistValues[0] * 1000}\n`);
+      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${twistValues[1] * 1000}\n`);
+      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 1000} R0${twistValues[2] * 1000}\n`);
+      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 1000}\n`);
+      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 1000}\n`);
+
+      ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
+      ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 3]);
+    });
   });
 });

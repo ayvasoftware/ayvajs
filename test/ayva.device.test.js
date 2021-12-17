@@ -1,15 +1,20 @@
-import '../setup-chai.js';
+import './test-util/setup-chai.js';
 import sinon from 'sinon';
-import Ayva from '../../src/ayva.js';
+import Ayva from '../src/ayva.js';
+import { createFunctionBinder } from './test-util/test-util.js';
 
 /**
  * Contains all tests for Ayva's Device API.
  */
 describe('Device Protocols', function () {
   let ayva;
+  let testAddDevice;
+  let testWrite;
 
   beforeEach(function () {
     ayva = new Ayva();
+    testAddDevice = createFunctionBinder(ayva, 'addOutputDevices');
+    testWrite = createFunctionBinder(ayva, 'write');
   });
 
   afterEach(function () {
@@ -21,13 +26,7 @@ describe('Device Protocols', function () {
    */
   describe('#addOutputDevices', function () {
     it('should throw an error when invalid device is added', function () {
-      const testAddDevice = function (device) {
-        return function () {
-          ayva.addOutputDevices(device);
-        };
-      };
-
-      testAddDevice().should.throw(Error, 'Invalid device: undefined');
+      testAddDevice(undefined).should.throw(Error, 'Invalid device: undefined');
       testAddDevice({}).should.throw(Error, 'Invalid device: [object Object]');
       testAddDevice(42).should.throw(Error, 'Invalid device: 42');
       testAddDevice({ write: 42 }).should.throw(Error, 'Invalid device: [object Object]');
@@ -41,12 +40,6 @@ describe('Device Protocols', function () {
    * Writing Output
    */
   describe('#write', function () {
-    const testWrite = function (command) {
-      return function () {
-        ayva.write(command);
-      };
-    };
-
     it('should throw an error when there are no output devices', function () {
       testWrite().should.throw(Error, 'No output devices have been added.');
     });

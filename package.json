@@ -6,7 +6,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "c8 --all --src src --reporter html -o test-output/coverage mocha --recursive --reporter mochawesome --reporter-options reportDir=test-output,reportFilename=test-results",
+    "test": "c8 --all --src src --reporter html -o test-output/coverage mocha test/**/*.test.js --reporter mochawesome --reporter-options reportDir=test-output,reportFilename=test-results",
     "docs": "jsdoc -c jsdoc.json",
     "lint": "eslint --format html -o test-output/eslint.html --fix src/* test/* "
   },

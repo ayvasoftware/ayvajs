@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-expressions */
-import '../setup-chai.js';
-import Ayva from '../../src/ayva.js';
-import { OSR2 } from '../../src/ayva-configs.js';
+import './test-util/setup-chai.js';
+import Ayva from '../src/ayva.js';
+import { OSR2 } from '../src/ayva-configs.js';
+import { createFunctionBinder } from './test-util/test-util.js';
 
 /**
  * Contains all tests for Ayva's Axis Configuration.
@@ -34,16 +35,11 @@ describe('Configuration Tests', function () {
     let config;
     let expectedConfig;
     let ayva;
+    let testConfigureAxis;
 
     const invalidConfigMessage = 'Invalid configuration object';
     const invalidParametersMessage = 'Invalid configuration parameter(s)';
     const missingParametersMessage = 'Configuration is missing properties';
-
-    const testConfigureAxis = function (c) {
-      return function () {
-        ayva.configureAxis(c);
-      };
-    };
 
     beforeEach(function () {
       config = {
@@ -57,6 +53,8 @@ describe('Configuration Tests', function () {
       expectedConfig = { ...config, value: DEFAULT_VALUE };
 
       ayva = new Ayva();
+
+      testConfigureAxis = createFunctionBinder(ayva, 'configureAxis');
     });
 
     it('should throw an error when invalid configuration is passed', function () {

@@ -41,12 +41,11 @@ class Ayva {
    * @param {Number}
    * @return {Promise} A promise that resolves when the movements are finished.
    */
-  home (value = 0.5) {
-    if (typeof value !== 'number') {
-      throw new Error(`Invalid value: ${value}`);
+  home (to = 0.5) {
+    if (typeof to !== 'number') {
+      throw new Error(`Invalid value: ${to}`);
     }
 
-    const to = util.clamp(value, 0, 1); // TODO: Move this down into the move method.
     const speed = 0.5;
 
     const movements = this.#getAxesArray()
@@ -57,11 +56,12 @@ class Ayva {
       return this.move(...movements);
     }
 
+    console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
     return Promise.resolve();
   }
 
   /**
-   * Performs movements along one or more axes. This is a powerful method that can synchronize
+   * Performs movements or updates along one or more axes. This is a powerful method that can synchronize
    * axis movement while allowing for fine control over position, speed, and move duration.
    * For full details on how to use this method, see the {@tutorial motion-api} tutorial.
    *
@@ -70,6 +70,10 @@ class Ayva {
    *   axis: 'stroke',
    *   to: 0,
    *   speed: 1,
+   * },{
+   *   axis: 'twist',
+   *   to: 0.5,
+   *   speed: 0.5,
    * });
    *
    * @param  {Object} movements
@@ -78,42 +82,42 @@ class Ayva {
   async move (...movements) {
     this.#validateMovements(movements);
     const suppliers = this.#createValueSuppliers(movements);
-    const stepCountList = suppliers.filter((s) => !!s.parameters.totalSteps).map((s) => s.parameters.totalSteps);
-    const totalSteps = Math.max(stepCountList);
+    const totalSteps = this.#computeTotalSteps(suppliers);
 
     // TODO: Perform immediate moves (duration = 0 or undefined)
     for (let stepIndex = 0; stepIndex < totalSteps; stepIndex++) {
-      // TODO: Not performing a movement when it is passed its totalSteps.
       // TODO: Think about what time should be if I am planning ahead... ?
       const time = stepIndex * this.#stepSeconds;
 
-      const axisValues = suppliers.map((supplier) => {
-        const { parameters, valueSupplier } = supplier;
+      const axisValues = suppliers
+        .filter((supplier) => stepIndex < supplier.parameters.totalSteps)
+        .map((supplier) => {
+          const { parameters, valueSupplier } = supplier;
 
-        const nextValue = valueSupplier({
-          ...parameters,
-          time,
-          stepIndex,
-          stepSeconds: this.#stepSeconds,
-          value: this.#axes[parameters.axis].value,
-          progress: Math.round((time * 1000) / parameters.duration) / 1000, // Round percentage to 3 decimals...
-        });
+          const nextValue = valueSupplier({
+            ...parameters,
+            time,
+            stepIndex,
+            stepSeconds: this.#stepSeconds,
+            value: this.#axes[parameters.axis].value,
+            progress: util.round(time / parameters.duration, 3),
+          });
 
-        // TODO: Perform a little validation on the value here.
-        // Instead of silently ignoring invalid values.
+          // TODO: Perform a little validation on the value here.
+          // Instead of silently ignoring invalid values.
 
-        return {
-          axis: parameters.axis,
-          value: nextValue,
-        };
-      }).filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
+          return {
+            axis: parameters.axis,
+            value: nextValue,
+          };
+        }).filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
 
       const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, value));
 
       if (tcodes.length) {
         this.write(`${tcodes.join(' ')}\n`);
         axisValues.forEach(({ axis, value }) => {
-          this.#axes[axis].value = value;
+          this.#axes[axis].value = typeof value === 'number' ? util.round(value, 3) : value;
         });
       }
 
@@ -325,7 +329,7 @@ class Ayva {
     }, {});
 
     computedMovements.forEach((movement) => {
-      // We need to compute the duration for any we couldn't do in the first pass.
+      // We need to compute the duration for any movements we couldn't in the first pass.
       // This will be either implicit or explicit sync movements.
       if (has(movement, 'sync')) {
         // Excplicit sync.
@@ -381,6 +385,26 @@ class Ayva {
 
       return supplier;
     });
+  }
+
+  /**
+   * Compute the total steps of the move given a list of value suppliers.
+   * i.e. The maximum number of steps.
+   *
+   * @param {Object[]} valueSuppliers
+   */
+  #computeTotalSteps (valueSuppliers) {
+    let maxTotalSteps = 0;
+
+    valueSuppliers.forEach((supplier) => {
+      const steps = supplier.parameters.totalSteps;
+
+      if (steps) {
+        maxTotalSteps = steps > maxTotalSteps ? steps : maxTotalSteps;
+      }
+    });
+
+    return maxTotalSteps;
   }
 
   /**
@@ -519,8 +543,9 @@ class Ayva {
    * @param {Object} axisConfig
    */
   #validateAxisConfig (axisConfig) {
+    const { fail } = util;
     if (!axisConfig || typeof axisConfig !== 'object') {
-      throw new Error(`Invalid configuration object: ${axisConfig}`);
+      fail(`Invalid configuration object: ${axisConfig}`);
     }
 
     const required = ['name', 'type'];
@@ -538,7 +563,7 @@ class Ayva {
     ).sort();
 
     if (missing.length) {
-      throw new Error(`Configuration is missing properties: ${missing.join(', ')}`);
+      fail(`Configuration is missing properties: ${missing.join(', ')}`);
     }
 
     const invalid = [];
@@ -562,11 +587,11 @@ class Ayva {
 
     if (invalid.length) {
       const message = invalid.sort().map((property) => `${property} = ${axisConfig[property]}`).join(', ');
-      throw new Error(`Invalid configuration parameter(s): ${message}`);
+      fail(`Invalid configuration parameter(s): ${message}`);
     }
 
     if (['linear', 'rotation', 'auxiliary', 'boolean'].indexOf(axisConfig.type) === -1) {
-      throw new Error(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
+      fail(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
     }
 
     const resultConfig = {
@@ -577,7 +602,7 @@ class Ayva {
     };
 
     if (resultConfig.max === resultConfig.min || resultConfig.min > resultConfig.max) {
-      throw new Error(`Invalid configuration parameter(s): max = ${resultConfig.max}, min = ${resultConfig.min}`);
+      fail(`Invalid configuration parameter(s): max = ${resultConfig.max}, min = ${resultConfig.min}`);
     }
 
     return resultConfig;
@@ -591,11 +616,7 @@ class Ayva {
     });
 
     function sortByName (a, b) {
-      if (a.name > b.name) {
-        return 1;
-      }
-
-      return a.name < b.name ? -1 : 0;
+      return a.name > b.name ? 1 : -1;
     }
 
     return Object.values(uniqueAxes).sort(sortByName);

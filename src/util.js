@@ -1,4 +1,9 @@
 export default {
+  round (value, digits) {
+    const factor = 10 ** digits;
+    return Math.round(factor * value) / factor;
+  },
+
   clamp (value, min, max) {
     return Math.max(min, Math.min(max, value));
   },
