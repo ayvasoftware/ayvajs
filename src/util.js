@@ -36,9 +36,6 @@ export default {
 
   /**
    * Shorthand for Object.prototype.hasOwnProperty.call()
-   * @param {*} obj
-   * @param {*} prop
-   * @returns
    */
   has (obj, prop) {
     return Object.prototype.hasOwnProperty.call(obj, prop);

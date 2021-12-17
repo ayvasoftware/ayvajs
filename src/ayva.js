@@ -128,7 +128,7 @@ class Ayva {
   /**
    * Asynchronously sleep for the specified number of seconds.
    * @param {*} seconds
-   * @returns
+   * @returns {Promise} a Promise that resolves when the number of seconds have passed.
    */
   async sleep (seconds) {
     return new Promise((resolve) => {
@@ -262,7 +262,7 @@ class Ayva {
    *
    * @param {*} axis
    * @param {*} value
-   * @returns
+   * @returns {String} the TCode string
    */
   #tcode (axis, value) {
     let valueText;
@@ -282,7 +282,7 @@ class Ayva {
    *
    * Precondition: Each movement is a valid movement per the Motion API.
    * @param {*} movements
-   * @returns
+   * @returns {Object[]} - array of value suppliers with parameters.
    */
   #createValueSuppliers (movements) {
     const { fail, has } = util;

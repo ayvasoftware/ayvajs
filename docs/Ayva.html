@@ -366,7 +366,7 @@
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line10">line 10</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line14">line 14</a>
             </span>
         </p>
     
@@ -552,7 +552,7 @@ Alias for #addOutputDevices()</p>
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line178">line 178</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line230">line 230</a>
             </span>
         </p>
     
@@ -712,7 +712,7 @@ Alias for #addOutputDevices()</p>
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line162">line 162</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line214">line 214</a>
             </span>
         </p>
     
@@ -1067,7 +1067,7 @@ Alias for #addOutputDevices()</p>
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line108">line 108</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line160">line 160</a>
             </span>
         </p>
     
@@ -1230,7 +1230,7 @@ ayva.configureAxis({
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line134">line 134</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line186">line 186</a>
             </span>
         </p>
     
@@ -1352,7 +1352,7 @@ ayva.configureAxis({
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line153">line 153</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line205">line 205</a>
             </span>
         </p>
     
@@ -1389,7 +1389,7 @@ ayva.configureAxis({
         
         <span class="code-name">
             
-                home<span class="signature">(value)</span><span class="type-signature"> &rarr; {Promise}</span>
+                home<span class="signature">(to)</span><span class="type-signature"> &rarr; {Promise}</span>
             
         </span>
     </h4>
@@ -1439,7 +1439,7 @@ the value specified at the default speed of 0.5 units/second.</p>
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>value</code></td>
+      <td class="name"><code>to</code></td>
   
 
   <td class="type">
@@ -1509,7 +1509,7 @@ the value specified at the default speed of 0.5 units/second.</p>
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line40">line 40</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line44">line 44</a>
             </span>
         </p>
     
@@ -1584,7 +1584,7 @@ the value specified at the default speed of 0.5 units/second.</p>
     
     
     <div class="description">
-        <p>Performs movements along one or more axes. This is a powerful method that can synchronize
+        <p>Performs movements or updates along one or more axes. This is a powerful method that can synchronize
 axis movement while allowing for fine control over position, speed, and move duration.
 For full details on how to use this method, see the <a href="tutorial-motion-api.html">Motion API</a> tutorial.</p>
     </div>
@@ -1700,7 +1700,7 @@ For full details on how to use this method, see the <a href="tutorial-motion-api
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line74">line 74</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line82">line 82</a>
             </span>
         </p>
     
@@ -1758,8 +1758,189 @@ For full details on how to use this method, see the <a href="tutorial-motion-api
   axis: 'stroke',
   to: 0,
   speed: 1,
+},{
+  axis: 'twist',
+  to: 0.5,
+  speed: 0.5,
 });</code></pre>
     
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="sleep">
+        <a class="href-link" href="#sleep">#</a>
+        
+            
+                <span class='tag'>async</span>
+            
+        
+        <span class="code-name">
+            
+                sleep<span class="signature">(seconds)</span><span class="type-signature"> &rarr; {Promise}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Asynchronously sleep for the specified number of seconds.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>seconds</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">*</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="ayva.js.html" class="button">View Source</a>
+            <span>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line133">line 133</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><p>a Promise that resolves when the number of seconds have passed.</p></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">Promise</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
 
 
 </div>
