@@ -67,6 +67,9 @@ describe('Motion API Tests', function () {
     });
   });
 
+  /**
+   * Invalid movements.
+   */
   describe('#move() (invalid movements)', function () {
     it('should throw an error if invalid movement is passed', function () {
       const invalidValues = [1, null, undefined, 'bad', '', false, true];
@@ -249,6 +252,9 @@ describe('Motion API Tests', function () {
     });
   });
 
+  /**
+   * Valid movements (single axis)
+   */
   describe('#move (valid single-axis)', function () {
     it('should send valid movements using value provider', async function () {
       const axis = ayva.getAxis('R0');
@@ -264,9 +270,11 @@ describe('Motion API Tests', function () {
       });
 
       device.write.callCount.should.equal(5);
-      values.forEach((value, index) => {
-        device.write.args[index][0].should.equal(`R0${value * 1000}\n`);
-      });
+      device.write.args[0][0].should.equal('R0475\n');
+      device.write.args[1][0].should.equal('R0450\n');
+      device.write.args[2][0].should.equal('R0425\n');
+      device.write.args[3][0].should.equal('R0400\n');
+      device.write.args[4][0].should.equal('R0375\n');
 
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
@@ -323,6 +331,9 @@ describe('Motion API Tests', function () {
     });
   });
 
+  /**
+   * Valid movements (multi-axis)
+   */
   describe('#move (valid multi-axis)', function () {
     it('should send valid movements using value providers', async function () {
       ayva.getAxis('L0').value.should.equal(0.5);
