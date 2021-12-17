@@ -123,6 +123,8 @@ class Ayva {
 
       await this.sleep(this.#stepSeconds); // eslint-disable-line no-await-in-loop
     }
+
+    return Promise.resolve();
   }
 
   /**
