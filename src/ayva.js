@@ -371,7 +371,7 @@ class Ayva {
           supplier.valueSupplier = () => movement.to;
         } else if (has(movement, 'velocity')) {
           const deltaFunction = movement.velocity;
-          supplier.valueSupplier = (params) => params.value + deltaFunction(params);
+          supplier.valueSupplier = (params) => params.value + deltaFunction(params) * params.stepSeconds * params.direction;
         } else {
           const delta = (movement.to - movement.from) / movement.totalSteps;
           supplier.valueSupplier = (params) => params.value + delta;
