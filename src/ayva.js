@@ -7,7 +7,7 @@ class Ayva {
 
   #frequency = 50; // Hz
 
-  get #stepSeconds () {
+  get #period () {
     return 1 / this.#frequency;
   }
 
@@ -35,19 +35,13 @@ class Ayva {
   }
 
   /**
-   * Moves all linear and rotation axes to their neutral positions (0.5) or to
-   * the value specified at the default speed of 0.5 units/second.
+   * Moves all linear and rotation axes to their neutral positions.
    *
-   * @param {Number}
+   * @param {Number} [to = 0.5] - optional target position to home to.
+   * @param {Number} [speed = 0.5] - optional speed of the movement.
    * @return {Promise} A promise that resolves when the movements are finished.
    */
-  home (to = 0.5) {
-    if (typeof to !== 'number') {
-      throw new Error(`Invalid value: ${to}`);
-    }
-
-    const speed = 0.5;
-
+  home (to = 0.5, speed = 0.5) {
     const movements = this.#getAxesArray()
       .filter((axis) => axis.type === 'linear' || axis.type === 'rotation')
       .map((axis) => ({ to, speed, axis: axis.name }));
@@ -81,26 +75,26 @@ class Ayva {
    */
   async move (...movements) {
     this.#validateMovements(movements);
-    const suppliers = this.#createValueSuppliers(movements);
-    const totalSteps = this.#computeTotalSteps(suppliers);
+    const providers = this.#createValueProviders(movements);
+    const stepCount = this.#computeStepCount(providers);
 
     // TODO: Perform immediate moves (duration = 0 or undefined)
-    for (let stepIndex = 0; stepIndex < totalSteps; stepIndex++) {
+    for (let index = 0; index < stepCount; index++) {
       // TODO: Think about what time should be if I am planning ahead... ?
-      const time = stepIndex * this.#stepSeconds;
+      const time = index * this.#period;
 
-      const axisValues = suppliers
-        .filter((supplier) => stepIndex < supplier.parameters.totalSteps)
-        .map((supplier) => {
-          const { parameters, valueSupplier } = supplier;
+      const axisValues = providers
+        .filter((provider) => index < provider.parameters.stepCount)
+        .map((provider) => {
+          const { parameters, valueProvider } = provider;
 
-          const nextValue = valueSupplier({
+          const nextValue = valueProvider({
             ...parameters,
             time,
-            stepIndex,
-            stepSeconds: this.#stepSeconds,
-            value: this.#axes[parameters.axis].value,
-            progress: util.round(time / parameters.duration, 3),
+            index,
+            period: this.#period,
+            currentValue: this.#axes[parameters.axis].value,
+            x: util.round((index + 1) / (provider.parameters.stepCount), 3),
           });
 
           // TODO: Perform a little validation on the value here.
@@ -108,20 +102,21 @@ class Ayva {
 
           return {
             axis: parameters.axis,
-            value: nextValue,
+            value: typeof nextValue === 'number' ? util.clamp(nextValue, 0, 1) : nextValue,
           };
         }).filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
 
-      const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, value));
+      const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, util.round(value * 0.999, 3)));
 
       if (tcodes.length) {
         this.write(`${tcodes.join(' ')}\n`);
+
         axisValues.forEach(({ axis, value }) => {
-          this.#axes[axis].value = typeof value === 'number' ? util.round(value, 3) : value;
+          this.#axes[axis].value = util.round(value, 3);
         });
       }
 
-      await this.sleep(this.#stepSeconds); // eslint-disable-line no-await-in-loop
+      await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
     }
 
     return Promise.resolve();
@@ -165,6 +160,7 @@ class Ayva {
     const oldConfig = this.#axes[axisConfig.name];
 
     if (oldConfig) {
+      // TODO: Retain value of old axis.
       delete this.#axes[oldConfig.alias];
     }
 
@@ -204,8 +200,15 @@ class Ayva {
   /**
    * Return Ayva's device update frequency in Hz.
    */
-  getFrequency () {
+  get frequency () {
     return this.#frequency;
+  }
+
+  /**
+   * Return Ayva's device update period in seconds.
+   */
+  get period () {
+    return this.#period;
   }
 
   /**
@@ -280,13 +283,13 @@ class Ayva {
   }
 
   /**
-   * Create value suppliers with initial parameters.
+   * Create value providers with initial parameters.
    *
    * Precondition: Each movement is a valid movement per the Motion API.
    * @param {*} movements
-   * @returns {Object[]} - array of value suppliers with parameters.
+   * @returns {Object[]} - array of value providers with parameters.
    */
-  #createValueSuppliers (movements) {
+  #createValueProviders (movements) {
     const { fail, has } = util;
     let maxDuration = 0;
 
@@ -298,23 +301,21 @@ class Ayva {
         ...movement,
         axis,
         from: this.#axes[axis].value,
-        stepSeconds: this.#stepSeconds,
+        period: this.#period,
       };
 
-      if (has(movement, 'duration') && typeof movement.to !== 'function') {
-        // { to: <number>, duration: <number> }
-        // So we can compute the speed from distance / time.
-        result.speed = Math.abs(movement.to - result.from) / movement.duration;
-      } else if (has(movement, 'speed')) {
-        // { to: <function> , speed: <any> } and { to: <boolean>, speed: <any> } are invalid.
-        // So we know 'to' must be numerical here and we can therefore compute the duration from distance / speed.
-        result.duration = Math.abs(movement.to - result.from) / movement.speed;
-      }
-
-      if (has(movement, 'velocity')) {
-        // { to: <function>, velocity: <function> } and { to: <boolean>, velocity: <function> } are invalid.
-        // So we know 'to' must be numerical here and we can compute a direction for the velocity.
+      if (has(movement, 'to')) {
         const distance = movement.to - result.from;
+        const absoluteDistance = Math.abs(distance);
+
+        if (has(movement, 'duration')) {
+          // { to: <number>, duration: <number> }
+          result.speed = absoluteDistance / movement.duration;
+        } else if (has(movement, 'speed')) {
+          // { to: <number>, speed: <number> }
+          result.duration = absoluteDistance / movement.speed;
+        }
+
         result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
       }
 
@@ -343,9 +344,9 @@ class Ayva {
 
         movement.duration = syncMovement.duration || maxDuration;
 
-        if (typeof movement.to !== 'function') {
+        if (has(movement, 'to')) {
           // Now we can compute a speed.
-          movement.speed = (movement.to - movement.from) / movement.duration;
+          movement.speed = Math.abs(movement.to - movement.from) / movement.duration;
         }
       } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
         // Implicit sync to max duration.
@@ -353,7 +354,7 @@ class Ayva {
       }
 
       if (has(movement, 'duration')) {
-        movement.totalSteps = Math.round(movement.duration * this.#frequency);
+        movement.stepCount = Math.round(movement.duration * this.#frequency);
       } else if (this.#axes[movement.axis].type !== 'boolean') {
         // By this point, the only movements without a duration should be boolean.
         // This should literally never happen because of validation. But including here for debugging and clarity.
@@ -361,52 +362,49 @@ class Ayva {
       }
     });
 
-    // Create the actual value suppliers.
+    // Create the actual value providers.
     return computedMovements.map((movement) => {
-      const supplier = {};
+      const provider = {};
 
-      if (typeof movement.to !== 'function') {
-        // Create a value supplier from parameters.
+      if (!has(movement, 'value')) {
+        // Create a value provider from parameters.
         if (this.#axes[movement.axis].type === 'boolean') {
-          supplier.valueSupplier = () => movement.to;
-        } else if (has(movement, 'velocity')) {
-          const deltaFunction = movement.velocity;
-          supplier.valueSupplier = (params) => params.value + deltaFunction(params) * params.stepSeconds * params.direction;
+          provider.valueProvider = () => movement.to;
         } else {
-          const delta = (movement.to - movement.from) / movement.totalSteps;
-          supplier.valueSupplier = (params) => params.value + delta;
+          const delta = (movement.to - movement.from) / movement.stepCount;
+          provider.valueProvider = (params) => params.currentValue + delta;
         }
       } else {
-        // User provided value supplier.
-        supplier.valueSupplier = movement.to;
-        delete movement.to;
+        // User provided value provider.
+        provider.valueProvider = movement.value;
       }
 
       delete movement.sync;
-      supplier.parameters = movement;
+      delete movement.value;
+      provider.parameters = movement;
 
-      return supplier;
+      return provider;
     });
   }
 
   /**
-   * Compute the total steps of the move given a list of value suppliers.
+   * Compute the total steps of the move given a list of value providers.
    * i.e. The maximum number of steps.
    *
-   * @param {Object[]} valueSuppliers
+   * @param {Object[]} valueProviders
    */
-  #computeTotalSteps (valueSuppliers) {
-    let maxTotalSteps = 0;
+  #computeStepCount (valueProviders) {
+    let maxStepCount = 0;
 
-    valueSuppliers.forEach((supplier) => {
-      const steps = supplier.parameters.totalSteps;
+    valueProviders.forEach((provider) => {
+      const steps = provider.parameters.stepCount;
 
       if (steps) {
-        maxTotalSteps = steps > maxTotalSteps ? steps : maxTotalSteps;
+        maxStepCount = steps > maxStepCount ? steps : maxStepCount;
       }
     });
 
-    return maxTotalSteps;
+    return maxStepCount;
   }
 
   /**
@@ -432,9 +430,10 @@ class Ayva {
       }
 
       const invalidValue = (name) => fail(`Invalid value for parameter '${name}': ${movement[name]}`);
+      const hasTo = has(movement, 'to');
       const hasSpeed = has(movement, 'speed');
       const hasDuration = has(movement, 'duration');
-      const hasVelocity = has(movement, 'velocity');
+      const hasValue = has(movement, 'value');
       const axis = movement.axis || this.defaultAxis;
 
       if (!axis) {
@@ -447,7 +446,7 @@ class Ayva {
         }
       }
 
-      if (typeof movement.to !== 'function') {
+      if (hasTo) {
         let invalidTo = false;
 
         if (this.#axes[axis].type === 'boolean') {
@@ -459,6 +458,8 @@ class Ayva {
         if (invalidTo) {
           invalidValue('to');
         }
+      } else if (!hasValue) {
+        fail('Must provide a \'to\' property or \'value\' function.');
       }
 
       if (hasSpeed && hasDuration) {
@@ -475,16 +476,12 @@ class Ayva {
         }
       }
 
-      if (typeof movement.to === 'function') {
-        if (hasSpeed && !hasDuration) {
-          fail('Must provide a duration when \'to\' is a function.');
-        }
+      if (hasSpeed && !hasTo) {
+        fail('Must provide a target position when specifying speed.');
       }
 
-      if (hasVelocity && typeof movement.velocity !== 'function') {
-        fail('\'velocity\' must be a function.');
-      } else if (hasVelocity && typeof movement.to === 'function') {
-        fail('Cannot provide both a value and velocity function.');
+      if (hasValue && typeof movement.value !== 'function') {
+        fail('\'value\' must be a function.');
       }
 
       if (has(movement, 'sync')) {
@@ -500,11 +497,12 @@ class Ayva {
       if (this.#axes[axis].type !== 'boolean') {
         atLeastOneNonBoolean = true;
       } else {
-        if (has(movement, 'speed') || has(movement, 'velocity')) {
-          fail(`Cannot specify speed or velocity for boolean axes: ${axis}`);
+        if (has(movement, 'speed')) {
+          fail(`Cannot specify speed for boolean axes: ${axis}`);
         }
 
-        if (has(movement, 'duration') && typeof movement.to !== 'function') {
+        if (has(movement, 'duration') && hasTo && !hasValue) {
+          // { to: <boolean>, duration: <number> } is invalid (for now).
           fail('Cannot specify a duration for a boolean axis movement with constant value.');
         }
       }

@@ -16,7 +16,7 @@ describe('Configuration Tests', function () {
 
       expect(ayva.name).to.equal('OSR2');
       expect(ayva.defaultAxis).to.equal('L0');
-      expect(ayva.getFrequency()).to.equal(50);
+      expect(ayva.frequency).to.equal(50);
 
       for (const axis of OSR2.axes) {
         const storedAxis = ayva.getAxis(axis.name);
