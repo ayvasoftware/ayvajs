@@ -97,7 +97,23 @@ class Ayva {
   async #performMovements (movements) {
     const allProviders = this.#createValueProviders(movements);
     const stepCount = this.#computeStepCount(allProviders);
+    const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
     const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
+
+    // TODO: Thou shalt not repeat thyself.
+    const axisValues = immediateProviders
+      .map((provider) => this.#executeProvider(provider, 0))
+      .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
+
+    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? util.round(value * 0.999, 3) : value));
+
+    if (tcodes.length) {
+      this.write(`${tcodes.join(' ')}\n`);
+
+      axisValues.forEach(({ axis, value }) => {
+        this.#axes[axis].value = typeof value === 'number' ? util.round(value, 3) : value;
+      });
+    }
 
     for (let index = 0; index < stepCount; index++) {
       const axisValues = stepProviders
