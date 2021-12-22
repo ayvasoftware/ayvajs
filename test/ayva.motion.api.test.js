@@ -45,8 +45,28 @@ describe('Motion API Tests', function () {
       args[2].should.deep.equal({ axis: 'R0', ...expectedParams });
       args[3].should.deep.equal({ axis: 'R1', ...expectedParams });
     });
+
+    it('should emit a warning when no linear or rotation axes are configured', function () {
+      const warn = sinon.replace(console, 'warn', sinon.fake());
+
+      ayva = new Ayva();
+      ayva.home();
+
+      warn.callCount.should.equal(1);
+      warn.getCall(0).args[0].should.equal('No linear or rotation axes configured.');
+    });
   });
 
+  describe('#sleep', function () {
+    it('should fulfill promise after number of seconds specified', async function () {
+      sinon.restore(); // So we can test actual sleep function.
+      const startTime = performance.now();
+      await ayva.sleep(0.02).should.be.fulfilled;
+      const elapsed = performance.now() - startTime;
+      expect(elapsed).to.be.at.least(20);
+      expect(elapsed).to.be.at.most(30);
+    });
+  });
   /**
    * Invalid movements.
    */
@@ -221,6 +241,15 @@ describe('Motion API Tests', function () {
     it('should throw an error if number passed to boolean axis', function () {
       return ayva.move({ axis: 'lube', to: 1 }).should.be.rejectedWith(Error, 'Invalid value for parameter \'to\': 1');
     });
+
+    it('should emit a warning when value provider gives invalid values', async function () {
+      const warn = sinon.replace(console, 'warn', sinon.fake());
+
+      await ayva.move({ value: () => ({}), duration: 1 }).should.be.fulfilled;
+
+      warn.callCount.should.equal(ayva.frequency);
+      warn.getCall(0).args[0].should.equal('Invalid value provided: [object Object]');
+    });
   });
 
   /**
@@ -250,7 +279,7 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
 
-    it('should send valid movements when constant position and speed', async function () {
+    it('should send valid movements when constant value and speed', async function () {
       const axis = ayva.getAxis('R0');
 
       axis.value.should.equal(0.5);
@@ -292,6 +321,22 @@ describe('Motion API Tests', function () {
       device.write.args[4][0].should.equal('R0400\n');
 
       ayva.getAxis('R0').value.should.equal(0.4);
+    });
+
+    it('should allow sending boolean updates with no duration', async function () {
+      const axis = ayva.getAxis('lube');
+
+      axis.value.should.equal(false);
+
+      await ayva.move({
+        axis: 'lube',
+        to: true,
+      });
+
+      device.write.callCount.should.equal(1);
+      device.write.args[0][0].should.equal('A2999\n');
+
+      ayva.getAxis('lube').value.should.equal(true);
     });
 
     it('should be able to omit duration if at least one other movement has an implicit duration', function () {
@@ -383,6 +428,58 @@ describe('Motion API Tests', function () {
 
       ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
       ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 3]);
+    });
+
+    it('should allow sending multiple boolean updates with no duration', async function () {
+      ayva.getAxis('lube').value.should.equal(false);
+      ayva.getAxis('test-boolean-axis').value.should.equal(false);
+
+      await ayva.move({
+        axis: 'lube',
+        to: true,
+      }, {
+        axis: 'test-boolean-axis',
+        to: true,
+      });
+
+      device.write.callCount.should.equal(1);
+      device.write.args[0][0].should.equal('A2999 A1999\n');
+
+      ayva.getAxis('lube').value.should.equal(true);
+      ayva.getAxis('test-boolean-axis').value.should.equal(true);
+    });
+
+    it('should send valid movements in correct order for multiple calls to move()', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('A0').value.should.equal(0.5);
+
+      await Promise.all([
+        ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'R0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
+      ]);
+
+      device.write.callCount.should.equal(15);
+      device.write.args[0][0].should.equal('L0400\n');
+      device.write.args[1][0].should.equal('L0300\n');
+      device.write.args[2][0].should.equal('L0200\n');
+      device.write.args[3][0].should.equal('L0100\n');
+      device.write.args[4][0].should.equal('L0000\n');
+      device.write.args[5][0].should.equal('R0400\n');
+      device.write.args[6][0].should.equal('R0300\n');
+      device.write.args[7][0].should.equal('R0200\n');
+      device.write.args[8][0].should.equal('R0100\n');
+      device.write.args[9][0].should.equal('R0000\n');
+      device.write.args[10][0].should.equal('A0400\n');
+      device.write.args[11][0].should.equal('A0300\n');
+      device.write.args[12][0].should.equal('A0200\n');
+      device.write.args[13][0].should.equal('A0100\n');
+      device.write.args[14][0].should.equal('A0000\n');
+
+      ayva.getAxis('L0').value.should.equal(0.0);
+      ayva.getAxis('R0').value.should.equal(0.0);
+      ayva.getAxis('A0').value.should.equal(0.0);
     });
   });
 });

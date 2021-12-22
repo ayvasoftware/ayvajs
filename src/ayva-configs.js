@@ -27,6 +27,10 @@ const OSR2 = {
       type: 'rotation',
       alias: 'pitch',
     },
+    {
+      name: 'A0',
+      type: 'boolean',
+    },
   ],
 };
 

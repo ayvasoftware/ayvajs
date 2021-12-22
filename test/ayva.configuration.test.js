@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import './test-util/setup-chai.js';
+import sinon from 'sinon';
 import Ayva from '../src/ayva.js';
 import { OSR2 } from '../src/ayva-configs.js';
 import { createFunctionBinder } from './test-util/test-util.js';
@@ -17,6 +18,7 @@ describe('Configuration Tests', function () {
       expect(ayva.name).to.equal('OSR2');
       expect(ayva.defaultAxis).to.equal('L0');
       expect(ayva.frequency).to.equal(50);
+      expect(ayva.period).to.equal(0.02);
 
       for (const axis of OSR2.axes) {
         const storedAxis = ayva.getAxis(axis.name);
@@ -201,6 +203,28 @@ describe('Configuration Tests', function () {
 
       ayva.configureAxis(config1);
       testConfigureAxis(config2).should.throw(Error, 'Alias already refers to another axis: stroke');
+    });
+
+    it('should retain value after reconfiguring axis', async function () {
+      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve())); // Do not actually sleep.
+      ayva.addOutputDevice({ write: () => {} });
+
+      ayva.configureAxis({
+        name: 'L0',
+        type: 'linear',
+      });
+
+      ayva.getAxis('L0').value.should.equal(DEFAULT_VALUE);
+      await ayva.move({ axis: 'L0', to: 0, speed: 1 });
+      ayva.getAxis('L0').value.should.equal(0);
+
+      ayva.configureAxis({
+        name: 'L0',
+        type: 'linear',
+        alias: 'new-alias',
+      });
+
+      ayva.getAxis('new-alias').value.should.equal(0);
     });
   });
 });

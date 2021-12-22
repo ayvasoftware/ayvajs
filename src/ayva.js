@@ -7,6 +7,8 @@ class Ayva {
 
   #frequency = 50; // Hz
 
+  #movementInProgress = false;
+
   get #period () {
     return 1 / this.#frequency;
   }
@@ -74,39 +76,36 @@ class Ayva {
    * @return {Promise} a promise that resolves when all movements have finished
    */
   async move (...movements) {
+    while (this.#movementInProgress) {
+      await this.sleep(); // eslint-disable-line no-await-in-loop
+      // TODO: Implement interrupt to stop all movements.
+    }
+
     this.#validateMovements(movements);
-    const providers = this.#createValueProviders(movements);
-    const stepCount = this.#computeStepCount(providers);
 
-    // TODO: Perform immediate moves (duration = 0 or undefined)
+    try {
+      this.#movementInProgress = true;
+      await this.#performMovements(movements);
+    } catch (error) {
+      return Promise.reject(error);
+    } finally {
+      this.#movementInProgress = false;
+    }
+    return Promise.resolve();
+  }
+
+  async #performMovements (movements) {
+    const allProviders = this.#createValueProviders(movements);
+    const stepCount = this.#computeStepCount(allProviders);
+    const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
+
     for (let index = 0; index < stepCount; index++) {
-      // TODO: Think about what time should be if I am planning ahead... ?
-      const time = index * this.#period;
-
-      const axisValues = providers
+      const axisValues = stepProviders
         .filter((provider) => index < provider.parameters.stepCount)
-        .map((provider) => {
-          const { parameters, valueProvider } = provider;
+        .map((provider) => this.#executeProvider(provider, index))
+        .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
 
-          const nextValue = valueProvider({
-            ...parameters,
-            time,
-            index,
-            period: this.#period,
-            currentValue: this.#axes[parameters.axis].value,
-            x: util.round((index + 1) / (provider.parameters.stepCount), 3),
-          });
-
-          // TODO: Perform a little validation on the value here.
-          // Instead of silently ignoring invalid values.
-
-          return {
-            axis: parameters.axis,
-            value: typeof nextValue === 'number' ? util.clamp(nextValue, 0, 1) : nextValue,
-          };
-        }).filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
-
-      const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, util.round(value * 0.999, 3)));
+      const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? util.round(value * 0.999, 3) : value));
 
       if (tcodes.length) {
         this.write(`${tcodes.join(' ')}\n`);
@@ -117,9 +116,33 @@ class Ayva {
       }
 
       await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
+      // TODO: Implement interrupt to stop all movements.
     }
 
     return Promise.resolve();
+  }
+
+  #executeProvider (provider, index) {
+    const time = index * this.#period;
+    const { parameters, valueProvider } = provider;
+
+    const nextValue = valueProvider({
+      ...parameters,
+      time,
+      index,
+      period: this.#period,
+      currentValue: this.#axes[parameters.axis].value,
+      x: util.round((index + 1) / (provider.parameters.stepCount), 3),
+    });
+
+    if (typeof nextValue !== 'number' && typeof nextValue !== 'boolean' && nextValue !== null && nextValue !== undefined) {
+      console.warn(`Invalid value provided: ${nextValue}`); // eslint-disable-line no-console
+    }
+
+    return {
+      axis: parameters.axis,
+      value: typeof nextValue === 'number' ? util.clamp(nextValue, 0, 1) : nextValue,
+    };
   }
 
   /**
@@ -160,7 +183,7 @@ class Ayva {
     const oldConfig = this.#axes[axisConfig.name];
 
     if (oldConfig) {
-      // TODO: Retain value of old axis.
+      resultConfig.value = oldConfig.value;
       delete this.#axes[oldConfig.alias];
     }
 
@@ -539,7 +562,7 @@ class Ayva {
   /**
    * Ensure all required fields are present in the configuration and that all are of valid types.
    *
-   * TODO: Move some of this out into a generic validator that takes a validation spec.
+   * TODO: Maybe move some of this out into a generic validator that takes a validation spec.
    * @param {Object} axisConfig
    */
   #validateAxisConfig (axisConfig) {

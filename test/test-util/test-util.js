@@ -35,6 +35,11 @@ export function TEST_CONFIG () {
       {
         name: 'A1',
         type: 'boolean',
+        alias: 'test-boolean-axis',
+      },
+      {
+        name: 'A2',
+        type: 'boolean',
         alias: 'lube',
       },
     ],
