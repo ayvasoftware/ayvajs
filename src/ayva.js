@@ -1,4 +1,6 @@
-import util from './util.js';
+import {
+  clamp, round, has, fail, createConstantProperty
+} from './util.js';
 
 class Ayva {
   #devices = [];
@@ -8,6 +10,14 @@ class Ayva {
   #frequency = 50; // Hz
 
   #movementInProgress = false;
+
+  get frequency () {
+    return this.#frequency;
+  }
+
+  get period () {
+    return this.#period;
+  }
 
   get #period () {
     return 1 / this.#frequency;
@@ -34,26 +44,6 @@ class Ayva {
         });
       }
     }
-  }
-
-  /**
-   * Moves all linear and rotation axes to their neutral positions.
-   *
-   * @param {Number} [to = 0.5] - optional target position to home to.
-   * @param {Number} [speed = 0.5] - optional speed of the movement.
-   * @return {Promise} A promise that resolves when the movements are finished.
-   */
-  home (to = 0.5, speed = 0.5) {
-    const movements = this.#getAxesArray()
-      .filter((axis) => axis.type === 'linear' || axis.type === 'rotation')
-      .map((axis) => ({ to, speed, axis: axis.name }));
-
-    if (movements.length) {
-      return this.move(...movements);
-    }
-
-    console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
-    return Promise.resolve();
   }
 
   /**
@@ -100,36 +90,10 @@ class Ayva {
     const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
     const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
 
-    // TODO: Thou shalt not repeat thyself.
-    const axisValues = immediateProviders
-      .map((provider) => this.#executeProvider(provider, 0))
-      .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
-
-    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? util.round(value * 0.999, 3) : value));
-
-    if (tcodes.length) {
-      this.write(`${tcodes.join(' ')}\n`);
-
-      axisValues.forEach(({ axis, value }) => {
-        this.#axes[axis].value = typeof value === 'number' ? util.round(value, 3) : value;
-      });
-    }
-
+    this.#executeProviders(immediateProviders, 0);
     for (let index = 0; index < stepCount; index++) {
-      const axisValues = stepProviders
-        .filter((provider) => index < provider.parameters.stepCount)
-        .map((provider) => this.#executeProvider(provider, index))
-        .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
-
-      const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? util.round(value * 0.999, 3) : value));
-
-      if (tcodes.length) {
-        this.write(`${tcodes.join(' ')}\n`);
-
-        axisValues.forEach(({ axis, value }) => {
-          this.#axes[axis].value = util.round(value, 3);
-        });
-      }
+      const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
+      this.#executeProviders(unfinishedProviders, index);
 
       await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
       // TODO: Implement interrupt to stop all movements.
@@ -138,31 +102,31 @@ class Ayva {
     return Promise.resolve();
   }
 
-  #executeProvider (provider, index) {
-    const time = index * this.#period;
-    const { parameters, valueProvider } = provider;
+  /**
+   * Moves all linear and rotation axes to their neutral positions.
+   *
+   * @param {Number} [to = 0.5] - optional target position to home to.
+   * @param {Number} [speed = 0.5] - optional speed of the movement.
+   * @return {Promise} A promise that resolves when the movements are finished.
+   */
+  async home (to = 0.5, speed = 0.5) {
+    const movements = this.#getAxesArray()
+      .filter((axis) => axis.type === 'linear' || axis.type === 'rotation')
+      .map((axis) => ({ to, speed, axis: axis.name }));
 
-    const nextValue = valueProvider({
-      ...parameters,
-      time,
-      index,
-      period: this.#period,
-      currentValue: this.#axes[parameters.axis].value,
-      x: util.round((index + 1) / (provider.parameters.stepCount), 3),
-    });
-
-    if (typeof nextValue !== 'number' && typeof nextValue !== 'boolean' && nextValue !== null && nextValue !== undefined) {
-      console.warn(`Invalid value provided: ${nextValue}`); // eslint-disable-line no-console
+    if (movements.length) {
+      return this.move(...movements);
     }
 
-    return {
-      axis: parameters.axis,
-      value: typeof nextValue === 'number' ? util.clamp(nextValue, 0, 1) : nextValue,
-    };
+    console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
+    return Promise.resolve();
   }
 
   /**
    * Asynchronously sleep for the specified number of seconds.
+   *
+   * TODO: Externalize this into a timer that can be swapped out.
+   *
    * @param {*} seconds
    * @returns {Promise} a Promise that resolves when the number of seconds have passed.
    */
@@ -227,27 +191,13 @@ class Ayva {
       const axis = {};
 
       Object.keys(fetchedAxis).forEach((key) => {
-        util.createConstant(axis, key, fetchedAxis[key]);
+        createConstantProperty(axis, key, fetchedAxis[key]);
       });
 
       return axis;
     }
 
     return undefined;
-  }
-
-  /**
-   * Return Ayva's device update frequency in Hz.
-   */
-  get frequency () {
-    return this.#frequency;
-  }
-
-  /**
-   * Return Ayva's device update period in seconds.
-   */
-  get period () {
-    return this.#period;
   }
 
   /**
@@ -300,6 +250,48 @@ class Ayva {
     }
   }
 
+  #executeProviders (providers, index) {
+    const axisValues = providers
+      .map((provider) => this.#executeProvider(provider, index))
+      .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
+
+    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
+
+    if (tcodes.length) {
+      this.write(`${tcodes.join(' ')}\n`);
+
+      axisValues.forEach(({ axis, value }) => {
+        this.#axes[axis].value = typeof value === 'number' ? round(value, 3) : value;
+      });
+    }
+  }
+
+  #executeProvider (provider, index) {
+    const time = index * this.#period;
+    const { parameters, valueProvider } = provider;
+
+    const nextValue = valueProvider({
+      ...parameters,
+      time,
+      index,
+      period: this.#period,
+      currentValue: this.#axes[parameters.axis].value,
+      x: round((index + 1) / (provider.parameters.stepCount), 3),
+    });
+
+    const isInvalidType = typeof nextValue !== 'number' && typeof nextValue !== 'boolean';
+    const notNullOrUndefined = nextValue !== null && nextValue !== undefined; // Allow null or undefined to indicate no movement.
+
+    if (Number.isNaN(nextValue) || (isInvalidType && notNullOrUndefined)) {
+      console.warn(`Invalid value provided: ${nextValue}`); // eslint-disable-line no-console
+    }
+
+    return {
+      axis: parameters.axis,
+      value: typeof nextValue === 'number' ? clamp(nextValue, 0, 1) : nextValue,
+    };
+  }
+
   /**
    * Converts the value into a standard TCode string for the specified axis. (i.e. 0.5 -> L0500)
    * If the axis is a boolean axis, true values get mapped to 999 and false gets mapped to 000.
@@ -314,8 +306,10 @@ class Ayva {
     if (typeof value === 'boolean') {
       valueText = value ? '999' : '000';
     } else {
-      // TODO: Scale to within limit range here.
-      valueText = `${Math.round(util.clamp(value * 1000, 0, 999))}`.padStart(3, '0');
+      const { min, max } = this.#axes[axis];
+      const scaledValue = (max - min) * value + min;
+
+      valueText = `${Math.round(clamp(scaledValue * 1000, 0, 999))}`.padStart(3, '0');
     }
 
     return `${this.#axes[axis].name}${valueText}`;
@@ -329,7 +323,6 @@ class Ayva {
    * @returns {Object[]} - array of value providers with parameters.
    */
   #createValueProviders (movements) {
-    const { fail, has } = util;
     let maxDuration = 0;
 
     const computedMovements = movements.map((movement) => {
@@ -385,7 +378,7 @@ class Ayva {
 
         if (has(movement, 'to')) {
           // Now we can compute a speed.
-          movement.speed = Math.abs(movement.to - movement.from) / movement.duration;
+          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 3);
         }
       } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
         // Implicit sync to max duration.
@@ -394,11 +387,11 @@ class Ayva {
 
       if (has(movement, 'duration')) {
         movement.stepCount = Math.round(movement.duration * this.#frequency);
-      } else if (this.#axes[movement.axis].type !== 'boolean') {
-        // By this point, the only movements without a duration should be boolean.
-        // This should literally never happen because of validation. But including here for debugging and clarity.
-        fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
-      }
+      } // else if (this.#axes[movement.axis].type !== 'boolean') {
+      // By this point, the only movements without a duration should be boolean.
+      // This should literally never happen because of validation. But including here for debugging and clarity.
+      // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
+      // }
     });
 
     // Create the actual value providers.
@@ -454,7 +447,6 @@ class Ayva {
    * @param {*} movements
    */
   #validateMovements (movements) {
-    const { has, fail } = util;
     const movementMap = {};
     let atLeastOneDuration = false;
     let atLeastOneNonBoolean = false;
@@ -491,7 +483,7 @@ class Ayva {
         if (this.#axes[axis].type === 'boolean') {
           invalidTo = typeof movement.to !== 'boolean';
         } else {
-          invalidTo = typeof movement.to !== 'number' || (movement.to < 0 || movement.to > 1);
+          invalidTo = Number.isNaN(movement.to) || typeof movement.to !== 'number' || (movement.to < 0 || movement.to > 1);
         }
 
         if (invalidTo) {
@@ -508,9 +500,9 @@ class Ayva {
       if (hasSpeed || hasDuration) {
         atLeastOneDuration = true;
 
-        if (hasSpeed && (typeof movement.speed !== 'number' || movement.speed <= 0)) {
+        if (hasSpeed && (Number.isNaN(movement.speed) || typeof movement.speed !== 'number' || movement.speed <= 0)) {
           invalidValue('speed');
-        } else if (hasDuration && (typeof movement.duration !== 'number' || movement.duration <= 0)) {
+        } else if (hasDuration && (Number.isNaN(movement.duration) || typeof movement.duration !== 'number' || movement.duration <= 0)) {
           invalidValue('duration');
         }
       }
@@ -582,7 +574,6 @@ class Ayva {
    * @param {Object} axisConfig
    */
   #validateAxisConfig (axisConfig) {
-    const { fail } = util;
     if (!axisConfig || typeof axisConfig !== 'object') {
       fail(`Invalid configuration object: ${axisConfig}`);
     }

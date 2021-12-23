@@ -1,7 +1,7 @@
-import './test-util/setup-chai.js';
+import '../setup-chai.js';
 import sinon from 'sinon';
-import Ayva from '../src/ayva.js';
-import { createFunctionBinder } from './test-util/test-util.js';
+import Ayva from '../../src/ayva.js';
+import { createFunctionBinder } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Device API.

@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-expressions */
-import './test-util/setup-chai.js';
+import '../setup-chai.js';
 import sinon from 'sinon';
-import Ayva from '../src/ayva.js';
-import { TEST_CONFIG } from './test-util/test-util.js';
+import Ayva from '../../src/ayva.js';
+import { TEST_CONFIG } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Motion API.
@@ -10,12 +10,14 @@ import { TEST_CONFIG } from './test-util/test-util.js';
 describe('Motion API Tests', function () {
   let ayva;
   let device;
+  let warn; // console.warn
 
   beforeEach(function () {
     ayva = new Ayva(TEST_CONFIG());
 
     // Do not actually sleep.
     sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+    warn = sinon.replace(console, 'warn', sinon.fake());
 
     device = {
       write: sinon.fake(),
@@ -47,8 +49,6 @@ describe('Motion API Tests', function () {
     });
 
     it('should emit a warning when no linear or rotation axes are configured', function () {
-      const warn = sinon.replace(console, 'warn', sinon.fake());
-
       ayva = new Ayva();
       ayva.home();
 
@@ -72,7 +72,7 @@ describe('Motion API Tests', function () {
    */
   describe('#move() (invalid movements)', function () {
     it('should throw an error if invalid movement is passed', function () {
-      const invalidValues = [1, null, undefined, 'bad', '', false, true, () => {}];
+      const invalidValues = [1, null, undefined, 'bad', '', false, true, () => {}, NaN];
 
       const testInvalidMovePromises = invalidValues.map((
         value
@@ -85,7 +85,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'to\' parameter is missing or invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 2];
+      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 2, NaN];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'to': ${value}`)
@@ -103,7 +103,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'speed\' is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0];
+      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0, NaN];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'speed': ${value}`)
@@ -113,7 +113,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'duration\' is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0];
+      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0, NaN];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'duration': ${value}`)
@@ -147,7 +147,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if value is not a function', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, 0, 1, -1];
+      const invalidValues = [null, undefined, 'bad', '', false, true, 0, 1, -1, NaN];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: 1, value }).should.be.rejectedWith(Error, '\'value\' must be a function.')
@@ -243,13 +243,16 @@ describe('Motion API Tests', function () {
     });
 
     it('should emit a warning when value provider gives invalid values', async function () {
-      const warn = sinon.replace(console, 'warn', sinon.fake());
-
       await ayva.move({ value: () => ({}), duration: 1 }).should.be.fulfilled;
+      await ayva.move({ value: () => NaN, duration: 1 }).should.be.fulfilled;
 
-      warn.callCount.should.equal(ayva.frequency);
+      warn.callCount.should.equal(ayva.frequency * 2);
       warn.getCall(0).args[0].should.equal('Invalid value provided: [object Object]');
+      warn.getCall(ayva.frequency).args[0].should.equal('Invalid value provided: NaN');
     });
+
+    // TODO: Test case - NaN for all numeric types.
+    // TODO: Test case - moving to the position I'm already at.
   });
 
   /**
@@ -364,6 +367,38 @@ describe('Motion API Tests', function () {
 
       ayva.getAxis('R0').value.should.equal(1);
     });
+
+    it('should scale values to limit range', async function () {
+      ayva.configureAxis({
+        name: 'R0',
+        type: 'rotation',
+        min: 0.1,
+        max: 0.9,
+      });
+
+      const axis = ayva.getAxis('R0');
+      axis.value.should.equal(0.5);
+
+      const values = [0.400, 0.300, 0.200, 0.100, 0];
+      const valueProvider = sinon.fake((parameters) => values[parameters.index]);
+
+      await ayva.move({
+        axis: 'R0',
+        value: valueProvider,
+        duration: 0.1,
+      });
+
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal('R0420\n');
+      device.write.args[1][0].should.equal('R0340\n');
+      device.write.args[2][0].should.equal('R0260\n');
+      device.write.args[3][0].should.equal('R0180\n');
+      device.write.args[4][0].should.equal('R0100\n');
+
+      ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
+    });
+
+    // TODO: Add test cases for impossible speeds or durations (durations less than the period)
   });
 
   /**
@@ -428,6 +463,90 @@ describe('Motion API Tests', function () {
 
       ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
       ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 3]);
+    });
+
+    it('should synchronize movements using the sync property', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('R1').value.should.equal(0.5);
+
+      const strokeValues = [0.475, 0.450, 0.425, 0.400, 0.375];
+      const twistValues = [0.480, 0.460, 0.440, 0.420, 0.400];
+      const rollValues = [0.485, 0.465, 0.445, 0, 0];
+
+      const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
+      const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.index]);
+      const rollValueProvider = sinon.fake((parameters) => rollValues[parameters.index]);
+
+      await ayva.move({
+        axis: 'L0',
+        value: strokeValueProvider,
+        duration: 0.1,
+      }, {
+        axis: 'R0',
+        value: twistValueProvider,
+        duration: 0.06,
+      }, {
+        axis: 'R1',
+        value: rollValueProvider,
+        sync: 'R0',
+      });
+
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${twistValues[0] * 1000} R1${rollValues[0] * 1000}\n`);
+      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${twistValues[1] * 1000} R1${rollValues[1] * 1000}\n`);
+      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 1000} R0${twistValues[2] * 1000} R1${rollValues[2] * 1000}\n`);
+      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 1000}\n`);
+      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 1000}\n`);
+
+      ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
+      ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 3]);
+      ayva.getAxis('R1').value.should.equal(rollValues[rollValues.length - 3]);
+    });
+
+    it('should compute speed if possible when synchronizing movements using the sync property', async function () {
+      // TODO: Clean up this test.
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('R1').value.should.equal(0.5);
+
+      const strokeValues = [0.475, 0.450, 0.425, 0.400, 0.375];
+      const expectedTwistValues = [0.480, 0.460, 0.440];
+      const rollValues = [0.470, 0.440, 0.410];
+
+      const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
+      const rollValueProvider = sinon.fake((parameters) => rollValues[parameters.index]);
+
+      await ayva.move({
+        axis: 'L0',
+        value: strokeValueProvider,
+        duration: 0.1,
+      }, {
+        axis: 'R0',
+        to: 0.440,
+        duration: 0.06,
+      }, {
+        axis: 'R1',
+        to: 0.410,
+        value: rollValueProvider,
+        sync: 'R0',
+      });
+
+      rollValueProvider.callCount.should.equal(3);
+      expect(rollValueProvider.args[0][0].speed).to.equal(1.5);
+      expect(rollValueProvider.args[1][0].speed).to.equal(1.5);
+      expect(rollValueProvider.args[2][0].speed).to.equal(1.5);
+
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${expectedTwistValues[0] * 1000} R1${rollValues[0] * 1000}\n`);
+      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${expectedTwistValues[1] * 1000} R1${rollValues[1] * 1000}\n`);
+      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 1000} R0${expectedTwistValues[2] * 1000} R1${rollValues[2] * 1000}\n`);
+      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 1000}\n`);
+      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 1000}\n`);
+
+      ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
+      ayva.getAxis('R0').value.should.equal(expectedTwistValues[expectedTwistValues.length - 1]);
+      ayva.getAxis('R1').value.should.equal(rollValues[rollValues.length - 1]);
     });
 
     it('should allow sending multiple boolean updates with no duration', async function () {

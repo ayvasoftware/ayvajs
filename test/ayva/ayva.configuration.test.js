@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-expressions */
-import './test-util/setup-chai.js';
+import '../setup-chai.js';
 import sinon from 'sinon';
-import Ayva from '../src/ayva.js';
-import { OSR2 } from '../src/ayva-configs.js';
-import { createFunctionBinder } from './test-util/test-util.js';
+import Ayva from '../../src/ayva.js';
+import { OSR2 } from '../../src/ayva-configs.js';
+import { createFunctionBinder } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Axis Configuration.
