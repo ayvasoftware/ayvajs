@@ -366,7 +366,7 @@
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line14">line 14</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line26">line 26</a>
             </span>
         </p>
     
@@ -437,8 +437,8 @@
     
     
     <div class="description">
-        <p>Registers new output devices. Ayva outputs commands to all connected devices.
-Alias for #addOutputDevices()</p>
+        <p>Registers a new output device. Ayva outputs commands to all connected devices.
+More than one device can be specified.</p>
     </div>
     
 
@@ -552,167 +552,7 @@ Alias for #addOutputDevices()</p>
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line230">line 230</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="addOutputDevices">
-        <a class="href-link" href="#addOutputDevices">#</a>
-        
-        <span class="code-name">
-            
-                addOutputDevices<span class="signature">(&hellip;device)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Registers new output devices. Ayva outputs commands to all connected devices.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-            <th>Attributes</th>
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>device</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Object</span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-
-      
-
-      
-          &lt;repeatable><br>
-      
-      </td>
-  
-
-  
-
-  <td class="description last"><p>object with a write method.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="ayva.js.html" class="button">View Source</a>
-            <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line214">line 214</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line225">line 225</a>
             </span>
         </p>
     
@@ -1230,7 +1070,7 @@ ayva.configureAxis({
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line186">line 186</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line187">line 187</a>
             </span>
         </p>
     
@@ -1287,109 +1127,16 @@ ayva.configureAxis({
 
 
     
-    <h4 class="name" id="getFrequency">
-        <a class="href-link" href="#getFrequency">#</a>
-        
-        <span class="code-name">
-            
-                getFrequency<span class="signature">()</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Return Ayva's device update frequency in Hz.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="ayva.js.html" class="button">View Source</a>
-            <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line205">line 205</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
     <h4 class="name" id="home">
         <a class="href-link" href="#home">#</a>
         
+            
+                <span class='tag'>async</span>
+            
+        
         <span class="code-name">
             
-                home<span class="signature">(to)</span><span class="type-signature"> &rarr; {Promise}</span>
+                home<span class="signature">(to<span class="signature-attributes">opt</span>, speed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise}</span>
             
         </span>
     </h4>
@@ -1398,8 +1145,7 @@ ayva.configureAxis({
     
     
     <div class="description">
-        <p>Moves all linear and rotation axes to their neutral positions (0.5) or to
-the value specified at the default speed of 0.5 units/second.</p>
+        <p>Moves all linear and rotation axes to their neutral positions.</p>
     </div>
     
 
@@ -1423,6 +1169,8 @@ the value specified at the default speed of 0.5 units/second.</p>
 
             <th>Type</th>
 
+            
+            <th>Attributes</th>
             
 
             
@@ -1452,6 +1200,16 @@ the value specified at the default speed of 0.5 units/second.</p>
   </td>
 
   
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
 
   
       <td class="default">
@@ -1461,7 +1219,48 @@ the value specified at the default speed of 0.5 units/second.</p>
       </td>
   
 
-  <td class="description last"></td>
+  <td class="description last"><p>optional target position to home to.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>speed</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          0.5
+      
+      </td>
+  
+
+  <td class="description last"><p>optional speed of the movement.</p></td>
 </tr>
 
 
@@ -1509,7 +1308,7 @@ the value specified at the default speed of 0.5 units/second.</p>
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line44">line 44</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line112">line 112</a>
             </span>
         </p>
     
@@ -1700,7 +1499,7 @@ For full details on how to use this method, see the <a href="tutorial-motion-api
         <p class="tag-source">
             <a href="ayva.js.html" class="button">View Source</a>
             <span>
-                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line82">line 82</a>
+                <a href="ayva.js.html">ayva.js</a>, <a href="ayva.js.html#line68">line 68</a>
             </span>
         </p>
     
@@ -1791,6 +1590,7 @@ For full details on how to use this method, see the <a href="tutorial-motion-api
     
     <div class="description">
         <p>Asynchronously sleep for the specified number of seconds.</p>
+<p>TODO: Externalize this into a timer that can be swapped out.</p>
     </div>
     
 

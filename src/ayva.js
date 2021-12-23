@@ -201,8 +201,9 @@ class Ayva {
   }
 
   /**
-   * Registers new output devices. Ayva outputs commands to all connected devices.
-   *
+   * Alias for #addOutputDevice()
+   * 
+   * @ignore
    * @param {...Object} device - object with a write method.
    */
   addOutputDevices (...devices) {
@@ -216,9 +217,9 @@ class Ayva {
   }
 
   /**
-   * Registers new output devices. Ayva outputs commands to all connected devices.
-   * Alias for #addOutputDevices()
-   *
+   * Registers a new output device. Ayva outputs commands to all connected devices.
+   * More than one device can be specified.
+   * 
    * @param {...Object} device - object with a write method.
    */
   addOutputDevice (...devices) {

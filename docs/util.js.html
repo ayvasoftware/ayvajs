@@ -117,57 +117,54 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>export default {
-  round (value, digits) {
-    const factor = 10 ** digits;
-    return Math.round(factor * value) / factor;
-  },
+            <pre class="prettyprint source linenums"><code>/**
+ * Various utility functions
+ * 
+ * @module
+ * @ignore
+ */
 
-  clamp (value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  },
+/**
+ * Round a number to the specified number of digits.
+ */
+export function round (value, digits) {
+  const factor = 10 ** digits;
+  return Math.round(factor * value) / factor;
+}
 
-  /**
-   * Shorthand for defining a readonly property.
-   */
-  createConstant (object, name, value) {
-    Object.defineProperty(object, name, {
-      value: value,
-      writeable: false,
-      configurable: false,
-      enumerable: true,
-    });
-  },
+/**
+ * Clamp a value to within the specified range.
+ */
+export function clamp (value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
-  /**
-   * Return a random number between min and max.
-   */
-  random (min, max) {
-    return (max - min) * Math.random() + min;
-  },
+/**
+ * Shorthand for defining a readonly property.
+ */
+export function createConstantProperty (object, name, value) {
+  Object.defineProperty(object, name, {
+    value: value,
+    writeable: false,
+    configurable: false,
+    enumerable: true,
+  });
+}
 
-  /**
-   * Return a random integer between 1 and the maximum.
-   */
-  randomCount (max) {
-    return Math.ceil(Math.random() * max);
-  },
+/**
+ * Shorthand for Object.prototype.hasOwnProperty.call()
+ */
+export function has (obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
 
-  /**
-   * Shorthand for Object.prototype.hasOwnProperty.call()
-   */
-  has (obj, prop) {
-    return Object.prototype.hasOwnProperty.call(obj, prop);
-  },
-
-  /**
-   * Shorthand for throwing an error during validation.
-   * @param {*} error
-   */
-  fail (error) {
-    throw new Error(error);
-  },
-};
+/**
+ * Shorthand for throwing an error during validation.
+ * @param {*} error
+ */
+export function fail (error) {
+  throw new Error(error);
+}
 </code></pre>
         </article>
     </section>

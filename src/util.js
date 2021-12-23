@@ -1,8 +1,21 @@
+/**
+ * Various utility functions
+ * 
+ * @module
+ * @ignore
+ */
+
+/**
+ * Round a number to the specified number of digits.
+ */
 export function round (value, digits) {
   const factor = 10 ** digits;
   return Math.round(factor * value) / factor;
 }
 
+/**
+ * Clamp a value to within the specified range.
+ */
 export function clamp (value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
