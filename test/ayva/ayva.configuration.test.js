@@ -83,17 +83,23 @@ describe('Configuration Tests', function () {
       config.alias = {};
       testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: alias = [object Object], name = 42, type = false`);
 
-      config.max = 'not a number';
+      config.max = NaN;
       testConfigureAxis(config).should.throw(
         Error,
-        `${invalidParametersMessage}: alias = [object Object], max = not a number, name = 42, type = false`
+        `${invalidParametersMessage}: alias = [object Object], max = NaN, name = 42, type = false`
       );
 
       config.min = {};
       testConfigureAxis(config).should.throw(
         Error,
-        `${invalidParametersMessage}: alias = [object Object], max = not a number, min = [object Object], name = 42, type = false`
+        `${invalidParametersMessage}: alias = [object Object], max = NaN, min = [object Object], name = 42, type = false`
       );
+    });
+
+    it('should throw an error when min and max are the same', function () {
+      config.min = 1;
+      config.max = 1;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: max = 1, min = 1`);
     });
 
     it('should allow a valid configuration to be retrieved by name or alias', function () {
@@ -225,6 +231,49 @@ describe('Configuration Tests', function () {
       });
 
       ayva.getAxis('new-alias').value.should.equal(0);
+    });
+  });
+
+  describe('#updateLimits', function () {
+    it('should disallow invalid limits', function () {
+      const ayva = new Ayva(OSR2);
+
+      ayva.getAxis('L0').min.should.equal(0);
+      ayva.getAxis('L0').max.should.equal(1);
+
+      const invalidLimits = [null, undefined, -1, 2, true, false, NaN, {}, () => {}];
+      const testUpdateLimits = createFunctionBinder(ayva, 'updateLimits');
+
+      for (const min of invalidLimits) {
+        testUpdateLimits('L0', min, 1).should.throw(Error, `Invalid limits: min = ${min}, max = 1`);
+      }
+
+      for (const max of invalidLimits) {
+        testUpdateLimits('L0', 0, max).should.throw(Error, `Invalid limits: min = 0, max = ${max}`);
+      }
+
+      for (let i = 0; i <= 1; i += 0.1) {
+        testUpdateLimits('L0', i, i).should.throw(Error, `Invalid limits: min = ${i}, max = ${i}`);
+      }
+
+      testUpdateLimits('F0', 0, 1).should.throw(Error, 'Invalid axis: F0');
+    });
+
+    it('should allow updating valid limits', function () {
+      const ayva = new Ayva(OSR2);
+
+      ayva.getAxis('L0').min.should.equal(0);
+      ayva.getAxis('L0').max.should.equal(1);
+
+      ayva.updateLimits('L0', 0.25, 0.75);
+
+      ayva.getAxis('L0').min.should.equal(0.25);
+      ayva.getAxis('L0').max.should.equal(0.75);
+
+      ayva.updateLimits('L0', 0.8, 0.2);
+
+      ayva.getAxis('L0').min.should.equal(0.2);
+      ayva.getAxis('L0').max.should.equal(0.8);
     });
   });
 });

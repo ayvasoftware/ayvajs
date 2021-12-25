@@ -201,6 +201,28 @@ class Ayva {
   }
 
   /**
+   * Update the limits for the specified axis.
+   *
+   * @param {*} axis
+   * @param {*} from - value between 0 and 1
+   * @param {*} to - value between 0 and 1
+   */
+  updateLimits (axis, from, to) {
+    const isInvalid = (value) => typeof value !== 'number' || Number.isNaN(value) || value < 0 || value > 1;
+
+    if (isInvalid(from) || isInvalid(to) || from === to) {
+      throw new Error(`Invalid limits: min = ${from}, max = ${to}`);
+    }
+
+    if (!this.#axes[axis]) {
+      throw new Error(`Invalid axis: ${axis}`);
+    }
+
+    this.#axes[axis].min = Math.min(from, to);
+    this.#axes[axis].max = Math.max(from, to);
+  }
+
+  /**
    * Alias for #addOutputDevice()
    *
    * @ignore
@@ -610,7 +632,7 @@ class Ayva {
         if (typeof value !== types[property]) {
           invalid.push(property);
         } else if (property === 'min' || property === 'max') {
-          if (value < 0 || value > 1) {
+          if (Number.isNaN(value) || value < 0 || value > 1) {
             invalid.push(property);
           }
         }
