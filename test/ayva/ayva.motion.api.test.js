@@ -251,6 +251,17 @@ describe('Motion API Tests', function () {
       warn.getCall(ayva.frequency).args[0].should.equal('Invalid value provided: NaN');
     });
 
+    it('should reject movement if value provider throws error', function () {
+      const errorMessage = 'All ur cock r belong to us.';
+
+      return ayva.move({
+        value: () => {
+          throw new Error(errorMessage);
+        },
+        duration: 1,
+      }).should.be.rejectedWith(errorMessage);
+    });
+
     // TODO: Test case - NaN for all numeric types.
     // TODO: Test case - moving to the position I'm already at.
   });

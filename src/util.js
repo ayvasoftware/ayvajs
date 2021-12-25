@@ -1,6 +1,6 @@
 /**
  * Various utility functions
- * 
+ *
  * @module
  * @ignore
  */

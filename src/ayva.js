@@ -202,7 +202,7 @@ class Ayva {
 
   /**
    * Alias for #addOutputDevice()
-   * 
+   *
    * @ignore
    * @param {...Object} device - object with a write method.
    */
@@ -219,7 +219,7 @@ class Ayva {
   /**
    * Registers a new output device. Ayva outputs commands to all connected devices.
    * More than one device can be specified.
-   * 
+   *
    * @param {...Object} device - object with a write method.
    */
   addOutputDevice (...devices) {
@@ -276,6 +276,7 @@ class Ayva {
       time,
       index,
       period: this.#period,
+      frequency: this.#frequency,
       currentValue: this.#axes[parameters.axis].value,
       x: round((index + 1) / (provider.parameters.stepCount), 3),
     });
