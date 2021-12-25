@@ -2,6 +2,7 @@ import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
 
+// TODO: Better filtering of NaN values. We're calling isNaN all over the place...
 class Ayva {
   #devices = [];
 
@@ -85,6 +86,7 @@ class Ayva {
   }
 
   async #performMovements (movements) {
+    // TODO: Discard movements that are to a position I am already at (if there is no user supplied value provider).
     const allProviders = this.#createValueProviders(movements);
     const stepCount = this.#computeStepCount(allProviders);
     const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
@@ -250,6 +252,8 @@ class Ayva {
 
   /**
    * Writes the specified command out to all connected devices.
+   * 
+   * TODO: Refactor into update method.
    *
    * Caution: This method is primarily intended for internal usage. Any movements performed
    * by the command will not be tracked by Ayva's internal position tracking.
@@ -276,7 +280,7 @@ class Ayva {
   #executeProviders (providers, index) {
     const axisValues = providers
       .map((provider) => this.#executeProvider(provider, index))
-      .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
+      .filter(({ value }) => !Number.isNaN(nextValue) && (typeof value === 'number' || typeof value === 'boolean'));
 
     const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
 
