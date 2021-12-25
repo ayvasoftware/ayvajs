@@ -280,7 +280,7 @@ class Ayva {
   #executeProviders (providers, index) {
     const axisValues = providers
       .map((provider) => this.#executeProvider(provider, index))
-      .filter(({ value }) => !Number.isNaN(nextValue) && (typeof value === 'number' || typeof value === 'boolean'));
+      .filter(({ value }) => !Number.isNaN(value) && (typeof value === 'number' || typeof value === 'boolean'));
 
     const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
 
