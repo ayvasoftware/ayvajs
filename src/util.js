@@ -6,10 +6,10 @@
  */
 
 /**
- * Round a number to the specified number of digits.
+ * Round a number to the specified number of decimals.
  */
-export function round (value, digits) {
-  const factor = 10 ** digits;
+export function round (value, decimals = 0) {
+  const factor = 10 ** decimals;
   return Math.round(factor * value) / factor;
 }
 

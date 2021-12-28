@@ -63,7 +63,7 @@ describe('Motion API Tests', function () {
       const startTime = performance.now();
       await ayva.sleep(0.02).should.be.fulfilled;
       const elapsed = performance.now() - startTime;
-      expect(elapsed).to.be.at.least(20);
+      expect(Math.round(elapsed)).to.be.at.least(20); // TODO: This might be flaky.
       expect(elapsed).to.be.at.most(30);
     });
   });

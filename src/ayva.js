@@ -4,6 +4,7 @@ import {
 
 // TODO: Better filtering of NaN/Infinity values...? We're calling isFinite all over the place...
 //       Double check moving to the same position I'm already at...
+//       And rounding errors on home()...
 class Ayva {
   #devices = [];
 
@@ -324,7 +325,7 @@ class Ayva {
       this.write(`${tcodes.join(' ')}\n`);
 
       axisValues.forEach(({ axis, value }) => {
-        this.#axes[axis].value = typeof value === 'number' ? round(value, 3) : value;
+        this.#axes[axis].value = value;
       });
     }
   }
@@ -340,7 +341,7 @@ class Ayva {
       period: this.#period,
       frequency: this.#frequency,
       currentValue: this.#axes[parameters.axis].value,
-      x: round((index + 1) / (provider.parameters.stepCount), 3),
+      x: (index + 1) / provider.parameters.stepCount,
     });
 
     const notNullOrUndefined = nextValue !== null && nextValue !== undefined; // Allow null or undefined to indicate no movement.
@@ -351,7 +352,7 @@ class Ayva {
 
     return {
       axis: parameters.axis,
-      value: Number.isFinite(nextValue) ? clamp(nextValue, 0, 1) : nextValue,
+      value: Number.isFinite(nextValue) ? clamp(round(nextValue, 10), 0, 1) : nextValue,
     };
   }
 
@@ -372,7 +373,7 @@ class Ayva {
       const { min, max } = this.#axes[axis];
       const scaledValue = (max - min) * value + min;
 
-      valueText = `${Math.round(clamp(scaledValue * 1000, 0, 999))}`.padStart(3, '0');
+      valueText = `${clamp(round(scaledValue, 3) * 1000, 0, 999)}`.padStart(3, '0');
     }
 
     return `${this.#axes[axis].name}${valueText}`;
@@ -405,10 +406,10 @@ class Ayva {
 
         if (has(movement, 'duration')) {
           // { to: <number>, duration: <number> }
-          result.speed = absoluteDistance / movement.duration;
+          result.speed = round(absoluteDistance / movement.duration, 10);
         } else if (has(movement, 'speed')) {
           // { to: <number>, speed: <number> }
-          result.duration = absoluteDistance / movement.speed;
+          result.duration = round(absoluteDistance / movement.speed, 10);
         }
 
         result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
@@ -441,7 +442,7 @@ class Ayva {
 
         if (has(movement, 'to')) {
           // Now we can compute a speed.
-          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 3);
+          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 10);
         }
       } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
         // Implicit sync to max duration.
@@ -449,7 +450,7 @@ class Ayva {
       }
 
       if (has(movement, 'duration')) {
-        movement.stepCount = Math.round(movement.duration * this.#frequency);
+        movement.stepCount = round(movement.duration * this.#frequency);
       } // else if (this.#axes[movement.axis].type !== 'boolean') {
       // By this point, the only movements without a duration should be boolean.
       // This should literally never happen because of validation. But including here for debugging and clarity.
@@ -465,9 +466,11 @@ class Ayva {
         // Create a value provider from parameters.
         if (this.#axes[movement.axis].type === 'boolean') {
           provider.valueProvider = () => movement.to;
+        } else if (movement.to !== movement.from) {
+          provider.valueProvider = ({ from, to, x }) => from + x * (to - from);
         } else {
-          const delta = (movement.to - movement.from) / movement.stepCount;
-          provider.valueProvider = (params) => params.currentValue + delta;
+          // No movement.
+          provider.valueProvider = () => {};
         }
       } else {
         // User provided value provider.
