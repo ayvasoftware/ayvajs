@@ -72,7 +72,7 @@ describe('Motion API Tests', function () {
    */
   describe('#move() (invalid movements)', function () {
     it('should throw an error if invalid movement is passed', function () {
-      const invalidValues = [1, null, undefined, 'bad', '', false, true, () => {}, NaN];
+      const invalidValues = [1, null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity];
 
       const testInvalidMovePromises = invalidValues.map((
         value
@@ -85,7 +85,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'to\' parameter is missing or invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 2, NaN];
+      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 2, NaN, Infinity];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'to': ${value}`)
@@ -103,7 +103,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'speed\' is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0, NaN];
+      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0, NaN, Infinity];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'speed': ${value}`)
@@ -113,7 +113,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'duration\' is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0, NaN];
+      const invalidValues = [null, undefined, 'bad', '', false, true, -1, 0, NaN, Infinity];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'duration': ${value}`)
@@ -147,7 +147,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if value is not a function', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, 0, 1, -1, NaN];
+      const invalidValues = [null, undefined, 'bad', '', false, true, 0, 1, -1, NaN, Infinity];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: 1, value }).should.be.rejectedWith(Error, '\'value\' must be a function.')

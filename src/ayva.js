@@ -2,7 +2,8 @@ import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
 
-// TODO: Better filtering of NaN values. We're calling isNaN all over the place...
+// TODO: Better filtering of NaN/Infinity values...? We're calling isFinite all over the place...
+//       Double check moving to the same position I'm already at...
 class Ayva {
   #devices = [];
 
@@ -15,6 +16,10 @@ class Ayva {
   #movements = new Set();
 
   #nextMovementId = 1;
+
+  get axes () {
+    return JSON.parse(JSON.stringify(this.#axes));
+  }
 
   get frequency () {
     return this.#frequency;
@@ -211,7 +216,7 @@ class Ayva {
    * @param {*} to - value between 0 and 1
    */
   updateLimits (axis, from, to) {
-    const isInvalid = (value) => typeof value !== 'number' || Number.isNaN(value) || value < 0 || value > 1;
+    const isInvalid = (value) => !Number.isFinite(value) || value < 0 || value > 1;
 
     if (isInvalid(from) || isInvalid(to) || from === to) {
       throw new Error(`Invalid limits: min = ${from}, max = ${to}`);
@@ -279,7 +284,6 @@ class Ayva {
   }
 
   async #performMovements (movementId, movements) {
-    // TODO: Discard movements that are to a position I am already at (if there is no user supplied value provider).
     const allProviders = this.#createValueProviders(movements);
     const stepCount = this.#computeStepCount(allProviders);
     const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
@@ -312,7 +316,7 @@ class Ayva {
   #executeProviders (providers, index) {
     const axisValues = providers
       .map((provider) => this.#executeProvider(provider, index))
-      .filter(({ value }) => !Number.isNaN(value) && (typeof value === 'number' || typeof value === 'boolean'));
+      .filter(({ value }) => Number.isFinite(value) || typeof value === 'boolean');
 
     const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
 
@@ -339,10 +343,9 @@ class Ayva {
       x: round((index + 1) / (provider.parameters.stepCount), 3),
     });
 
-    const isInvalidType = typeof nextValue !== 'number' && typeof nextValue !== 'boolean';
     const notNullOrUndefined = nextValue !== null && nextValue !== undefined; // Allow null or undefined to indicate no movement.
 
-    if (Number.isNaN(nextValue) || (isInvalidType && notNullOrUndefined)) {
+    if (!Number.isFinite(nextValue) && typeof nextValue !== 'boolean' && notNullOrUndefined) {
       console.warn(`Invalid value provided: ${nextValue}`); // eslint-disable-line no-console
     }
 
@@ -543,7 +546,7 @@ class Ayva {
         if (this.#axes[axis].type === 'boolean') {
           invalidTo = typeof movement.to !== 'boolean';
         } else {
-          invalidTo = Number.isNaN(movement.to) || typeof movement.to !== 'number' || (movement.to < 0 || movement.to > 1);
+          invalidTo = !Number.isFinite(movement.to) || (movement.to < 0 || movement.to > 1);
         }
 
         if (invalidTo) {
@@ -560,9 +563,9 @@ class Ayva {
       if (hasSpeed || hasDuration) {
         atLeastOneDuration = true;
 
-        if (hasSpeed && (Number.isNaN(movement.speed) || typeof movement.speed !== 'number' || movement.speed <= 0)) {
+        if (hasSpeed && (!Number.isFinite(movement.speed) || movement.speed <= 0)) {
           invalidValue('speed');
-        } else if (hasDuration && (Number.isNaN(movement.duration) || typeof movement.duration !== 'number' || movement.duration <= 0)) {
+        } else if (hasDuration && (!Number.isFinite(movement.duration) || movement.duration <= 0)) {
           invalidValue('duration');
         }
       }
@@ -668,7 +671,7 @@ class Ayva {
         if (typeof value !== types[property]) {
           invalid.push(property);
         } else if (property === 'min' || property === 'max') {
-          if (Number.isNaN(value) || value < 0 || value > 1) {
+          if (!Number.isFinite(value) || value < 0 || value > 1) {
             invalid.push(property);
           }
         }
