@@ -351,7 +351,7 @@ class Ayva {
 
     return {
       axis: parameters.axis,
-      value: typeof nextValue === 'number' ? clamp(nextValue, 0, 1) : nextValue,
+      value: Number.isFinite(nextValue) ? clamp(nextValue, 0, 1) : nextValue,
     };
   }
 
