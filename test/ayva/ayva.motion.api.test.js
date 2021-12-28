@@ -277,12 +277,13 @@ describe('Motion API Tests', function () {
       const values = [0.475, 0.450, 0.425, 0.400, 0.375];
       const valueProvider = sinon.fake((parameters) => values[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'R0',
         value: valueProvider,
         duration: 0.1,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(5);
       device.write.args[0][0].should.equal('R0475\n');
       device.write.args[1][0].should.equal('R0450\n');
@@ -298,12 +299,13 @@ describe('Motion API Tests', function () {
 
       axis.value.should.equal(0.5);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'R0',
         to: 0.4,
         speed: 1,
       });
 
+      expect(result).to.be.true;
       // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
       device.write.callCount.should.equal(5);
       device.write.args[0][0].should.equal('R0480\n');
@@ -320,12 +322,13 @@ describe('Motion API Tests', function () {
 
       axis.value.should.equal(0.5);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'R0',
         to: 0.4,
         duration: 0.1,
       });
 
+      expect(result).to.be.true;
       // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
       device.write.callCount.should.equal(5);
       device.write.args[0][0].should.equal('R0480\n');
@@ -342,11 +345,12 @@ describe('Motion API Tests', function () {
 
       axis.value.should.equal(false);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'lube',
         to: true,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(1);
       device.write.args[0][0].should.equal('A2999\n');
 
@@ -367,12 +371,13 @@ describe('Motion API Tests', function () {
       const values = [1.5];
       const valueProvider = sinon.fake((parameters) => values[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'R0',
         value: valueProvider,
         duration: 1,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(1);
       device.write.args[0][0].should.equal('R0999\n');
 
@@ -393,12 +398,13 @@ describe('Motion API Tests', function () {
       const values = [0.400, 0.300, 0.200, 0.100, 0];
       const valueProvider = sinon.fake((parameters) => values[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'R0',
         value: valueProvider,
         duration: 0.1,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(5);
       device.write.args[0][0].should.equal('R0420\n');
       device.write.args[1][0].should.equal('R0340\n');
@@ -426,7 +432,7 @@ describe('Motion API Tests', function () {
       const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
       const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'L0',
         value: strokeValueProvider,
         duration: 0.1,
@@ -436,6 +442,7 @@ describe('Motion API Tests', function () {
         duration: 0.1,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(5);
       strokeValues.forEach((value, index) => {
         device.write.args[index][0].should.equal(`L0${value * 1000} R0${twistValues[index] * 1000}\n`);
@@ -455,7 +462,7 @@ describe('Motion API Tests', function () {
       const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
       const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'L0',
         value: strokeValueProvider,
         duration: 0.1,
@@ -465,6 +472,7 @@ describe('Motion API Tests', function () {
         duration: 0.06,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(5);
       device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${twistValues[0] * 1000}\n`);
       device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${twistValues[1] * 1000}\n`);
@@ -489,7 +497,7 @@ describe('Motion API Tests', function () {
       const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.index]);
       const rollValueProvider = sinon.fake((parameters) => rollValues[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'L0',
         value: strokeValueProvider,
         duration: 0.1,
@@ -503,6 +511,7 @@ describe('Motion API Tests', function () {
         sync: 'R0',
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(5);
       device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${twistValues[0] * 1000} R1${rollValues[0] * 1000}\n`);
       device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${twistValues[1] * 1000} R1${rollValues[1] * 1000}\n`);
@@ -528,7 +537,7 @@ describe('Motion API Tests', function () {
       const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
       const rollValueProvider = sinon.fake((parameters) => rollValues[parameters.index]);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'L0',
         value: strokeValueProvider,
         duration: 0.1,
@@ -543,6 +552,7 @@ describe('Motion API Tests', function () {
         sync: 'R0',
       });
 
+      expect(result).to.be.true;
       rollValueProvider.callCount.should.equal(3);
       expect(rollValueProvider.args[0][0].speed).to.equal(1.5);
       expect(rollValueProvider.args[1][0].speed).to.equal(1.5);
@@ -564,7 +574,7 @@ describe('Motion API Tests', function () {
       ayva.getAxis('lube').value.should.equal(false);
       ayva.getAxis('test-boolean-axis').value.should.equal(false);
 
-      await ayva.move({
+      const result = await ayva.move({
         axis: 'lube',
         to: true,
       }, {
@@ -572,6 +582,7 @@ describe('Motion API Tests', function () {
         to: true,
       });
 
+      expect(result).to.be.true;
       device.write.callCount.should.equal(1);
       device.write.args[0][0].should.equal('A2999 A1999\n');
 
@@ -584,12 +595,13 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R0').value.should.equal(0.5);
       ayva.getAxis('A0').value.should.equal(0.5);
 
-      await Promise.all([
+      const result = await Promise.all([
         ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
         ayva.move({ axis: 'R0', to: 0, duration: 0.1 }),
         ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
       ]);
 
+      expect(result).to.deep.equal([true, true, true]);
       device.write.callCount.should.equal(15);
       device.write.args[0][0].should.equal('L0400\n');
       device.write.args[1][0].should.equal('L0300\n');
@@ -610,6 +622,72 @@ describe('Motion API Tests', function () {
       ayva.getAxis('L0').value.should.equal(0.0);
       ayva.getAxis('R0').value.should.equal(0.0);
       ayva.getAxis('A0').value.should.equal(0.0);
+    });
+  });
+
+  describe('#stop()', function () {
+    it('should cancel all movements', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('A0').value.should.equal(0.5);
+
+      const promise = Promise.all([
+        ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'R0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
+      ]);
+
+      ayva.stop();
+
+      const result = await promise;
+
+      expect(result).to.deep.equal([false, false, false]);
+
+      // The first move should have only had time to complete one step.
+      // The rest should have been cancelled before even starting.
+      device.write.callCount.should.equal(1);
+      device.write.args[0][0].should.equal('L0400\n');
+      ayva.getAxis('L0').value.should.equal(0.400);
+      ayva.getAxis('R0').value.should.equal(0.500);
+      ayva.getAxis('A0').value.should.equal(0.500);
+
+      const retry = await ayva.move({ axis: 'L0', to: 0, duration: 0.1 });
+      expect(retry).to.equal(true);
+      ayva.getAxis('L0').value.should.equal(0.0);
+    });
+
+    it('should cancel pending movements', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('A0').value.should.equal(0.5);
+
+      const promise = Promise.all([
+        ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
+        ayva.move({
+          axis: 'R0',
+          value: () => {
+            ayva.stop();
+          },
+          duration: 0.1,
+        }),
+        ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
+      ]);
+
+      const result = await promise;
+
+      expect(result).to.deep.equal([true, false, false]);
+
+      // The first move should have completed successfully, while the rest are cancelled.
+      device.write.callCount.should.equal(5);
+      device.write.args[0][0].should.equal('L0400\n');
+      device.write.args[1][0].should.equal('L0300\n');
+      device.write.args[2][0].should.equal('L0200\n');
+      device.write.args[3][0].should.equal('L0100\n');
+      device.write.args[4][0].should.equal('L0000\n');
+
+      ayva.getAxis('L0').value.should.equal(0.0);
+      ayva.getAxis('R0').value.should.equal(0.500);
+      ayva.getAxis('A0').value.should.equal(0.500);
     });
   });
 });

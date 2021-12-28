@@ -12,6 +12,10 @@ class Ayva {
 
   #movementInProgress = false;
 
+  #movements = new Set();
+
+  #nextMovementId = 1;
+
   get frequency () {
     return this.#frequency;
   }
@@ -67,41 +71,31 @@ class Ayva {
    * @return {Promise} a promise that resolves when all movements have finished
    */
   async move (...movements) {
-    while (this.#movementInProgress) {
-      await this.sleep(); // eslint-disable-line no-await-in-loop
-      // TODO: Implement interrupt to stop all movements.
+    this.#validateMovements(movements);
+
+    const movementId = this.#nextMovementId++;
+    this.#movements.add(movementId);
+
+    if (this.#movementInProgress) {
+      while (this.#movementExists(movementId) && !this.#movementReady(movementId)) {
+        await this.sleep(); // eslint-disable-line no-await-in-loop
+      }
     }
 
-    this.#validateMovements(movements);
+    if (!this.#movementExists(movementId)) {
+      // This move was cancelled.
+      return false;
+    }
 
     try {
       this.#movementInProgress = true;
-      await this.#performMovements(movements);
+      return await this.#performMovements(movementId, movements);
     } catch (error) {
       return Promise.reject(error);
     } finally {
       this.#movementInProgress = false;
+      this.#movements.delete(movementId);
     }
-    return Promise.resolve();
-  }
-
-  async #performMovements (movements) {
-    // TODO: Discard movements that are to a position I am already at (if there is no user supplied value provider).
-    const allProviders = this.#createValueProviders(movements);
-    const stepCount = this.#computeStepCount(allProviders);
-    const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
-    const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
-
-    this.#executeProviders(immediateProviders, 0);
-    for (let index = 0; index < stepCount; index++) {
-      const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
-      this.#executeProviders(unfinishedProviders, index);
-
-      await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
-      // TODO: Implement interrupt to stop all movements.
-    }
-
-    return Promise.resolve();
   }
 
   /**
@@ -122,6 +116,13 @@ class Ayva {
 
     console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
     return Promise.resolve();
+  }
+
+  /**
+   * Cancels all running or pending movements immediately.
+   */
+  stop () {
+    this.#movements.clear();
   }
 
   /**
@@ -252,7 +253,7 @@ class Ayva {
 
   /**
    * Writes the specified command out to all connected devices.
-   * 
+   *
    * TODO: Refactor into update method.
    *
    * Caution: This method is primarily intended for internal usage. Any movements performed
@@ -275,6 +276,37 @@ class Ayva {
     for (const device of this.#devices) {
       device.write(command);
     }
+  }
+
+  async #performMovements (movementId, movements) {
+    // TODO: Discard movements that are to a position I am already at (if there is no user supplied value provider).
+    const allProviders = this.#createValueProviders(movements);
+    const stepCount = this.#computeStepCount(allProviders);
+    const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
+    const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
+
+    this.#executeProviders(immediateProviders, 0);
+    for (let index = 0; index < stepCount; index++) {
+      const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
+      this.#executeProviders(unfinishedProviders, index);
+
+      await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
+
+      if (!this.#movementExists(movementId)) {
+        // This move was cancelled.
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  #movementExists (movementId) {
+    return this.#movements.has(movementId);
+  }
+
+  #movementReady (movementId) {
+    return !this.#movementInProgress && this.#movements.values().next().value === movementId;
   }
 
   #executeProviders (providers, index) {
