@@ -2,17 +2,13 @@ import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
 
-// TODO: Better filtering of NaN/Infinity values...? We're calling isFinite all over the place...
-//       Double check moving to the same position I'm already at...
-//       And rounding errors on home()...
+// TODO: Review how often we're calling isFinite and if there is a better way.
 class Ayva {
   #devices = [];
 
   #axes = {};
 
   #frequency = 50; // Hz
-
-  #movementInProgress = false;
 
   #movements = new Set();
 
@@ -82,24 +78,21 @@ class Ayva {
     const movementId = this.#nextMovementId++;
     this.#movements.add(movementId);
 
-    if (this.#movementInProgress) {
-      while (this.#movementExists(movementId) && !this.#movementReady(movementId)) {
-        await this.sleep(); // eslint-disable-line no-await-in-loop
-      }
+    while (this.#movements.has(movementId) && this.#movements.values().next().value !== movementId) {
+      // Wait until current movements have completed to proceed.
+      await this.sleep(); // eslint-disable-line no-await-in-loop
     }
 
-    if (!this.#movementExists(movementId)) {
-      // This move was cancelled.
+    if (!this.#movements.has(movementId)) {
+      // This move must have been cancelled.
       return false;
     }
 
     try {
-      this.#movementInProgress = true;
       return await this.#performMovements(movementId, movements);
     } catch (error) {
       return Promise.reject(error);
     } finally {
-      this.#movementInProgress = false;
       this.#movements.delete(movementId);
     }
   }
@@ -297,21 +290,13 @@ class Ayva {
 
       await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
 
-      if (!this.#movementExists(movementId)) {
+      if (!this.#movements.has(movementId)) {
         // This move was cancelled.
         return false;
       }
     }
 
     return true;
-  }
-
-  #movementExists (movementId) {
-    return this.#movements.has(movementId);
-  }
-
-  #movementReady (movementId) {
-    return !this.#movementInProgress && this.#movements.values().next().value === movementId;
   }
 
   #executeProviders (providers, index) {
