@@ -15,7 +15,7 @@ class Ayva {
   #nextMovementId = 1;
 
   get axes () {
-    return JSON.parse(JSON.stringify(this.#axes));
+    return { ...this.#axes };
   }
 
   get frequency () {
@@ -54,8 +54,8 @@ class Ayva {
   }
 
   /**
-   * Performs movements or updates along one or more axes. This is a powerful method that can synchronize
-   * axis movement while allowing for fine control over position, speed, and move duration.
+   * Performs movements along one or more axes. This is a powerful method that can synchronize
+   * axis movement while allowing for fine control over position, speed, or move duration.
    * For full details on how to use this method, see the {@tutorial motion-api} tutorial.
    *
    * @example
@@ -66,11 +66,14 @@ class Ayva {
    * },{
    *   axis: 'twist',
    *   to: 0.5,
-   *   speed: 0.5,
+   *   duration: 1,
+   * },{
+   *   axis: 'roll',
+   *   value: ({ x }) => Math.sin(x * Math.PI),
    * });
    *
    * @param  {Object} movements
-   * @return {Promise} a promise that resolves when all movements have finished
+   * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
    */
   async move (...movements) {
     this.#validateMovements(movements);
@@ -284,6 +287,7 @@ class Ayva {
     const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
 
     this.#executeProviders(immediateProviders, 0);
+
     for (let index = 0; index < stepCount; index++) {
       const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
       this.#executeProviders(unfinishedProviders, index);
@@ -302,7 +306,7 @@ class Ayva {
   #executeProviders (providers, index) {
     const axisValues = providers
       .map((provider) => this.#executeProvider(provider, index))
-      .filter(({ value }) => Number.isFinite(value) || typeof value === 'boolean');
+      .filter(({ value }) => this.#isValidAxisValue(value));
 
     const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
 
@@ -331,7 +335,7 @@ class Ayva {
 
     const notNullOrUndefined = nextValue !== null && nextValue !== undefined; // Allow null or undefined to indicate no movement.
 
-    if (!Number.isFinite(nextValue) && typeof nextValue !== 'boolean' && notNullOrUndefined) {
+    if (!this.#isValidAxisValue(nextValue) && notNullOrUndefined) {
       console.warn(`Invalid value provided: ${nextValue}`); // eslint-disable-line no-console
     }
 
@@ -341,8 +345,12 @@ class Ayva {
     };
   }
 
+  #isValidAxisValue (value) {
+    return Number.isFinite(value) || typeof value === 'boolean';
+  }
+
   /**
-   * Converts the value into a standard TCode string for the specified axis. (i.e. 0.5 -> L0500)
+   * Converts the value into a standard live command TCode string for the specified axis. (i.e. 0.5 -> L0500)
    * If the axis is a boolean axis, true values get mapped to 999 and false gets mapped to 000.
    *
    * @param {*} axis
@@ -368,7 +376,7 @@ class Ayva {
    * Create value providers with initial parameters.
    *
    * Precondition: Each movement is a valid movement per the Motion API.
-   * @param {*} movements
+   * @param {Object[]} movements
    * @returns {Object[]} - array of value providers with parameters.
    */
   #createValueProviders (movements) {
@@ -401,7 +409,7 @@ class Ayva {
       }
 
       if (has(result, 'duration')) {
-        maxDuration = result.duration > maxDuration ? result.duration : maxDuration;
+        maxDuration = Math.max(result.duration, maxDuration);
       }
 
       return result;
@@ -429,18 +437,18 @@ class Ayva {
           // Now we can compute a speed.
           movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 10);
         }
-      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
+      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') { // TODO: Do I want to exclude boolean here?
         // Implicit sync to max duration.
         movement.duration = maxDuration;
       }
 
       if (has(movement, 'duration')) {
         movement.stepCount = round(movement.duration * this.#frequency);
-      } // else if (this.#axes[movement.axis].type !== 'boolean') {
-      // By this point, the only movements without a duration should be boolean.
-      // This should literally never happen because of validation. But including here for debugging and clarity.
-      // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
-      // }
+      } else if (this.#axes[movement.axis].type !== 'boolean') {
+        // By this point, the only movements without a duration should be boolean.
+        // This should literally never happen because of validation. But including here for debugging and clarity.
+        fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
+      }
     });
 
     // Create the actual value providers.
@@ -483,7 +491,7 @@ class Ayva {
       const steps = provider.parameters.stepCount;
 
       if (steps) {
-        maxStepCount = steps > maxStepCount ? steps : maxStepCount;
+        maxStepCount = Math.max(steps, maxStepCount);
       }
     });
 
