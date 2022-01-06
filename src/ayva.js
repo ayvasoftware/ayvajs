@@ -2,7 +2,6 @@ import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
 
-// TODO: Review how often we're calling isFinite and if there is a better way.
 class Ayva {
   #devices = [];
 
@@ -256,7 +255,7 @@ class Ayva {
   /**
    * Writes the specified command out to all connected devices.
    *
-   * TODO: Refactor into update method.
+   * TODO: Refactor into update method and do NOT expose writing tcode out to devices.
    *
    * Caution: This method is primarily intended for internal usage. Any movements performed
    * by the command will not be tracked by Ayva's internal position tracking.
