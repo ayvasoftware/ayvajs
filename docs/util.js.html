@@ -100,7 +100,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2">OSR2</a></li><li><a href="global.html#SR6">SR6</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -125,10 +125,10 @@
  */
 
 /**
- * Round a number to the specified number of digits.
+ * Round a number to the specified number of decimals.
  */
-export function round (value, digits) {
-  const factor = 10 ** digits;
+export function round (value, decimals = 0) {
+  const factor = 10 ** decimals;
   return Math.round(factor * value) / factor;
 }
 

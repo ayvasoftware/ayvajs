@@ -100,7 +100,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2">OSR2</a></li><li><a href="global.html#SR6">SR6</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -128,7 +128,13 @@ class Ayva {
 
   #frequency = 50; // Hz
 
-  #movementInProgress = false;
+  #movements = new Set();
+
+  #nextMovementId = 1;
+
+  get axes () {
+    return { ...this.#axes };
+  }
 
   get frequency () {
     return this.#frequency;
@@ -166,8 +172,8 @@ class Ayva {
   }
 
   /**
-   * Performs movements or updates along one or more axes. This is a powerful method that can synchronize
-   * axis movement while allowing for fine control over position, speed, and move duration.
+   * Performs movements along one or more axes. This is a powerful method that can synchronize
+   * axis movement while allowing for fine control over position, speed, or move duration.
    * For full details on how to use this method, see the {@tutorial motion-api} tutorial.
    *
    * @example
@@ -178,47 +184,38 @@ class Ayva {
    * },{
    *   axis: 'twist',
    *   to: 0.5,
-   *   speed: 0.5,
+   *   duration: 1,
+   * },{
+   *   axis: 'roll',
+   *   value: ({ x }) => Math.sin(x * Math.PI),
    * });
    *
    * @param  {Object} movements
-   * @return {Promise} a promise that resolves when all movements have finished
+   * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
    */
   async move (...movements) {
-    while (this.#movementInProgress) {
-      await this.sleep(); // eslint-disable-line no-await-in-loop
-      // TODO: Implement interrupt to stop all movements.
-    }
-
     this.#validateMovements(movements);
 
+    const movementId = this.#nextMovementId++;
+    this.#movements.add(movementId);
+
+    while (this.#movements.has(movementId) &amp;&amp; this.#movements.values().next().value !== movementId) {
+      // Wait until current movements have completed to proceed.
+      await this.sleep(); // eslint-disable-line no-await-in-loop
+    }
+
+    if (!this.#movements.has(movementId)) {
+      // This move must have been cancelled.
+      return false;
+    }
+
     try {
-      this.#movementInProgress = true;
-      await this.#performMovements(movements);
+      return await this.#performMovements(movementId, movements);
     } catch (error) {
       return Promise.reject(error);
     } finally {
-      this.#movementInProgress = false;
+      this.#movements.delete(movementId);
     }
-    return Promise.resolve();
-  }
-
-  async #performMovements (movements) {
-    const allProviders = this.#createValueProviders(movements);
-    const stepCount = this.#computeStepCount(allProviders);
-    const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
-    const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
-
-    this.#executeProviders(immediateProviders, 0);
-    for (let index = 0; index &lt; stepCount; index++) {
-      const unfinishedProviders = stepProviders.filter((provider) => index &lt; provider.parameters.stepCount);
-      this.#executeProviders(unfinishedProviders, index);
-
-      await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
-      // TODO: Implement interrupt to stop all movements.
-    }
-
-    return Promise.resolve();
   }
 
   /**
@@ -239,6 +236,13 @@ class Ayva {
 
     console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
     return Promise.resolve();
+  }
+
+  /**
+   * Cancels all running or pending movements immediately.
+   */
+  stop () {
+    this.#movements.clear();
   }
 
   /**
@@ -327,7 +331,7 @@ class Ayva {
    * @param {*} to - value between 0 and 1
    */
   updateLimits (axis, from, to) {
-    const isInvalid = (value) => typeof value !== 'number' || Number.isNaN(value) || value &lt; 0 || value > 1;
+    const isInvalid = (value) => !Number.isFinite(value) || value &lt; 0 || value > 1;
 
     if (isInvalid(from) || isInvalid(to) || from === to) {
       throw new Error(`Invalid limits: min = ${from}, max = ${to}`);
@@ -370,6 +374,8 @@ class Ayva {
   /**
    * Writes the specified command out to all connected devices.
    *
+   * TODO: Refactor into update method and do NOT expose writing tcode out to devices.
+   *
    * Caution: This method is primarily intended for internal usage. Any movements performed
    * by the command will not be tracked by Ayva's internal position tracking.
    * @private
@@ -392,10 +398,33 @@ class Ayva {
     }
   }
 
+  async #performMovements (movementId, movements) {
+    const allProviders = this.#createValueProviders(movements);
+    const stepCount = this.#computeStepCount(allProviders);
+    const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
+    const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
+
+    this.#executeProviders(immediateProviders, 0);
+
+    for (let index = 0; index &lt; stepCount; index++) {
+      const unfinishedProviders = stepProviders.filter((provider) => index &lt; provider.parameters.stepCount);
+      this.#executeProviders(unfinishedProviders, index);
+
+      await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
+
+      if (!this.#movements.has(movementId)) {
+        // This move was cancelled.
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   #executeProviders (providers, index) {
     const axisValues = providers
       .map((provider) => this.#executeProvider(provider, index))
-      .filter(({ value }) => typeof value === 'number' || typeof value === 'boolean');
+      .filter(({ value }) => this.#isValidAxisValue(value));
 
     const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
 
@@ -403,7 +432,7 @@ class Ayva {
       this.write(`${tcodes.join(' ')}\n`);
 
       axisValues.forEach(({ axis, value }) => {
-        this.#axes[axis].value = typeof value === 'number' ? round(value, 3) : value;
+        this.#axes[axis].value = value;
       });
     }
   }
@@ -419,24 +448,27 @@ class Ayva {
       period: this.#period,
       frequency: this.#frequency,
       currentValue: this.#axes[parameters.axis].value,
-      x: round((index + 1) / (provider.parameters.stepCount), 3),
+      x: (index + 1) / provider.parameters.stepCount,
     });
 
-    const isInvalidType = typeof nextValue !== 'number' &amp;&amp; typeof nextValue !== 'boolean';
     const notNullOrUndefined = nextValue !== null &amp;&amp; nextValue !== undefined; // Allow null or undefined to indicate no movement.
 
-    if (Number.isNaN(nextValue) || (isInvalidType &amp;&amp; notNullOrUndefined)) {
+    if (!this.#isValidAxisValue(nextValue) &amp;&amp; notNullOrUndefined) {
       console.warn(`Invalid value provided: ${nextValue}`); // eslint-disable-line no-console
     }
 
     return {
       axis: parameters.axis,
-      value: typeof nextValue === 'number' ? clamp(nextValue, 0, 1) : nextValue,
+      value: Number.isFinite(nextValue) ? clamp(round(nextValue, 10), 0, 1) : nextValue,
     };
   }
 
+  #isValidAxisValue (value) {
+    return Number.isFinite(value) || typeof value === 'boolean';
+  }
+
   /**
-   * Converts the value into a standard TCode string for the specified axis. (i.e. 0.5 -> L0500)
+   * Converts the value into a standard live command TCode string for the specified axis. (i.e. 0.5 -> L0500)
    * If the axis is a boolean axis, true values get mapped to 999 and false gets mapped to 000.
    *
    * @param {*} axis
@@ -452,7 +484,7 @@ class Ayva {
       const { min, max } = this.#axes[axis];
       const scaledValue = (max - min) * value + min;
 
-      valueText = `${Math.round(clamp(scaledValue * 1000, 0, 999))}`.padStart(3, '0');
+      valueText = `${clamp(round(scaledValue, 3) * 1000, 0, 999)}`.padStart(3, '0');
     }
 
     return `${this.#axes[axis].name}${valueText}`;
@@ -462,7 +494,7 @@ class Ayva {
    * Create value providers with initial parameters.
    *
    * Precondition: Each movement is a valid movement per the Motion API.
-   * @param {*} movements
+   * @param {Object[]} movements
    * @returns {Object[]} - array of value providers with parameters.
    */
   #createValueProviders (movements) {
@@ -485,17 +517,17 @@ class Ayva {
 
         if (has(movement, 'duration')) {
           // { to: &lt;number>, duration: &lt;number> }
-          result.speed = absoluteDistance / movement.duration;
+          result.speed = round(absoluteDistance / movement.duration, 10);
         } else if (has(movement, 'speed')) {
           // { to: &lt;number>, speed: &lt;number> }
-          result.duration = absoluteDistance / movement.speed;
+          result.duration = round(absoluteDistance / movement.speed, 10);
         }
 
         result.direction = distance > 0 ? 1 : distance &lt; 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
       }
 
       if (has(result, 'duration')) {
-        maxDuration = result.duration > maxDuration ? result.duration : maxDuration;
+        maxDuration = Math.max(result.duration, maxDuration);
       }
 
       return result;
@@ -521,20 +553,20 @@ class Ayva {
 
         if (has(movement, 'to')) {
           // Now we can compute a speed.
-          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 3);
+          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 10);
         }
-      } else if (!has(movement, 'duration') &amp;&amp; this.#axes[movement.axis].type !== 'boolean') {
+      } else if (!has(movement, 'duration') &amp;&amp; this.#axes[movement.axis].type !== 'boolean') { // TODO: Do I want to exclude boolean here?
         // Implicit sync to max duration.
         movement.duration = maxDuration;
       }
 
       if (has(movement, 'duration')) {
-        movement.stepCount = Math.round(movement.duration * this.#frequency);
-      } // else if (this.#axes[movement.axis].type !== 'boolean') {
-      // By this point, the only movements without a duration should be boolean.
-      // This should literally never happen because of validation. But including here for debugging and clarity.
-      // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
-      // }
+        movement.stepCount = round(movement.duration * this.#frequency);
+      } else if (this.#axes[movement.axis].type !== 'boolean') {
+        // By this point, the only movements without a duration should be boolean.
+        // This should literally never happen because of validation. But including here for debugging and clarity.
+        fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
+      }
     });
 
     // Create the actual value providers.
@@ -545,9 +577,11 @@ class Ayva {
         // Create a value provider from parameters.
         if (this.#axes[movement.axis].type === 'boolean') {
           provider.valueProvider = () => movement.to;
+        } else if (movement.to !== movement.from) {
+          provider.valueProvider = ({ from, to, x }) => from + x * (to - from);
         } else {
-          const delta = (movement.to - movement.from) / movement.stepCount;
-          provider.valueProvider = (params) => params.currentValue + delta;
+          // No movement.
+          provider.valueProvider = () => {};
         }
       } else {
         // User provided value provider.
@@ -575,7 +609,7 @@ class Ayva {
       const steps = provider.parameters.stepCount;
 
       if (steps) {
-        maxStepCount = steps > maxStepCount ? steps : maxStepCount;
+        maxStepCount = Math.max(steps, maxStepCount);
       }
     });
 
@@ -626,7 +660,7 @@ class Ayva {
         if (this.#axes[axis].type === 'boolean') {
           invalidTo = typeof movement.to !== 'boolean';
         } else {
-          invalidTo = Number.isNaN(movement.to) || typeof movement.to !== 'number' || (movement.to &lt; 0 || movement.to > 1);
+          invalidTo = !Number.isFinite(movement.to) || (movement.to &lt; 0 || movement.to > 1);
         }
 
         if (invalidTo) {
@@ -643,9 +677,9 @@ class Ayva {
       if (hasSpeed || hasDuration) {
         atLeastOneDuration = true;
 
-        if (hasSpeed &amp;&amp; (Number.isNaN(movement.speed) || typeof movement.speed !== 'number' || movement.speed &lt;= 0)) {
+        if (hasSpeed &amp;&amp; (!Number.isFinite(movement.speed) || movement.speed &lt;= 0)) {
           invalidValue('speed');
-        } else if (hasDuration &amp;&amp; (Number.isNaN(movement.duration) || typeof movement.duration !== 'number' || movement.duration &lt;= 0)) {
+        } else if (hasDuration &amp;&amp; (!Number.isFinite(movement.duration) || movement.duration &lt;= 0)) {
           invalidValue('duration');
         }
       }
@@ -751,7 +785,7 @@ class Ayva {
         if (typeof value !== types[property]) {
           invalid.push(property);
         } else if (property === 'min' || property === 'max') {
-          if (Number.isNaN(value) || value &lt; 0 || value > 1) {
+          if (!Number.isFinite(value) || value &lt; 0 || value > 1) {
             invalid.push(property);
           }
         }
