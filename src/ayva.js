@@ -227,12 +227,12 @@ class Ayva {
   }
 
   /**
-   * Alias for #addOutputDevice()
+   * Registers a new output device. Ayva outputs commands to all connected devices.
+   * More than one device can be specified.
    *
-   * @ignore
    * @param {...Object} device - object with a write method.
    */
-  addOutputDevices (...devices) {
+  addOutputDevice (...devices) {
     for (const device of devices) {
       if (!(device && device.write && device.write instanceof Function)) {
         throw new Error(`Invalid device: ${device}`);
@@ -243,13 +243,13 @@ class Ayva {
   }
 
   /**
-   * Registers a new output device. Ayva outputs commands to all connected devices.
-   * More than one device can be specified.
+   * Alias for #addOutputDevice()
    *
+   * @ignore
    * @param {...Object} device - object with a write method.
    */
-  addOutputDevice (...devices) {
-    this.addOutputDevices(...devices);
+  addOutputDevices (...devices) {
+    this.addOutputDevice(...devices);
   }
 
   /**
@@ -307,7 +307,7 @@ class Ayva {
       .map((provider) => this.#executeProvider(provider, index))
       .filter(({ value }) => this.#isValidAxisValue(value));
 
-    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
+    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.9999, 4) : value));
 
     if (tcodes.length) {
       this.write(`${tcodes.join(' ')}\n`);
@@ -360,12 +360,12 @@ class Ayva {
     let valueText;
 
     if (typeof value === 'boolean') {
-      valueText = value ? '999' : '000';
+      valueText = value ? '9999' : '0000';
     } else {
       const { min, max } = this.#axes[axis];
       const scaledValue = (max - min) * value + min;
 
-      valueText = `${clamp(round(scaledValue, 3) * 1000, 0, 999)}`.padStart(3, '0');
+      valueText = `${clamp(round(scaledValue * 10000), 0, 9999)}`.padStart(4, '0');
     }
 
     return `${this.#axes[axis].name}${valueText}`;

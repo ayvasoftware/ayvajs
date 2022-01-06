@@ -285,11 +285,11 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal('R0475\n');
-      device.write.args[1][0].should.equal('R0450\n');
-      device.write.args[2][0].should.equal('R0425\n');
-      device.write.args[3][0].should.equal('R0400\n');
-      device.write.args[4][0].should.equal('R0375\n');
+      device.write.args[0][0].should.equal('R04750\n');
+      device.write.args[1][0].should.equal('R04500\n');
+      device.write.args[2][0].should.equal('R04250\n');
+      device.write.args[3][0].should.equal('R04000\n');
+      device.write.args[4][0].should.equal('R03750\n');
 
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
@@ -308,11 +308,11 @@ describe('Motion API Tests', function () {
       expect(result).to.be.true;
       // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal('R0480\n');
-      device.write.args[1][0].should.equal('R0460\n');
-      device.write.args[2][0].should.equal('R0440\n');
-      device.write.args[3][0].should.equal('R0420\n');
-      device.write.args[4][0].should.equal('R0400\n');
+      device.write.args[0][0].should.equal('R04800\n');
+      device.write.args[1][0].should.equal('R04600\n');
+      device.write.args[2][0].should.equal('R04400\n');
+      device.write.args[3][0].should.equal('R04200\n');
+      device.write.args[4][0].should.equal('R04000\n');
 
       ayva.getAxis('R0').value.should.equal(0.4);
     });
@@ -331,11 +331,11 @@ describe('Motion API Tests', function () {
       expect(result).to.be.true;
       // Travelling from 0.5 to 0.4 at 1 unit per second (with 50hz = 20ms step)
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal('R0480\n');
-      device.write.args[1][0].should.equal('R0460\n');
-      device.write.args[2][0].should.equal('R0440\n');
-      device.write.args[3][0].should.equal('R0420\n');
-      device.write.args[4][0].should.equal('R0400\n');
+      device.write.args[0][0].should.equal('R04800\n');
+      device.write.args[1][0].should.equal('R04600\n');
+      device.write.args[2][0].should.equal('R04400\n');
+      device.write.args[3][0].should.equal('R04200\n');
+      device.write.args[4][0].should.equal('R04000\n');
 
       ayva.getAxis('R0').value.should.equal(0.4);
     });
@@ -352,7 +352,7 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(1);
-      device.write.args[0][0].should.equal('A2999\n');
+      device.write.args[0][0].should.equal('A29999\n');
 
       ayva.getAxis('lube').value.should.equal(true);
     });
@@ -379,7 +379,7 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(1);
-      device.write.args[0][0].should.equal('R0999\n');
+      device.write.args[0][0].should.equal('R09999\n');
 
       ayva.getAxis('R0').value.should.equal(1);
     });
@@ -406,11 +406,11 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal('R0420\n');
-      device.write.args[1][0].should.equal('R0340\n');
-      device.write.args[2][0].should.equal('R0260\n');
-      device.write.args[3][0].should.equal('R0180\n');
-      device.write.args[4][0].should.equal('R0100\n');
+      device.write.args[0][0].should.equal('R04200\n');
+      device.write.args[1][0].should.equal('R03400\n');
+      device.write.args[2][0].should.equal('R02600\n');
+      device.write.args[3][0].should.equal('R01800\n');
+      device.write.args[4][0].should.equal('R01000\n');
 
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
@@ -445,7 +445,7 @@ describe('Motion API Tests', function () {
       expect(result).to.be.true;
       device.write.callCount.should.equal(5);
       strokeValues.forEach((value, index) => {
-        device.write.args[index][0].should.equal(`L0${value * 1000} R0${twistValues[index] * 1000}\n`);
+        device.write.args[index][0].should.equal(`L0${value * 10000} R0${twistValues[index] * 10000}\n`);
       });
 
       ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
@@ -474,11 +474,11 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${twistValues[0] * 1000}\n`);
-      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${twistValues[1] * 1000}\n`);
-      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 1000} R0${twistValues[2] * 1000}\n`);
-      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 1000}\n`);
-      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 1000}\n`);
+      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 10000} R0${twistValues[0] * 10000}\n`);
+      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 10000} R0${twistValues[1] * 10000}\n`);
+      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 10000} R0${twistValues[2] * 10000}\n`);
+      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 10000}\n`);
+      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 10000}\n`);
 
       ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
       ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 3]);
@@ -513,11 +513,11 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${twistValues[0] * 1000} R1${rollValues[0] * 1000}\n`);
-      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${twistValues[1] * 1000} R1${rollValues[1] * 1000}\n`);
-      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 1000} R0${twistValues[2] * 1000} R1${rollValues[2] * 1000}\n`);
-      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 1000}\n`);
-      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 1000}\n`);
+      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 10000} R0${twistValues[0] * 10000} R1${rollValues[0] * 10000}\n`);
+      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 10000} R0${twistValues[1] * 10000} R1${rollValues[1] * 10000}\n`);
+      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 10000} R0${twistValues[2] * 10000} R1${rollValues[2] * 10000}\n`);
+      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 10000}\n`);
+      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 10000}\n`);
 
       ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
       ayva.getAxis('R0').value.should.equal(twistValues[twistValues.length - 3]);
@@ -559,11 +559,11 @@ describe('Motion API Tests', function () {
       expect(rollValueProvider.args[2][0].speed).to.equal(1.5);
 
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 1000} R0${expectedTwistValues[0] * 1000} R1${rollValues[0] * 1000}\n`);
-      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 1000} R0${expectedTwistValues[1] * 1000} R1${rollValues[1] * 1000}\n`);
-      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 1000} R0${expectedTwistValues[2] * 1000} R1${rollValues[2] * 1000}\n`);
-      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 1000}\n`);
-      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 1000}\n`);
+      device.write.args[0][0].should.equal(`L0${strokeValues[0] * 10000} R0${expectedTwistValues[0] * 10000} R1${rollValues[0] * 10000}\n`);
+      device.write.args[1][0].should.equal(`L0${strokeValues[1] * 10000} R0${expectedTwistValues[1] * 10000} R1${rollValues[1] * 10000}\n`);
+      device.write.args[2][0].should.equal(`L0${strokeValues[2] * 10000} R0${expectedTwistValues[2] * 10000} R1${rollValues[2] * 10000}\n`);
+      device.write.args[3][0].should.equal(`L0${strokeValues[3] * 10000}\n`);
+      device.write.args[4][0].should.equal(`L0${strokeValues[4] * 10000}\n`);
 
       ayva.getAxis('L0').value.should.equal(strokeValues[strokeValues.length - 1]);
       ayva.getAxis('R0').value.should.equal(expectedTwistValues[expectedTwistValues.length - 1]);
@@ -584,7 +584,7 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
       device.write.callCount.should.equal(1);
-      device.write.args[0][0].should.equal('A2999 A1999\n');
+      device.write.args[0][0].should.equal('A29999 A19999\n');
 
       ayva.getAxis('lube').value.should.equal(true);
       ayva.getAxis('test-boolean-axis').value.should.equal(true);
@@ -603,21 +603,21 @@ describe('Motion API Tests', function () {
 
       expect(result).to.deep.equal([true, true, true]);
       device.write.callCount.should.equal(15);
-      device.write.args[0][0].should.equal('L0400\n');
-      device.write.args[1][0].should.equal('L0300\n');
-      device.write.args[2][0].should.equal('L0200\n');
-      device.write.args[3][0].should.equal('L0100\n');
-      device.write.args[4][0].should.equal('L0000\n');
-      device.write.args[5][0].should.equal('R0400\n');
-      device.write.args[6][0].should.equal('R0300\n');
-      device.write.args[7][0].should.equal('R0200\n');
-      device.write.args[8][0].should.equal('R0100\n');
-      device.write.args[9][0].should.equal('R0000\n');
-      device.write.args[10][0].should.equal('A0400\n');
-      device.write.args[11][0].should.equal('A0300\n');
-      device.write.args[12][0].should.equal('A0200\n');
-      device.write.args[13][0].should.equal('A0100\n');
-      device.write.args[14][0].should.equal('A0000\n');
+      device.write.args[0][0].should.equal('L04000\n');
+      device.write.args[1][0].should.equal('L03000\n');
+      device.write.args[2][0].should.equal('L02000\n');
+      device.write.args[3][0].should.equal('L01000\n');
+      device.write.args[4][0].should.equal('L00000\n');
+      device.write.args[5][0].should.equal('R04000\n');
+      device.write.args[6][0].should.equal('R03000\n');
+      device.write.args[7][0].should.equal('R02000\n');
+      device.write.args[8][0].should.equal('R01000\n');
+      device.write.args[9][0].should.equal('R00000\n');
+      device.write.args[10][0].should.equal('A04000\n');
+      device.write.args[11][0].should.equal('A03000\n');
+      device.write.args[12][0].should.equal('A02000\n');
+      device.write.args[13][0].should.equal('A01000\n');
+      device.write.args[14][0].should.equal('A00000\n');
 
       ayva.getAxis('L0').value.should.equal(0.0);
       ayva.getAxis('R0').value.should.equal(0.0);
@@ -646,7 +646,7 @@ describe('Motion API Tests', function () {
       // The first move should have only had time to complete one step.
       // The rest should have been cancelled before even starting.
       device.write.callCount.should.equal(1);
-      device.write.args[0][0].should.equal('L0400\n');
+      device.write.args[0][0].should.equal('L04000\n');
       ayva.getAxis('L0').value.should.equal(0.400);
       ayva.getAxis('R0').value.should.equal(0.500);
       ayva.getAxis('A0').value.should.equal(0.500);
@@ -679,11 +679,11 @@ describe('Motion API Tests', function () {
 
       // The first move should have completed successfully, while the rest are cancelled.
       device.write.callCount.should.equal(5);
-      device.write.args[0][0].should.equal('L0400\n');
-      device.write.args[1][0].should.equal('L0300\n');
-      device.write.args[2][0].should.equal('L0200\n');
-      device.write.args[3][0].should.equal('L0100\n');
-      device.write.args[4][0].should.equal('L0000\n');
+      device.write.args[0][0].should.equal('L04000\n');
+      device.write.args[1][0].should.equal('L03000\n');
+      device.write.args[2][0].should.equal('L02000\n');
+      device.write.args[3][0].should.equal('L01000\n');
+      device.write.args[4][0].should.equal('L00000\n');
 
       ayva.getAxis('L0').value.should.equal(0.0);
       ayva.getAxis('R0').value.should.equal(0.500);
