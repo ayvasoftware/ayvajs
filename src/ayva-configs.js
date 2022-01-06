@@ -1,9 +1,7 @@
 /**
  * Base OSR2 Configuration
- *
- * TODO: Add auxiliary axes.
  */
-const OSR2 = {
+const OSR2_CONFIG = {
   name: 'OSR2',
   defaultAxis: 'L0',
   axes: [
@@ -29,7 +27,26 @@ const OSR2 = {
     },
     {
       name: 'A0',
-      type: 'boolean',
+      alias: 'valve',
+      type: 'auxiliary',
+    },
+    {
+      name: 'A1',
+      alias: 'suck',
+      type: 'auxiliary',
+    },
+    {
+      name: 'A2',
+      alias: 'lube',
+      type: 'auxiliary',
+    },
+    {
+      name: 'V0',
+      type: 'auxiliary',
+    },
+    {
+      name: 'V1',
+      type: 'auxiliary',
     },
   ],
 };
@@ -39,9 +56,9 @@ const OSR2 = {
  *
  * SR6 configuration is just the OSR2 configuration plus a couple axes.
  */
-const SR6 = JSON.parse(JSON.stringify(OSR2));
-SR6.name = 'SR6';
-SR6.axes.push({
+const SR6_CONFIG = JSON.parse(JSON.stringify(OSR2_CONFIG));
+SR6_CONFIG.name = 'SR6';
+SR6_CONFIG.axes.push({
   name: 'L1',
   type: 'linear',
   alias: 'forward',
@@ -51,4 +68,4 @@ SR6.axes.push({
   alias: 'left',
 });
 
-export { OSR2, SR6 };
+export { OSR2_CONFIG, SR6_CONFIG };

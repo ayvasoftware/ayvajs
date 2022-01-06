@@ -2,7 +2,7 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { OSR2 } from '../../src/ayva-configs.js';
+import { OSR2_CONFIG } from '../../src/ayva-configs.js';
 import { createFunctionBinder } from '../test-helpers.js';
 
 /**
@@ -13,14 +13,14 @@ describe('Configuration Tests', function () {
 
   describe('#constructor', function () {
     it('should set a valid configuration', function () {
-      const ayva = new Ayva(OSR2);
+      const ayva = new Ayva(OSR2_CONFIG);
 
       expect(ayva.name).to.equal('OSR2');
       expect(ayva.defaultAxis).to.equal('L0');
       expect(ayva.frequency).to.equal(50);
       expect(ayva.period).to.equal(0.02);
 
-      for (const axis of OSR2.axes) {
+      for (const axis of OSR2_CONFIG.axes) {
         const storedAxis = ayva.getAxis(axis.name);
 
         expect(storedAxis).to.not.be.undefined;
@@ -236,7 +236,7 @@ describe('Configuration Tests', function () {
 
   describe('#updateLimits', function () {
     it('should disallow invalid limits', function () {
-      const ayva = new Ayva(OSR2);
+      const ayva = new Ayva(OSR2_CONFIG);
 
       ayva.getAxis('L0').min.should.equal(0);
       ayva.getAxis('L0').max.should.equal(1);
@@ -260,7 +260,7 @@ describe('Configuration Tests', function () {
     });
 
     it('should allow updating valid limits', function () {
-      const ayva = new Ayva(OSR2);
+      const ayva = new Ayva(OSR2_CONFIG);
 
       ayva.getAxis('L0').min.should.equal(0);
       ayva.getAxis('L0').max.should.equal(1);
