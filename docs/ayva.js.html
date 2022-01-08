@@ -194,6 +194,10 @@ class Ayva {
    * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
    */
   async move (...movements) {
+    if (!this.#devices || !this.#devices.length) {
+      throw new Error('No output devices have been added.');
+    }
+
     this.#validateMovements(movements);
 
     const movementId = this.#nextMovementId++;
@@ -346,12 +350,12 @@ class Ayva {
   }
 
   /**
-   * Alias for #addOutputDevice()
+   * Registers a new output device. Ayva outputs commands to all connected devices.
+   * More than one device can be specified.
    *
-   * @ignore
    * @param {...Object} device - object with a write method.
    */
-  addOutputDevices (...devices) {
+  addOutputDevice (...devices) {
     for (const device of devices) {
       if (!(device &amp;&amp; device.write &amp;&amp; device.write instanceof Function)) {
         throw new Error(`Invalid device: ${device}`);
@@ -362,13 +366,13 @@ class Ayva {
   }
 
   /**
-   * Registers a new output device. Ayva outputs commands to all connected devices.
-   * More than one device can be specified.
+   * Alias for #addOutputDevice()
    *
+   * @ignore
    * @param {...Object} device - object with a write method.
    */
-  addOutputDevice (...devices) {
-    this.addOutputDevices(...devices);
+  addOutputDevices (...devices) {
+    this.addOutputDevice(...devices);
   }
 
   /**
@@ -380,19 +384,7 @@ class Ayva {
    * by the command will not be tracked by Ayva's internal position tracking.
    * @private
    */
-  write (command) {
-    if (!this.#devices || !this.#devices.length) {
-      throw new Error('No output devices have been added.');
-    }
-
-    if (!(typeof command === 'string' || command instanceof String)) {
-      throw new Error(`Invalid command: ${command}`);
-    }
-
-    if (!(command.trim() &amp;&amp; command.trim().length)) {
-      throw new Error('Cannot send a blank command.');
-    }
-
+  #write (command) {
     for (const device of this.#devices) {
       device.write(command);
     }
@@ -426,10 +418,10 @@ class Ayva {
       .map((provider) => this.#executeProvider(provider, index))
       .filter(({ value }) => this.#isValidAxisValue(value));
 
-    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.999, 3) : value));
+    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.9999, 4) : value));
 
     if (tcodes.length) {
-      this.write(`${tcodes.join(' ')}\n`);
+      this.#write(`${tcodes.join(' ')}\n`);
 
       axisValues.forEach(({ axis, value }) => {
         this.#axes[axis].value = value;
@@ -440,6 +432,7 @@ class Ayva {
   #executeProvider (provider, index) {
     const time = index * this.#period;
     const { parameters, valueProvider } = provider;
+    const { stepCount } = parameters;
 
     const nextValue = valueProvider({
       ...parameters,
@@ -448,7 +441,7 @@ class Ayva {
       period: this.#period,
       frequency: this.#frequency,
       currentValue: this.#axes[parameters.axis].value,
-      x: (index + 1) / provider.parameters.stepCount,
+      x: stepCount === 0 ? 1 : (index + 1) / stepCount,
     });
 
     const notNullOrUndefined = nextValue !== null &amp;&amp; nextValue !== undefined; // Allow null or undefined to indicate no movement.
@@ -479,12 +472,12 @@ class Ayva {
     let valueText;
 
     if (typeof value === 'boolean') {
-      valueText = value ? '999' : '000';
+      valueText = value ? '9999' : '0000';
     } else {
       const { min, max } = this.#axes[axis];
       const scaledValue = (max - min) * value + min;
 
-      valueText = `${clamp(round(scaledValue, 3) * 1000, 0, 999)}`.padStart(3, '0');
+      valueText = `${clamp(round(scaledValue * 10000), 0, 9999)}`.padStart(4, '0');
     }
 
     return `${this.#axes[axis].name}${valueText}`;
@@ -535,6 +528,11 @@ class Ayva {
 
     const movementsByAxis = computedMovements.reduce((map, p) => {
       map[p.axis] = p;
+
+      if (this.#axes[p.axis].alias) {
+        map[this.#axes[p.axis].alias] = p;
+      }
+
       return map;
     }, {});
 
@@ -555,7 +553,7 @@ class Ayva {
           // Now we can compute a speed.
           movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 10);
         }
-      } else if (!has(movement, 'duration') &amp;&amp; this.#axes[movement.axis].type !== 'boolean') { // TODO: Do I want to exclude boolean here?
+      } else if (!has(movement, 'duration') &amp;&amp; this.#axes[movement.axis].type !== 'boolean') {
         // Implicit sync to max duration.
         movement.duration = maxDuration;
       }
@@ -618,8 +616,6 @@ class Ayva {
 
   /**
    * All the validation on movement descriptors :O
-   *
-   * TODO: Clean this up and maybe move some of this out into a generic, parameterizable validator.
    *
    * @param {*} movements
    */
@@ -720,6 +716,10 @@ class Ayva {
       }
 
       movementMap[axis] = movement;
+
+      if (this.#axes[axis].alias) {
+        movementMap[this.#axes[axis].alias] = movement;
+      }
     });
 
     movements.forEach((movement) => {
@@ -747,7 +747,6 @@ class Ayva {
   /**
    * Ensure all required fields are present in the configuration and that all are of valid types.
    *
-   * TODO: Maybe move some of this out into a generic validator that takes a validation spec.
    * @param {Object} axisConfig
    */
   #validateAxisConfig (axisConfig) {
