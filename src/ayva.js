@@ -321,6 +321,7 @@ class Ayva {
   #executeProvider (provider, index) {
     const time = index * this.#period;
     const { parameters, valueProvider } = provider;
+    const { stepCount } = parameters;
 
     const nextValue = valueProvider({
       ...parameters,
@@ -329,7 +330,7 @@ class Ayva {
       period: this.#period,
       frequency: this.#frequency,
       currentValue: this.#axes[parameters.axis].value,
-      x: (index + 1) / provider.parameters.stepCount,
+      x: stepCount === 0 ? 1 : (index + 1) / stepCount,
     });
 
     const notNullOrUndefined = nextValue !== null && nextValue !== undefined; // Allow null or undefined to indicate no movement.

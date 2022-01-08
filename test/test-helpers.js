@@ -40,7 +40,7 @@ export function TEST_CONFIG () {
       {
         name: 'A2',
         type: 'boolean',
-        alias: 'lube',
+        alias: 'test-boolean-axis-2',
       },
     ],
   };
