@@ -354,7 +354,7 @@ describe('Motion API Tests', function () {
     });
 
     it(`should call value provider with 'to', 'speed', and 'direction' properties when 'to' is specified (positive direction)`, async function () { // eslint-disable-line max-len
-      // TODO: This test is nearly identical to the previous test. Thou shalt not repeat thyself?
+      // TODO: Thou shalt not repeat thyself?
       ayva.getAxis('R0').value.should.equal(0.5);
 
       const values = [0.600, 0.700, 0.800, 0.900, 1];
@@ -670,7 +670,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should synchronize movements using the sync property (alias)', async function () {
-      // TODO: This test is virtually identical to the previous test. Thou shalt not repeat thyself.
+      // TODO: Thou shalt not repeat thyself.
       ayva.getAxis('L0').value.should.equal(0.5);
       ayva.getAxis('R0').value.should.equal(0.5);
       ayva.getAxis('R1').value.should.equal(0.5);
