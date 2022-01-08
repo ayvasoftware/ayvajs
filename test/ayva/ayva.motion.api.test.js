@@ -6,7 +6,6 @@ import { TEST_CONFIG } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Motion API.
- * TODO: Add some validation of parameters passed to value providers.
  */
 describe('Motion API Tests', function () {
   let ayva;
@@ -21,6 +20,25 @@ describe('Motion API Tests', function () {
 
     tcodes.forEach((tcode, index) => {
       device.write.args[index][0].should.equal(`${tcode}\n`);
+    });
+  };
+
+  /**
+   * Helper to check that a fake provider function was called with appropriate values.
+   */
+  const validateProviderParameters = function (provider, parameters, currentValues) {
+    provider.callCount.should.equal(currentValues.length);
+
+    currentValues.forEach((currentValue, index) => {
+      const expectedParameters = {
+        currentValue,
+        index,
+        time: ayva.period * index,
+        x: (index + 1) / currentValues.length,
+        ...parameters,
+      };
+
+      provider.args[index][0].should.deep.equal(expectedParameters);
     });
   };
 
@@ -287,8 +305,86 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
 
+      const expectedCurrentValues = [0.5, ...values.slice(0, values.length - 1)];
+
+      validateProviderParameters(valueProvider, {
+        axis: 'R0',
+        frequency: 50,
+        period: 0.02,
+        from: 0.5,
+        stepCount: 5,
+        duration: 0.1,
+      }, expectedCurrentValues);
+
       validateWriteOutput('R04750', 'R04500', 'R04250', 'R04000', 'R03750');
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
+    });
+
+    it(`should call value provider with 'to', 'speed', and 'direction' properties when 'to' is specified`, async function () {
+      ayva.getAxis('R0').value.should.equal(0.5);
+
+      const values = [0.400, 0.300, 0.200, 0.100, 0];
+      const valueProvider = sinon.fake((parameters) => values[parameters.index]);
+
+      const result = await ayva.move({
+        axis: 'R0',
+        to: 0,
+        duration: 0.1,
+        value: valueProvider,
+      });
+
+      expect(result).to.be.true;
+
+      const expectedCurrentValues = [0.5, ...values.slice(0, values.length - 1)];
+
+      validateProviderParameters(valueProvider, {
+        axis: 'R0',
+        frequency: 50,
+        period: 0.02,
+        to: 0,
+        from: 0.5,
+        direction: -1,
+        speed: 5,
+        stepCount: 5,
+        duration: 0.1,
+      }, expectedCurrentValues);
+
+      validateWriteOutput('R04000', 'R03000', 'R02000', 'R01000', 'R00000');
+      ayva.getAxis('R0').value.should.equal(0);
+    });
+
+    it(`should call value provider with 'to', 'speed', and 'direction' properties when 'to' is specified (positive direction)`, async function () { // eslint-disable-line max-len
+      // TODO: This test is nearly identical to the previous test. Thou shalt not repeat thyself?
+      ayva.getAxis('R0').value.should.equal(0.5);
+
+      const values = [0.600, 0.700, 0.800, 0.900, 1];
+      const valueProvider = sinon.fake((parameters) => values[parameters.index]);
+
+      const result = await ayva.move({
+        axis: 'R0',
+        to: 1,
+        duration: 0.1,
+        value: valueProvider,
+      });
+
+      expect(result).to.be.true;
+
+      const expectedCurrentValues = [0.5, ...values.slice(0, values.length - 1)];
+
+      validateProviderParameters(valueProvider, {
+        axis: 'R0',
+        frequency: 50,
+        period: 0.02,
+        to: 1,
+        from: 0.5,
+        direction: 1,
+        speed: 5,
+        stepCount: 5,
+        duration: 0.1,
+      }, expectedCurrentValues);
+
+      validateWriteOutput('R05999', 'R06999', 'R07999', 'R08999', 'R09999'); // Because normalization
+      ayva.getAxis('R0').value.should.equal(1);
     });
 
     it('should send valid movements when constant value and speed', async function () {
@@ -351,10 +447,19 @@ describe('Motion API Tests', function () {
       const result = await ayva.move({
         axis: 'R0',
         value: valueProvider,
-        duration: 1,
+        duration: 0.02,
       });
 
       expect(result).to.be.true;
+
+      validateProviderParameters(valueProvider, {
+        axis: 'R0',
+        frequency: 50,
+        period: 0.02,
+        from: 0.5,
+        stepCount: 1,
+        duration: 0.02,
+      }, [0.5]);
 
       validateWriteOutput('R09999');
       ayva.getAxis('R0').value.should.equal(1);
@@ -374,6 +479,17 @@ describe('Motion API Tests', function () {
       });
 
       expect(result).to.be.true;
+
+      const expectedCurrentValues = [0.5, ...values.slice(0, values.length - 1)];
+
+      validateProviderParameters(valueProvider, {
+        axis: 'R0',
+        frequency: 50,
+        period: 0.02,
+        from: 0.5,
+        stepCount: 5,
+        duration: 0.1,
+      }, expectedCurrentValues);
 
       validateWriteOutput('R04200', 'R03400', 'R02600', 'R01800', 'R01000');
       ayva.getAxis('R0').value.should.equal(0);
