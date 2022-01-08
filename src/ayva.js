@@ -417,6 +417,11 @@ class Ayva {
 
     const movementsByAxis = computedMovements.reduce((map, p) => {
       map[p.axis] = p;
+
+      if (this.#axes[p.axis].alias) {
+        map[this.#axes[p.axis].alias] = p;
+      }
+
       return map;
     }, {});
 

@@ -513,6 +513,49 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R1').value.should.equal(0.445);
     });
 
+    it('should synchronize movements using the sync property (alias)', async function () {
+      // TODO: This test is virtually identical to the previous test. Thou shalt not repeat thyself.
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('R1').value.should.equal(0.5);
+
+      const strokeValues = [0.475, 0.450, 0.425, 0.400, 0.375];
+      const twistValues = [0.480, 0.460, 0.440, 0.420, 0.400];
+      const rollValues = [0.485, 0.465, 0.445, 0, 0];
+
+      const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
+      const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.index]);
+      const rollValueProvider = sinon.fake((parameters) => rollValues[parameters.index]);
+
+      const result = await ayva.move({
+        axis: 'L0',
+        value: strokeValueProvider,
+        duration: 0.1,
+      }, {
+        axis: 'R0',
+        value: twistValueProvider,
+        duration: 0.06,
+      }, {
+        axis: 'R1',
+        value: rollValueProvider,
+        sync: 'twist',
+      });
+
+      expect(result).to.be.true;
+
+      validateWriteOutput(
+        'L04750 R04800 R14850',
+        'L04500 R04600 R14650',
+        'L04250 R04400 R14450',
+        'L04000',
+        'L03750',
+      );
+
+      ayva.getAxis('L0').value.should.equal(0.375);
+      ayva.getAxis('R0').value.should.equal(0.44);
+      ayva.getAxis('R1').value.should.equal(0.445);
+    });
+
     it('should compute speed when synchronizing movements using the sync property', async function () {
       ayva.getAxis('L0').value.should.equal(0.5);
       ayva.getAxis('R0').value.should.equal(0.5);
