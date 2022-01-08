@@ -72,10 +72,10 @@ describe('Motion API Tests', function () {
    * Invalid movements.
    */
   describe('#move() (invalid movements)', function () {
-    it('should throw an error if invalid movement is passed', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity, 1];
+    const invalidNumericValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity];
 
-      const testInvalidMovePromises = invalidValues.map((
+    it('should throw an error if invalid movement is passed', function () {
+      const testInvalidMovePromises = [...invalidNumericValues, -1, 0, 1].map((
         value
       ) => ayva.move(value).should.be.rejectedWith(Error, `Invalid movement: ${value}`));
 
@@ -86,9 +86,8 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'to\' parameter is missing or invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity, -1, 2];
-
-      const testInvalidMovePromises = invalidValues.map(
+      // 0 <= to <= 1
+      const testInvalidMovePromises = [...invalidNumericValues, -1, 2].map(
         (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'to': ${value}`)
       );
 
@@ -100,9 +99,8 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'speed\' is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity, -1, 0];
-
-      const testInvalidMovePromises = invalidValues.map(
+      // speed > 0
+      const testInvalidMovePromises = [...invalidNumericValues, -1, 0].map(
         (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'speed': ${value}`)
       );
 
@@ -110,9 +108,8 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if \'duration\' is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity, -1, 0];
-
-      const testInvalidMovePromises = invalidValues.map(
+      // duration > 0
+      const testInvalidMovePromises = [...invalidNumericValues, -1, 0].map(
         (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'duration': ${value}`)
       );
 
@@ -136,7 +133,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if axis is invalid', function () {
-      const invalidValues = [null, undefined, 'bad', '', '  ', false, true, () => {}, NaN, Infinity, 0, 1, -1];
+      const invalidValues = [...invalidNumericValues, 'non-existent', 0, 1, -1];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: 1, axis: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'axis': ${value}`)
@@ -148,7 +145,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if value is not a function', function () {
-      const invalidValues = [null, undefined, 'bad', '', '  ', false, true, NaN, Infinity, 0, 1, -1];
+      const invalidValues = [...invalidNumericValues, 0, 1, -1].filter((v) => !(v instanceof Function));
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: 1, value }).should.be.rejectedWith(Error, '\'value\' must be a function.')
@@ -167,7 +164,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if the sync property is invalid data type', function () {
-      const invalidValues = [null, undefined, '', '  ', false, true, () => {}, NaN, Infinity, 0, 1, -1];
+      const invalidValues = [null, undefined, '', ' ', false, true, () => {}, NaN, Infinity, 0, 1, -1];
 
       const testInvalidMovePromises = invalidValues.map(
         (value) => ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: value })
@@ -179,6 +176,7 @@ describe('Motion API Tests', function () {
 
     it('should throw an error if the sync property is invalid', function () {
       const syncCycleError = 'Sync axes cannot form a cycle.';
+
       return Promise.all([
         // Sync with non-existent axis.
         ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' })
@@ -439,8 +437,6 @@ describe('Motion API Tests', function () {
       device.write.callCount.should.equal(1);
       device.write.args[0][0].should.equal('L00000\n');
     });
-
-    // TODO: Add test cases for impossible speeds or durations (durations less than the period)
   });
 
   /**
