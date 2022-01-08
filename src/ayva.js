@@ -75,6 +75,10 @@ class Ayva {
    * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
    */
   async move (...movements) {
+    if (!this.#devices || !this.#devices.length) {
+      throw new Error('No output devices have been added.');
+    }
+
     this.#validateMovements(movements);
 
     const movementId = this.#nextMovementId++;
@@ -261,19 +265,7 @@ class Ayva {
    * by the command will not be tracked by Ayva's internal position tracking.
    * @private
    */
-  write (command) {
-    if (!this.#devices || !this.#devices.length) {
-      throw new Error('No output devices have been added.');
-    }
-
-    if (!(typeof command === 'string' || command instanceof String)) {
-      throw new Error(`Invalid command: ${command}`);
-    }
-
-    if (!(command.trim() && command.trim().length)) {
-      throw new Error('Cannot send a blank command.');
-    }
-
+  #write (command) {
     for (const device of this.#devices) {
       device.write(command);
     }
@@ -310,7 +302,7 @@ class Ayva {
     const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, typeof value === 'number' ? round(value * 0.9999, 4) : value));
 
     if (tcodes.length) {
-      this.write(`${tcodes.join(' ')}\n`);
+      this.#write(`${tcodes.join(' ')}\n`);
 
       axisValues.forEach(({ axis, value }) => {
         this.#axes[axis].value = value;
@@ -506,8 +498,6 @@ class Ayva {
   /**
    * All the validation on movement descriptors :O
    *
-   * TODO: Clean this up and maybe move some of this out into a generic, parameterizable validator.
-   *
    * @param {*} movements
    */
   #validateMovements (movements) {
@@ -638,7 +628,6 @@ class Ayva {
   /**
    * Ensure all required fields are present in the configuration and that all are of valid types.
    *
-   * TODO: Maybe move some of this out into a generic validator that takes a validation spec.
    * @param {Object} axisConfig
    */
   #validateAxisConfig (axisConfig) {

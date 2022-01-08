@@ -136,6 +136,7 @@ describe('Motion API Tests', function () {
       delete configWithoutDefault.defaultAxis;
 
       ayva = new Ayva(configWithoutDefault);
+      ayva.addOutputDevice(device);
       return ayva.move({ to: 0, speed: 1 }).should.be.rejectedWith(Error, 'No default axis configured. Must specify an axis for each movement.');
     });
 
@@ -253,6 +254,16 @@ describe('Motion API Tests', function () {
         value: () => {
           throw new Error(errorMessage);
         },
+        duration: 1,
+      }).should.be.rejectedWith(errorMessage);
+    });
+
+    it('should throw an error if there are no output devices added', function () {
+      ayva = new Ayva(TEST_CONFIG());
+      const errorMessage = 'No output devices have been added.';
+
+      return ayva.move({
+        to: 0,
         duration: 1,
       }).should.be.rejectedWith(errorMessage);
     });
@@ -396,6 +407,35 @@ describe('Motion API Tests', function () {
 
       validateWriteOutput('L00000');
       ayva.getAxis('stroke').value.should.equal(0);
+    });
+
+    it('should send output to all connected devices', async function () {
+      const secondDevice = {
+        write: sinon.fake(),
+      };
+
+      ayva.addOutputDevice(secondDevice);
+
+      ayva.getAxis('R0').value.should.equal(0.5);
+
+      const result = await ayva.move({
+        axis: 'R0',
+        to: 0.4,
+        speed: 1,
+      });
+
+      expect(result).to.be.true;
+
+      const expected = ['R04800', 'R04600', 'R04400', 'R04200', 'R04000'];
+
+      validateWriteOutput(...expected);
+
+      secondDevice.write.callCount.should.equal(expected.length);
+      expected.forEach((tcode, index) => {
+        secondDevice.write.args[index][0].should.equal(`${tcode}\n`);
+      });
+
+      ayva.getAxis('R0').value.should.equal(0.4);
     });
   });
 
