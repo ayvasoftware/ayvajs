@@ -437,7 +437,7 @@ class Ayva {
           // Now we can compute a speed.
           movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 10);
         }
-      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') { // TODO: Do I want to exclude boolean here?
+      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
         // Implicit sync to max duration.
         movement.duration = maxDuration;
       }
@@ -602,6 +602,10 @@ class Ayva {
       }
 
       movementMap[axis] = movement;
+
+      if (this.#axes[axis].alias) {
+        movementMap[this.#axes[axis].alias] = movement;
+      }
     });
 
     movements.forEach((movement) => {
