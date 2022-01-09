@@ -452,7 +452,8 @@ class Ayva {
         if (this.#axes[movement.axis].type === 'boolean') {
           provider.valueProvider = () => movement.to;
         } else if (movement.to !== movement.from) {
-          provider.valueProvider = ({ from, to, x }) => from + x * (to - from);
+          // TODO: Allow for a default ramp function.
+          provider.valueProvider = Ayva.RAMP_LINEAR;
         } else {
           // No movement.
           provider.valueProvider = () => {};
@@ -702,6 +703,42 @@ class Ayva {
     }
 
     return Object.values(uniqueAxes).sort(sortByName);
+  }
+
+  /**
+   * Value provider that generates motion with constant velocity.
+   */
+  static get RAMP_LINEAR () {
+    return ({ to, from, x }) => from + ((to - from) * x);
+  }
+
+  /**
+   * Value provider that generates motion that looks like a negative cos wave (0 - 180 degrees)
+   */
+  static get RAMP_NEGATIVE_COS () {
+    return ({ to, from, x }) => {
+      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
+
+      return from + ((to - from) * value);
+    };
+  }
+
+  /**
+   * Value provider that generates motion in the shape of a parabola (half)
+   */
+  static get RAMP_PARABOLIC () {
+    return ({ to, from, x }) => ((to - from) * x * x) + from;
+  }
+
+  /**
+   * Value provider that generates motion in the shape of an upside down parabola (half)
+   */
+  static get RAMP_NEGATIVE_PARABOLIC () {
+    return ({ to, from, x }) => {
+      const value = -((x - 1) ** 2) + 1;
+
+      return ((to - from) * value) + from;
+    };
   }
 }
 

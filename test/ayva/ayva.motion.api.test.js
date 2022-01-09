@@ -320,7 +320,7 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R0').value.should.equal(values[values.length - 1]);
     });
 
-    it(`should call value provider with 'to', 'speed', and 'direction' properties when 'to' is specified`, async function () {
+    it('should call value provider with \'to\', \'speed\', and \'direction\' properties when \'to\' is specified', async function () {
       ayva.getAxis('R0').value.should.equal(0.5);
 
       const values = [0.400, 0.300, 0.200, 0.100, 0];
@@ -353,7 +353,7 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R0').value.should.equal(0);
     });
 
-    it(`should call value provider with 'to', 'speed', and 'direction' properties when 'to' is specified (positive direction)`, async function () { // eslint-disable-line max-len
+    it('should call value provider with \'to\', \'speed\', and \'direction\' properties when \'to\' is specified (positive direction)', async function () { // eslint-disable-line max-len
       // TODO: Thou shalt not repeat thyself?
       ayva.getAxis('R0').value.should.equal(0.5);
 
@@ -552,6 +552,22 @@ describe('Motion API Tests', function () {
       });
 
       ayva.getAxis('R0').value.should.equal(0.4);
+    });
+
+    it('should allow standard ramp functions', async function () {
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      await ayva.move({ to: 0, duration: 1, value: Ayva.RAMP_NEGATIVE_COS });
+      ayva.getAxis('stroke').value.should.equal(0);
+
+      await ayva.move({ to: 1, duration: 1, value: Ayva.RAMP_LINEAR });
+      ayva.getAxis('stroke').value.should.equal(1);
+
+      await ayva.move({ to: 0.5, duration: 1, value: Ayva.RAMP_PARABOLIC });
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      await ayva.move({ to: 0, duration: 1, value: Ayva.RAMP_NEGATIVE_PARABOLIC });
+      ayva.getAxis('stroke').value.should.equal(0);
     });
   });
 
