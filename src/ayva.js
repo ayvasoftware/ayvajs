@@ -211,9 +211,9 @@ class Ayva {
   /**
    * Update the limits for the specified axis.
    *
-   * @param {*} axis
-   * @param {*} from - value between 0 and 1
-   * @param {*} to - value between 0 and 1
+   * @param {String} axis
+   * @param {Number} from - value between 0 and 1
+   * @param {Number} to - value between 0 and 1
    */
   updateLimits (axis, from, to) {
     const isInvalid = (value) => !Number.isFinite(value) || value < 0 || value > 1;
@@ -339,8 +339,8 @@ class Ayva {
    * Converts the value into a standard live command TCode string for the specified axis. (i.e. 0.5 -> L0500)
    * If the axis is a boolean axis, true values get mapped to 999 and false gets mapped to 000.
    *
-   * @param {*} axis
-   * @param {*} value
+   * @param {String} axis
+   * @param {Number} value
    * @returns {String} the TCode string
    */
   #tcode (axis, value) {
@@ -494,7 +494,7 @@ class Ayva {
   /**
    * All the validation on movement descriptors :O
    *
-   * @param {*} movements
+   * @param {Array} movements
    */
   #validateMovements (movements) {
     const movementMap = {};
