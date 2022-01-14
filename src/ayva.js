@@ -2,6 +2,8 @@ import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
 
+import { SR6_CONFIG } from './ayva-configs.js';
+
 class Ayva {
   #devices = [];
 
@@ -40,16 +42,21 @@ class Ayva {
    */
   constructor (config) {
     if (config) {
-      this.name = config.name;
-      this.defaultAxis = config.defaultAxis;
-      this.#frequency = (config.frequency || this.#frequency);
-
-      if (config.axes) {
-        config.axes.forEach((axis) => {
-          this.configureAxis(axis);
-        });
-      }
+      this.#configure(config);
     }
+  }
+
+  /**
+   * Setup this Ayva instance with the default configuration (a six axis stroker).
+   *
+   * @example
+   * const ayva = new Ayva().defaultConfiguration();
+   *
+   * @returns the instance of Ayva
+   */
+  defaultConfiguration () {
+    this.#configure(SR6_CONFIG);
+    return this;
   }
 
   /**
@@ -254,6 +261,21 @@ class Ayva {
    */
   addOutputDevices (...devices) {
     this.addOutputDevice(...devices);
+  }
+
+  /**
+   * Setup the configuration.
+   */
+  #configure (config) {
+    this.name = config.name;
+    this.defaultAxis = config.defaultAxis;
+    this.#frequency = (config.frequency || this.#frequency);
+
+    if (config.axes) {
+      config.axes.forEach((axis) => {
+        this.configureAxis(axis);
+      });
+    }
   }
 
   /**
@@ -706,14 +728,14 @@ class Ayva {
   }
 
   /**
-   * Value provider that generates motion with constant velocity.
+   * Value provider that generates motion towards a target position with constant velocity.
    */
   static get RAMP_LINEAR () {
     return ({ to, from, x }) => from + ((to - from) * x);
   }
 
   /**
-   * Value provider that generates motion that looks like a negative cos wave (0 - 180 degrees)
+   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
    */
   static get RAMP_NEGATIVE_COS () {
     return ({ to, from, x }) => {
@@ -724,14 +746,14 @@ class Ayva {
   }
 
   /**
-   * Value provider that generates motion in the shape of a parabola (half)
+   * Value provider that generates motion towards a target position in the shape of half a parabola.
    */
   static get RAMP_PARABOLIC () {
     return ({ to, from, x }) => ((to - from) * x * x) + from;
   }
 
   /**
-   * Value provider that generates motion in the shape of an upside down parabola (half)
+   * Value provider that generates motion towards a target position in the shape of an upside down half of parabola.
    */
   static get RAMP_NEGATIVE_PARABOLIC () {
     return ({ to, from, x }) => {
