@@ -117,12 +117,13 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import {
+            <pre class="prettyprint source linenums"><code>import AyvaMoveBuilder from './ayva-move-builder.js';
+import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
-
 import { SR6_CONFIG } from './ayva-configs.js';
 
+// TODO: Allow accessing min, max, and value on $ axis functions.
 class Ayva {
   #devices = [];
 
@@ -135,7 +136,14 @@ class Ayva {
   #nextMovementId = 1;
 
   get axes () {
-    return { ...this.#axes };
+    const result = {};
+
+    Object.keys(this.#axes).forEach((key) => {
+      // Ensure that the result object is immutable by using getAxis()
+      result[key] = this.getAxis(key);
+    });
+
+    return result;
   }
 
   get frequency () {
@@ -151,6 +159,42 @@ class Ayva {
   }
 
   /**
+   * Value provider that generates motion towards a target position with constant velocity.
+   */
+  static get RAMP_LINEAR () {
+    return ({ to, from, x }) => from + ((to - from) * x);
+  }
+
+  /**
+   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
+   */
+  static get RAMP_NEGATIVE_COS () {
+    return ({ to, from, x }) => {
+      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
+
+      return from + ((to - from) * value);
+    };
+  }
+
+  /**
+   * Value provider that generates motion towards a target position in the shape of half a parabola.
+   */
+  static get RAMP_PARABOLIC () {
+    return ({ to, from, x }) => ((to - from) * x * x) + from;
+  }
+
+  /**
+   * Value provider that generates motion towards a target position in the shape of an upside down half of parabola.
+   */
+  static get RAMP_NEGATIVE_PARABOLIC () {
+    return ({ to, from, x }) => {
+      const value = -((x - 1) ** 2) + 1;
+
+      return ((to - from) * value) + from;
+    };
+  }
+
+  /**
    * Create a new instance of Ayva with the specified configuration.
    *
    * @param {Object} [config]
@@ -160,6 +204,8 @@ class Ayva {
    * @class Ayva
    */
   constructor (config) {
+    createConstantProperty(this, '$', {});
+
     if (config) {
       this.#configure(config);
     }
@@ -227,6 +273,15 @@ class Ayva {
     } finally {
       this.#movements.delete(movementId);
     }
+  }
+
+  /**
+   * Creates an AyvaMoveBuilder for this instance.
+   *
+   * @returns the new move builder.
+   */
+  moveBuilder () {
+    return new AyvaMoveBuilder(this);
   }
 
   /**
@@ -299,9 +354,11 @@ class Ayva {
     if (oldConfig) {
       resultConfig.value = oldConfig.value;
       delete this.#axes[oldConfig.alias];
+      delete this.$[oldConfig.alias];
     }
 
     this.#axes[axisConfig.name] = resultConfig;
+    this.#createAxisMoveBuilder(axisConfig.name);
 
     if (axisConfig.alias) {
       if (this.#axes[axisConfig.alias]) {
@@ -309,6 +366,7 @@ class Ayva {
       }
 
       this.#axes[axisConfig.alias] = resultConfig;
+      this.#createAxisMoveBuilder(axisConfig.alias);
     }
   }
 
@@ -380,6 +438,18 @@ class Ayva {
    */
   addOutputDevices (...devices) {
     this.addOutputDevice(...devices);
+  }
+
+  /**
+   * Add the start of a move builder chain to $ for the specified axis.
+   */
+  #createAxisMoveBuilder (axis) {
+    Object.defineProperty(this.$, axis, {
+      value: (...args) => this.moveBuilder()[axis](...args),
+      writeable: false,
+      configurable: true,
+      enumerable: true,
+    });
   }
 
   /**
@@ -577,11 +647,11 @@ class Ayva {
 
       if (has(movement, 'duration')) {
         movement.stepCount = round(movement.duration * this.#frequency);
-      } else if (this.#axes[movement.axis].type !== 'boolean') {
-        // By this point, the only movements without a duration should be boolean.
-        // This should literally never happen because of validation. But including here for debugging and clarity.
-        fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
-      }
+      } // else if (this.#axes[movement.axis].type !== 'boolean') {
+      // By this point, the only movements without a duration should be boolean.
+      // This should literally never happen because of validation. But including here for debugging and clarity.
+      // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
+      // }
     });
 
     // Create the actual value providers.
@@ -844,42 +914,6 @@ class Ayva {
     }
 
     return Object.values(uniqueAxes).sort(sortByName);
-  }
-
-  /**
-   * Value provider that generates motion towards a target position with constant velocity.
-   */
-  static get RAMP_LINEAR () {
-    return ({ to, from, x }) => from + ((to - from) * x);
-  }
-
-  /**
-   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
-   */
-  static get RAMP_NEGATIVE_COS () {
-    return ({ to, from, x }) => {
-      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
-
-      return from + ((to - from) * value);
-    };
-  }
-
-  /**
-   * Value provider that generates motion towards a target position in the shape of half a parabola.
-   */
-  static get RAMP_PARABOLIC () {
-    return ({ to, from, x }) => ((to - from) * x * x) + from;
-  }
-
-  /**
-   * Value provider that generates motion towards a target position in the shape of an upside down half of parabola.
-   */
-  static get RAMP_NEGATIVE_PARABOLIC () {
-    return ({ to, from, x }) => {
-      const value = -((x - 1) ** 2) + 1;
-
-      return ((to - from) * value) + from;
-    };
   }
 }
 
