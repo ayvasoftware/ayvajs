@@ -4,6 +4,7 @@ import {
 } from './util.js';
 import { SR6_CONFIG } from './ayva-configs.js';
 
+// TODO: Allow accessing min, max, and value on $ axis functions.
 class Ayva {
   #devices = [];
 
@@ -84,6 +85,8 @@ class Ayva {
    * @class Ayva
    */
   constructor (config) {
+    createConstantProperty(this, '$', {});
+
     if (config) {
       this.#configure(config);
     }
@@ -232,9 +235,11 @@ class Ayva {
     if (oldConfig) {
       resultConfig.value = oldConfig.value;
       delete this.#axes[oldConfig.alias];
+      delete this.$[oldConfig.alias];
     }
 
     this.#axes[axisConfig.name] = resultConfig;
+    this.#createAxisMoveBuilder(axisConfig.name);
 
     if (axisConfig.alias) {
       if (this.#axes[axisConfig.alias]) {
@@ -242,6 +247,7 @@ class Ayva {
       }
 
       this.#axes[axisConfig.alias] = resultConfig;
+      this.#createAxisMoveBuilder(axisConfig.alias);
     }
   }
 
@@ -313,6 +319,18 @@ class Ayva {
    */
   addOutputDevices (...devices) {
     this.addOutputDevice(...devices);
+  }
+
+  /**
+   * Add the start of a move builder chain to $ for the specified axis.
+   */
+  #createAxisMoveBuilder (axis) {
+    Object.defineProperty(this.$, axis, {
+      value: (...args) => this.moveBuilder()[axis](...args),
+      writeable: false,
+      configurable: true,
+      enumerable: true,
+    });
   }
 
   /**
@@ -510,11 +528,11 @@ class Ayva {
 
       if (has(movement, 'duration')) {
         movement.stepCount = round(movement.duration * this.#frequency);
-      } else if (this.#axes[movement.axis].type !== 'boolean') {
-        // By this point, the only movements without a duration should be boolean.
-        // This should literally never happen because of validation. But including here for debugging and clarity.
-        fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
-      }
+      } // else if (this.#axes[movement.axis].type !== 'boolean') {
+      // By this point, the only movements without a duration should be boolean.
+      // This should literally never happen because of validation. But including here for debugging and clarity.
+      // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
+      // }
     });
 
     // Create the actual value providers.
