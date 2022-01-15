@@ -16,7 +16,7 @@ class AyvaMoveBuilder {
   }
 
   execute () {
-    this.#ayva.move(...this.#moves);
+    return this.#ayva.move(...this.#moves);
   }
 
   #createBuilderFunction (axis) {
