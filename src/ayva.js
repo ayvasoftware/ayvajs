@@ -1,7 +1,7 @@
+import AyvaMoveBuilder from './ayva-move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
-
 import { SR6_CONFIG } from './ayva-configs.js';
 
 class Ayva {
@@ -16,7 +16,14 @@ class Ayva {
   #nextMovementId = 1;
 
   get axes () {
-    return { ...this.#axes };
+    const result = {};
+
+    Object.keys(this.#axes).forEach((key) => {
+      // Ensure that the result object is immutable by using getAxis()
+      result[key] = this.getAxis(key);
+    });
+
+    return result;
   }
 
   get frequency () {
@@ -29,6 +36,42 @@ class Ayva {
 
   get #period () {
     return 1 / this.#frequency;
+  }
+
+  /**
+   * Value provider that generates motion towards a target position with constant velocity.
+   */
+  static get RAMP_LINEAR () {
+    return ({ to, from, x }) => from + ((to - from) * x);
+  }
+
+  /**
+   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
+   */
+  static get RAMP_NEGATIVE_COS () {
+    return ({ to, from, x }) => {
+      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
+
+      return from + ((to - from) * value);
+    };
+  }
+
+  /**
+   * Value provider that generates motion towards a target position in the shape of half a parabola.
+   */
+  static get RAMP_PARABOLIC () {
+    return ({ to, from, x }) => ((to - from) * x * x) + from;
+  }
+
+  /**
+   * Value provider that generates motion towards a target position in the shape of an upside down half of parabola.
+   */
+  static get RAMP_NEGATIVE_PARABOLIC () {
+    return ({ to, from, x }) => {
+      const value = -((x - 1) ** 2) + 1;
+
+      return ((to - from) * value) + from;
+    };
   }
 
   /**
@@ -108,6 +151,15 @@ class Ayva {
     } finally {
       this.#movements.delete(movementId);
     }
+  }
+
+  /**
+   * Creates an AyvaMoveBuilder for this instance.
+   *
+   * @returns the new move builder.
+   */
+  moveBuilder () {
+    return new AyvaMoveBuilder(this);
   }
 
   /**
@@ -725,42 +777,6 @@ class Ayva {
     }
 
     return Object.values(uniqueAxes).sort(sortByName);
-  }
-
-  /**
-   * Value provider that generates motion towards a target position with constant velocity.
-   */
-  static get RAMP_LINEAR () {
-    return ({ to, from, x }) => from + ((to - from) * x);
-  }
-
-  /**
-   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
-   */
-  static get RAMP_NEGATIVE_COS () {
-    return ({ to, from, x }) => {
-      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
-
-      return from + ((to - from) * value);
-    };
-  }
-
-  /**
-   * Value provider that generates motion towards a target position in the shape of half a parabola.
-   */
-  static get RAMP_PARABOLIC () {
-    return ({ to, from, x }) => ((to - from) * x * x) + from;
-  }
-
-  /**
-   * Value provider that generates motion towards a target position in the shape of an upside down half of parabola.
-   */
-  static get RAMP_NEGATIVE_PARABOLIC () {
-    return ({ to, from, x }) => {
-      const value = -((x - 1) ** 2) + 1;
-
-      return ((to - from) * value) + from;
-    };
   }
 }
 

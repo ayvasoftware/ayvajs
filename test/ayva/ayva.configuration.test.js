@@ -275,5 +275,18 @@ describe('Configuration Tests', function () {
       ayva.getAxis('L0').min.should.equal(0.2);
       ayva.getAxis('L0').max.should.equal(0.8);
     });
+
+    it('should disallow changes through the axes property', function () {
+      const ayva = new Ayva(OSR2_CONFIG);
+
+      ayva.getAxis('L0').min.should.equal(0);
+      ayva.axes.L0.min.should.equal(0);
+
+      const testAssign = function () {
+        ayva.axes.L0.min = 9;
+      };
+
+      testAssign.should.throw('Cannot assign to read only property \'min\' of object \'#<Object>\'');
+    });
   });
 });
