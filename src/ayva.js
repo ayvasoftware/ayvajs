@@ -465,6 +465,7 @@ class Ayva {
     const computedMovements = movements.map((movement) => {
       // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
+      const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
 
       const result = {
         ...movement,
@@ -482,7 +483,8 @@ class Ayva {
           result.speed = round(absoluteDistance / movement.duration, 10);
         } else if (has(movement, 'speed')) {
           // { to: <number>, speed: <number> }
-          result.duration = round(absoluteDistance / movement.speed, 10);
+          result.speed = movement.speed * axisScale; // Convert real, absolute speed to scaled speed.
+          result.duration = round(absoluteDistance / result.speed, 10);
         }
 
         result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
