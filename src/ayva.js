@@ -5,6 +5,7 @@ import {
 import { SR6_CONFIG } from './ayva-configs.js';
 
 // TODO: Allow accessing min, max, and value on $ axis functions.
+// TODO: Scale speed values based on limits (before generating duration)
 class Ayva {
   #devices = [];
 

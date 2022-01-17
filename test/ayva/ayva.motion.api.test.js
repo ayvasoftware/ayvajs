@@ -45,7 +45,7 @@ describe('Motion API Tests', function () {
   beforeEach(function () {
     ayva = new Ayva(TEST_CONFIG());
 
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve())); // Do not actually sleep.
+    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
     warn = sinon.replace(console, 'warn', sinon.fake());
 
     device = {
