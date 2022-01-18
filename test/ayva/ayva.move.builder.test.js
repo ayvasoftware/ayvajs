@@ -2,7 +2,7 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import MoveBuilder from '../../src/move-builder.js';
+import AyvaMoveBuilder from '../../src/ayva-move-builder.js';
 import { TEST_CONFIG } from '../test-helpers.js';
 
 describe('Move Builder Tests', function () {
@@ -39,8 +39,8 @@ describe('Move Builder Tests', function () {
         expect(ayva.$).to.have.property(axis.alias);
         expect(ayva.$[axis.alias]).to.be.a('function');
 
-        expect(ayva.$[axis.name](0) instanceof MoveBuilder).to.be.true;
-        expect(ayva.$[axis.alias](0) instanceof MoveBuilder).to.be.true;
+        expect(ayva.$[axis.name](0) instanceof AyvaMoveBuilder).to.be.true;
+        expect(ayva.$[axis.alias](0) instanceof AyvaMoveBuilder).to.be.true;
       });
     });
   });

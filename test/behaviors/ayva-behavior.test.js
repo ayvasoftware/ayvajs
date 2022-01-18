@@ -1,7 +1,7 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import ActionBehavior from '../../src/behaviors/action-behavior.js';
+import AyvaBehavior from '../../src/behaviors/ayva-behavior.js';
 import { TEST_CONFIG } from '../test-helpers.js';
 
 describe('Behavior API Tests', function () {
@@ -13,7 +13,7 @@ describe('Behavior API Tests', function () {
     sinon.replace(ayva, 'move', sinon.fake());
     sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
 
-    behavior = new ActionBehavior();
+    behavior = new AyvaBehavior();
   });
 
   afterEach(function () {
@@ -97,7 +97,7 @@ describe('Behavior API Tests', function () {
 
       it(`${type}Behavior`, async function () {
         const duration = 1;
-        const subBehavior = new ActionBehavior();
+        const subBehavior = new AyvaBehavior();
 
         subBehavior.generateActions = () => {
           subBehavior[`${type}Sleep`](duration);
@@ -160,7 +160,7 @@ describe('Behavior API Tests', function () {
         speed: 2,
       }];
 
-      const subBehavior = new ActionBehavior();
+      const subBehavior = new AyvaBehavior();
 
       subBehavior.generateActions = () => {
         subBehavior.queueSleep(duration);

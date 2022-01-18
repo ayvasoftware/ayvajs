@@ -1,4 +1,4 @@
-import MoveBuilder from './move-builder.js';
+import AyvaMoveBuilder from './ayva-move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
@@ -162,7 +162,7 @@ class Ayva {
    * @returns the new move builder.
    */
   moveBuilder () {
-    return new MoveBuilder(this);
+    return new AyvaMoveBuilder(this);
   }
 
   /**
