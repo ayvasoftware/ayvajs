@@ -5,6 +5,9 @@
   "motion-api": { 
     "title": "Motion API" 
   },
+  "behavior-api": { 
+    "title": "Behavior API" 
+  },
   "configuration": { 
     "title": "Configuration" 
   }

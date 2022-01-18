@@ -74,6 +74,10 @@
                                 Motion API
                             </a>
                         
+                            <a class="dropdown-item" href="tutorial-behavior-api.html">
+                                Behavior API
+                            </a>
+                        
                             <a class="dropdown-item" href="tutorial-configuration.html">
                                 Configuration
                             </a>
@@ -100,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="ActionBehavior.html">ActionBehavior</a></li><li><a href="Ayva.html">Ayva</a></li><li><a href="MoveBuilder.html">MoveBuilder</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -117,11 +121,11 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import AyvaMoveBuilder from './ayva-move-builder.js';
+            <pre class="prettyprint source linenums"><code>import MoveBuilder from './move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
-import { SR6_CONFIG } from './ayva-configs.js';
+import { SR6_CONFIG } from './osr-configs.js';
 
 // TODO: Allow accessing min, max, and value on $ axis functions.
 class Ayva {
@@ -243,7 +247,7 @@ class Ayva {
    *   value: ({ x }) => Math.sin(x * Math.PI),
    * });
    *
-   * @param  {Object} movements
+   * @param  {...Object} movements
    * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
    */
   async move (...movements) {
@@ -276,12 +280,12 @@ class Ayva {
   }
 
   /**
-   * Creates an AyvaMoveBuilder for this instance.
+   * Creates an MoveBuilder for this instance.
    *
    * @returns the new move builder.
    */
   moveBuilder () {
-    return new AyvaMoveBuilder(this);
+    return new MoveBuilder(this);
   }
 
   /**
@@ -583,6 +587,7 @@ class Ayva {
     const computedMovements = movements.map((movement) => {
       // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
+      const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
 
       const result = {
         ...movement,
@@ -600,7 +605,8 @@ class Ayva {
           result.speed = round(absoluteDistance / movement.duration, 10);
         } else if (has(movement, 'speed')) {
           // { to: &lt;number>, speed: &lt;number> }
-          result.duration = round(absoluteDistance / movement.speed, 10);
+          result.speed = movement.speed * axisScale; // Convert real, absolute speed to scaled speed.
+          result.duration = round(absoluteDistance / result.speed, 10);
         }
 
         result.direction = distance > 0 ? 1 : distance &lt; 0 ? -1 : 0; // eslint-disable-line no-nested-ternary

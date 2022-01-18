@@ -1,8 +1,13 @@
-class AyvaMoveBuilder {
+class MoveBuilder {
   #ayva;
 
   #moves = [];
 
+  /**
+   * Construct a new move builder for the specified instance of Ayva.
+   * @param {Ayva} ayva
+   * @class MoveBuilder
+   */
   constructor (ayva) {
     this.#ayva = ayva;
 
@@ -77,4 +82,4 @@ class AyvaMoveBuilder {
   }
 }
 
-export default AyvaMoveBuilder;
+export default MoveBuilder;

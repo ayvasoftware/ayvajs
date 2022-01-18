@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> Home</title>
+  <title> ayva-move-builder.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -102,45 +104,111 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="ActionBehavior.html">ActionBehavior</a></li><li><a href="Ayva.html">Ayva</a></li><li><a href="MoveBuilder.html">MoveBuilder</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="ActionBehavior.html">ActionBehavior</a></li><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaMoveBuilder.html">AyvaMoveBuilder</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
         <div class="core" id="main-content-wrapper">
             <div class="content">
                 <header class="page-title">
-                    <p></p>
-                    <h1>Home</h1>
+                    <p>Source</p>
+                    <h1>ayva-move-builder.js</h1>
                 </header>
                 
 
 
 
     
-
-
-    <h3> </h3>
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
     <section>
-        <article><h1>ayva</h1>
-<p>A lightweight, behavior-based JavaScript API for controlling Open Source Multi Axis Stroker Robots.</p></article>
+        <article>
+            <pre class="prettyprint source linenums"><code>class AyvaMoveBuilder {
+  #ayva;
+
+  #moves = [];
+
+  /**
+   * Construct a new move builder for the specified instance of Ayva.
+   * @param {Ayva} ayva 
+   * @class AyvaMoveBuilder
+   */
+  constructor (ayva) {
+    this.#ayva = ayva;
+
+    Object.values(ayva.axes).forEach((axis) => {
+      this[axis.name] = this.#createBuilderFunction(axis.name);
+
+      if (axis.alias) {
+        this[axis.alias] = this.#createBuilderFunction(axis.alias);
+      }
+    });
+  }
+
+  execute () {
+    return this.#ayva.move(...this.#moves);
+  }
+
+  #createBuilderFunction (axis) {
+    return (...args) => {
+      if (args.length === 3 &amp;&amp; typeof args[0] === 'number' &amp;&amp; typeof args[1] === 'number' &amp;&amp; typeof args[2] === 'function') {
+        // &lt;to, speed, value>
+        this.#moves.push({
+          axis,
+          to: args[0],
+          speed: args[1],
+          value: args[2],
+        });
+      } else if (args.length === 2 &amp;&amp; typeof args[0] === 'number' &amp;&amp; typeof args[1] === 'number') {
+        // &lt;to, speed>
+        this.#moves.push({
+          axis,
+          to: args[0],
+          speed: args[1],
+        });
+      } else if (args.length === 2 &amp;&amp; typeof args[0] === 'number' &amp;&amp; typeof args[1] === 'function') {
+        // &lt;to, value>
+        this.#moves.push({
+          axis,
+          to: args[0],
+          value: args[1],
+        });
+      } else if (args.length === 1 &amp;&amp; typeof args[0] === 'number') {
+        // &lt;to>
+        this.#moves.push({
+          axis,
+          to: args[0],
+        });
+      } else if (args.length === 2 &amp;&amp; typeof args[0] === 'function' &amp;&amp; typeof args[1] === 'number') {
+        // &lt;value, duration>
+        this.#moves.push({
+          axis,
+          value: args[0],
+          duration: args[1],
+        });
+      } else if (args.length === 1 &amp;&amp; typeof args[0] === 'function') {
+        // &lt;value>
+        this.#moves.push({
+          axis,
+          value: args[0],
+        });
+      } else if (args.length === 1 &amp;&amp; typeof args[0] === 'object') {
+        // &lt;object>
+        this.#moves.push({
+          ...args[0],
+          axis,
+        });
+      } else {
+        throw new Error(`Invalid arguments: ${args}`);
+      }
+
+      return this;
+    };
+  }
+}
+
+export default AyvaMoveBuilder;
+</code></pre>
+        </article>
     </section>
-
-
 
 
 

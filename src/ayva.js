@@ -1,11 +1,10 @@
-import AyvaMoveBuilder from './ayva-move-builder.js';
+import MoveBuilder from './move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty
 } from './util.js';
-import { SR6_CONFIG } from './ayva-configs.js';
+import { SR6_CONFIG } from './osr-configs.js';
 
 // TODO: Allow accessing min, max, and value on $ axis functions.
-// TODO: Scale speed values based on limits (before generating duration)
 class Ayva {
   #devices = [];
 
@@ -125,7 +124,7 @@ class Ayva {
    *   value: ({ x }) => Math.sin(x * Math.PI),
    * });
    *
-   * @param  {Object} movements
+   * @param  {...Object} movements
    * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
    */
   async move (...movements) {
@@ -158,12 +157,12 @@ class Ayva {
   }
 
   /**
-   * Creates an AyvaMoveBuilder for this instance.
+   * Creates an MoveBuilder for this instance.
    *
    * @returns the new move builder.
    */
   moveBuilder () {
-    return new AyvaMoveBuilder(this);
+    return new MoveBuilder(this);
   }
 
   /**

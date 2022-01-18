@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> Home</title>
+  <title> osr-configs.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -109,38 +111,90 @@
         <div class="core" id="main-content-wrapper">
             <div class="content">
                 <header class="page-title">
-                    <p></p>
-                    <h1>Home</h1>
+                    <p>Source</p>
+                    <h1>osr-configs.js</h1>
                 </header>
                 
 
 
 
     
-
-
-    <h3> </h3>
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
     <section>
-        <article><h1>ayva</h1>
-<p>A lightweight, behavior-based JavaScript API for controlling Open Source Multi Axis Stroker Robots.</p></article>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Base OSR2 Configuration
+ */
+const OSR2_CONFIG = {
+  name: 'OSR2',
+  defaultAxis: 'L0',
+  axes: [
+    {
+      name: 'L0',
+      type: 'linear',
+      alias: 'stroke',
+    },
+    {
+      name: 'R0',
+      type: 'rotation',
+      alias: 'twist',
+    },
+    {
+      name: 'R1',
+      type: 'rotation',
+      alias: 'roll',
+    },
+    {
+      name: 'R2',
+      type: 'rotation',
+      alias: 'pitch',
+    },
+    {
+      name: 'A0',
+      alias: 'valve',
+      type: 'auxiliary',
+    },
+    {
+      name: 'A1',
+      alias: 'suck',
+      type: 'auxiliary',
+    },
+    {
+      name: 'A2',
+      alias: 'lube',
+      type: 'auxiliary',
+    },
+    {
+      name: 'V0',
+      type: 'auxiliary',
+    },
+    {
+      name: 'V1',
+      type: 'auxiliary',
+    },
+  ],
+};
+
+/**
+ * Base SR6 Configuration
+ *
+ * SR6 configuration is just the OSR2 configuration plus a couple axes.
+ */
+const SR6_CONFIG = JSON.parse(JSON.stringify(OSR2_CONFIG));
+SR6_CONFIG.name = 'SR6';
+SR6_CONFIG.axes.push({
+  name: 'L1',
+  type: 'linear',
+  alias: 'forward',
+}, {
+  name: 'L2',
+  type: 'linear',
+  alias: 'left',
+});
+
+export { OSR2_CONFIG, SR6_CONFIG };
+</code></pre>
+        </article>
     </section>
-
-
 
 
 

@@ -2,7 +2,7 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { OSR2_CONFIG } from '../../src/ayva-configs.js';
+import { OSR2_CONFIG } from '../../src/osr-configs.js';
 import { createFunctionBinder } from '../test-helpers.js';
 
 /**
