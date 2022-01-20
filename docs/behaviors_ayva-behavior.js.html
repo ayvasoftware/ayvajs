@@ -223,7 +223,7 @@ class AyvaBehavior {
 
   /**
    * Add a sleep to the end of the action queue.
-   * 
+   *
    * @param {Number} seconds - number of seconds to sleep.
    */
   queueSleep (seconds) {
@@ -232,7 +232,7 @@ class AyvaBehavior {
 
   /**
    * Add a function to the end of the action queue.
-   * 
+   *
    * @param {Function} func - the function.
    */
   queueFunction (func) {
@@ -242,7 +242,7 @@ class AyvaBehavior {
   /**
    * Add the actions from the specified behavior to the end of the action queue.
    * Allows for behavior composition.
-   * 
+   *
    * @param {AyvaBehavior} behavior - the sub behavior.
    * @param {Ayva} ayva - instance of Ayva.
    * @param {Number} iterations - how many iterations of the sub behavior to generate.
@@ -289,7 +289,7 @@ class AyvaBehavior {
 
   /**
    * Add a sleep to the front of the action queue.
-   * 
+   *
    * @param {Number} seconds - number of seconds to sleep.
    */
   insertSleep (seconds) {
@@ -298,7 +298,7 @@ class AyvaBehavior {
 
   /**
    * Add a function to the front of the action queue.
-   * 
+   *
    * @param {Function} func - callback function.
    */
   insertFunction (func) {
@@ -308,10 +308,10 @@ class AyvaBehavior {
   /**
    * Add the actions from the specified behavior to the front of the action queue.
    * Allows for behavior composition.
-   * 
+   *
    * @param {AyvaBehavior} behavior - the sub behavior.
    * @param {Ayva} ayva - instance of Ayva.
-   * @param {Number} iterations - how many iterations of the sub behavior to generate. 
+   * @param {Number} iterations - how many iterations of the sub behavior to generate.
    */
   insertBehavior (behavior, ayva, iterations = 1) {
     // TODO: Cycle detection?
