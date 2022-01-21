@@ -163,42 +163,6 @@ class Ayva {
   }
 
   /**
-   * Value provider that generates motion towards a target position with constant velocity.
-   */
-  static get RAMP_LINEAR () {
-    return ({ to, from, x }) => from + ((to - from) * x);
-  }
-
-  /**
-   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
-   */
-  static get RAMP_NEGATIVE_COS () {
-    return ({ to, from, x }) => {
-      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
-
-      return from + ((to - from) * value);
-    };
-  }
-
-  /**
-   * Value provider that generates motion towards a target position in the shape of half a parabola.
-   */
-  static get RAMP_PARABOLIC () {
-    return ({ to, from, x }) => ((to - from) * x * x) + from;
-  }
-
-  /**
-   * Value provider that generates motion towards a target position in the shape of an upside down half of parabola.
-   */
-  static get RAMP_NEGATIVE_PARABOLIC () {
-    return ({ to, from, x }) => {
-      const value = -((x - 1) ** 2) + 1;
-
-      return ((to - from) * value) + from;
-    };
-  }
-
-  /**
    * Create a new instance of Ayva with the specified configuration.
    *
    * @param {Object} [config]
@@ -920,6 +884,80 @@ class Ayva {
     }
 
     return Object.values(uniqueAxes).sort(sortByName);
+  }
+
+  /**
+   * Value provider that generates motion towards a target position with constant velocity.
+   */
+  static get RAMP_LINEAR () {
+    return ({ to, from, x }) => from + ((to - from) * x);
+  }
+
+  /**
+   * Value provider that generates motion towards a target position that resembles part of a cos wave (0 - 180 degrees).
+   */
+  static get RAMP_COS () {
+    return ({ to, from, x }) => {
+      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
+
+      return from + ((to - from) * value);
+    };
+  }
+
+  /**
+   * Value provider that generates motion towards a target position in the shape of the latter half of a parabola.
+   */
+  static get RAMP_PARABOLIC () {
+    return ({ to, from, x }) => ((to - from) * x * x) + from;
+  }
+
+  /**
+   * Value provider that generates motion towards a target position in the shape of the first half of an upside down parabola.
+   */
+  static get RAMP_NEGATIVE_PARABOLIC () {
+    return ({ to, from, x }) => {
+      const value = -((x - 1) ** 2) + 1;
+
+      return ((to - from) * value) + from;
+    };
+  }
+
+  /**
+   * Creates a value provider that generates oscillatory motion. The formula is:
+   *
+   * cos(x + phase·π/2 + ecc·sin(x))
+   *
+   * The result is translated and scaled to fit the range specified.
+   * This formula was created by TempestMAx—loosely based on orbital motion calculations. Hence, tempestMotion.
+   *
+   * @example
+   * // Note: These examples use the Builder Pattern of the Motion API.
+   *
+   * // Simple up/down stroke for 10 seconds.
+   * ayva.$.stroke(Ayva.tempestMotion(1, 0), 10).execute();
+   *
+   * // ... out of phase with a little eccentricity.
+   * ayva.$.stroke(Ayva.tempestMotion(1, 0, 1, 2), 10).execute();
+   *
+   * // ... at 30 BPM.
+   * ayva.$.stroke(Ayva.tempestMotion(1, 0, 1, 2, 30), 10).execute();
+   *
+   * @param {Number} from - the start of the range of motion
+   * @param {Number} to - the end of the range of motion
+   * @param {Number} [phase] - the phase of the wave in multiples of 90 degrees.
+   * @param {Number} [ecc] - the eccentricity of the wave.
+   * @param {Number} [bpm] - beats per minute
+   * @returns the value provider.
+   */
+  static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60) {
+    const angularVelocity = (2 * Math.PI * bpm) / 60;
+    const scale = 0.5 * (to - from);
+    const midpoint = 0.5 * (to + from);
+
+    return ({ index, frequency }) => {
+      const angle = (index * angularVelocity) / frequency;
+      return midpoint - scale * Math.cos(angle + (0.5 * Math.PI * phase) + (ecc * Math.sin(angle)));
+    };
   }
 }
 
