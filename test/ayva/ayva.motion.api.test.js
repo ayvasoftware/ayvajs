@@ -617,7 +617,7 @@ describe('Motion API Tests', function () {
     it('should allow standard ramp functions', async function () {
       ayva.getAxis('stroke').value.should.equal(0.5);
 
-      await ayva.move({ to: 0, duration: 1, value: Ayva.RAMP_NEGATIVE_COS });
+      await ayva.move({ to: 0, duration: 1, value: Ayva.RAMP_COS });
       ayva.getAxis('stroke').value.should.equal(0);
 
       await ayva.move({ to: 1, duration: 1, value: Ayva.RAMP_LINEAR });

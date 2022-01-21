@@ -47,9 +47,9 @@ class Ayva {
   }
 
   /**
-   * Value provider that generates mmotion towards a target position that resembles a negative cos wave (0 - 180 degrees)
+   * Value provider that generates mmotion towards a target position that resembles part of a cos wave (0 - 180 degrees).
    */
-  static get RAMP_NEGATIVE_COS () {
+  static get RAMP_COS () {
     return ({ to, from, x }) => {
       const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
 
