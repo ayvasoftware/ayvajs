@@ -1,0 +1,36 @@
+/**
+ * A few custom Styles for Documentation
+ */
+
+/* Fix script tag styles in code block documentation. */
+code .tag {
+  align-items: normal;
+  background-color: rgba(0, 0, 0, 0);
+  border: none;
+  color: #c66;
+  display: inline;
+  font-size: 1em;
+  height: 2em;
+  justify-content: normal;
+  line-height: 1.5;
+  padding: 0;
+  white-space: pre;
+  text-transform: none;
+}
+
+.top-nav {
+  height: 75px;
+}
+
+#main {
+  padding-top: 75px;
+}
+
+#main > .core {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.footer .content {
+  display: none;
+}

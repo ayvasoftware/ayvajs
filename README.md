@@ -18,8 +18,6 @@ Features:
 - Quick and easy setup.
 
 ## Installation
-Ayva can be installed through a CDN or through npm.
-
 ### CDN
 In a browser, Ayva can be imported as an [ES6 module](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) using a CDN such as unpkg:
 

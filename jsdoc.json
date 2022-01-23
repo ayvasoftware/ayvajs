@@ -18,6 +18,7 @@
   "templates": {
     "better-docs": {
       "name": "Ayva Documentation",
+      "css": "custom-styles.css",
       "navigation": [
         {
           "label": "GitHub",
@@ -27,7 +28,12 @@
     },
     "search": true,
     "default": {
-      "includeDate": false
+      "includeDate": false,
+      "staticFiles": {
+        "include": [
+            "./docs-static"
+        ]
+      }
     }
   }
 }
