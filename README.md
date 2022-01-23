@@ -23,7 +23,7 @@ Ayva can be installed through a CDN or through npm.
 ### CDN
 In a browser, Ayva can be imported as an [ES6 module](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) using a CDN such as unpkg:
 
-```
+```html
 <script type="module">
   import Ayva from 'https://unpkg.com/ayvajs';
 
@@ -35,7 +35,7 @@ In a browser, Ayva can be imported as an [ES6 module](https://developer.mozilla.
 
 One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a _write_ method is considered an output device), or you may use the simple [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) based BrowserSerialDevice provided:
 
-```
+```html
 <script type="module">
   import Ayva, { BrowserSerialDevice } from 'https://unpkg.com/ayvajs';
 
@@ -53,17 +53,16 @@ One or more output devices must be added to an instance of Ayva in order to do a
   });
 </script>
 ```
-
 ### npm
 
-Ayva can be installed in a nodejs app via npm:
+Ayva can be installed in a Node.js app via npm:
 
 ```
 npm install ayvajs
 ```
 
 And imported like so:
-```
+```js
 import Ayva from 'ayvajs';
 
 const ayva = new Ayva().defaultConfiguration();
@@ -71,13 +70,13 @@ const ayva = new Ayva().defaultConfiguration();
 // ...
 ```
 
-To avoid unnecessary dependencies or re-inventing the wheel, Ayva does not provide any device implementations that work in a nodejs app. Instead, Ayva can work with an external library to connect to serial devices. The recommended serial library for nodejs is [serialport](https://serialport.io/):
+To avoid unnecessary dependencies or re-inventing the wheel, Ayva does not provide any device implementations that work in a Node.js app. Instead, Ayva can work with an external library to connect to serial devices. The recommended serial library for Node.js is [serialport](https://serialport.io/):
 
 ```
 npm install serialport
 ```
 Then:
-```
+```js
 import Ayva from 'ayvajs';
 import SerialPort from 'serialport';
 
@@ -88,7 +87,7 @@ ayva.addOutputDevice(device);
 
 ayva.move({ to: 0; speed: 1 });
 ```
-
+_Note: The port used above (/dev/cu.usbserial-0001) is just an example. Yours may be different._
 
 
 

@@ -158,7 +158,7 @@
 <p>Ayva can be installed through a CDN or through npm.</p>
 <h3>CDN</h3>
 <p>In a browser, Ayva can be imported as an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules">ES6 module</a> using a CDN such as unpkg:</p>
-<pre class="prettyprint source"><code>&lt;script type=&quot;module&quot;>
+<pre class="prettyprint source lang-html"><code>&lt;script type=&quot;module&quot;>
   import Ayva from 'https://unpkg.com/ayvajs';
 
   const ayva = new Ayva().defaultConfiguration();
@@ -167,7 +167,7 @@
 &lt;/script>
 </code></pre>
 <p>One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a <em>write</em> method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API">Web Serial API</a> based BrowserSerialDevice provided:</p>
-<pre class="prettyprint source"><code>&lt;script type=&quot;module&quot;>
+<pre class="prettyprint source lang-html"><code>&lt;script type=&quot;module&quot;>
   import Ayva, { BrowserSerialDevice } from 'https://unpkg.com/ayvajs';
 
   const ayva = new Ayva().defaultConfiguration();
@@ -185,21 +185,21 @@
 &lt;/script>
 </code></pre>
 <h3>npm</h3>
-<p>Ayva can be installed in a nodejs app via npm:</p>
+<p>Ayva can be installed in a Node.js app via npm:</p>
 <pre class="prettyprint source"><code>npm install ayvajs
 </code></pre>
 <p>And imported like so:</p>
-<pre class="prettyprint source"><code>import Ayva from 'ayvajs';
+<pre class="prettyprint source lang-js"><code>import Ayva from 'ayvajs';
 
 const ayva = new Ayva().defaultConfiguration();
 
 // ...
 </code></pre>
-<p>To avoid unnecessary dependencies or re-inventing the wheel, Ayva does not provide any device implementations that work in a nodejs app. Instead, Ayva can work with an external library to connect to serial devices. The recommended serial library for nodejs is <a href="https://serialport.io/">serialport</a>:</p>
+<p>To avoid unnecessary dependencies or re-inventing the wheel, Ayva does not provide any device implementations that work in a Node.js app. Instead, Ayva can work with an external library to connect to serial devices. The recommended serial library for Node.js is <a href="https://serialport.io/">serialport</a>:</p>
 <pre class="prettyprint source"><code>npm install serialport
 </code></pre>
 <p>Then:</p>
-<pre class="prettyprint source"><code>import Ayva from 'ayvajs';
+<pre class="prettyprint source lang-js"><code>import Ayva from 'ayvajs';
 import SerialPort from 'serialport';
 
 const device = new SerialPort('/dev/cu.usbserial-0001');
@@ -208,7 +208,8 @@ const ayva = new Ayva().defaultConfiguration();
 ayva.addOutputDevice(device);
 
 ayva.move({ to: 0; speed: 1 });
-</code></pre></article>
+</code></pre>
+<p><em>Note: The port used above (/dev/cu.usbserial-0001) is just an example. Yours may be different.</em></p></article>
     </section>
 
 
