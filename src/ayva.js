@@ -805,7 +805,8 @@ class Ayva {
    * cos(x + phase·π/2 + ecc·sin(x))
    *
    * The result is translated and scaled to fit the range specified.
-   * This formula was created by TempestMAx—loosely based on orbital motion calculations. Hence, tempestMotion.
+   * This formula was created by [TempestMAx]{@link https://www.patreon.com/tempestvr}—loosely based
+   * on orbital motion calculations. Hence, tempestMotion.
    *
    * @example
    * // Note: These examples use the Builder Pattern of the Motion API.

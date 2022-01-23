@@ -2,6 +2,9 @@
   "getting-started": { 
     "title": "Getting Started" 
   },
+  "configuration": { 
+    "title": "Configuration" 
+  },
   "motion-api": { 
     "title": "Motion API",
     "children": {
@@ -12,8 +15,5 @@
   },
   "behavior-api": { 
     "title": "Behavior API" 
-  },
-  "configuration": { 
-    "title": "Configuration" 
   }
 }
