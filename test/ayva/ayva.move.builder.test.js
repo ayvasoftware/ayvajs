@@ -3,14 +3,15 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import AyvaMoveBuilder from '../../src/ayva-move-builder.js';
-import { TEST_CONFIG } from '../test-helpers.js';
+import { createTestConfig } from '../test-helpers.js';
 
 describe('Move Builder Tests', function () {
   let ayva;
   let moveBuilder;
 
   beforeEach(function () {
-    ayva = new Ayva(TEST_CONFIG());
+    ayva = new Ayva(createTestConfig());
+    ayva.addOutputDevice({ write: sinon.fake() });
     sinon.replace(ayva, 'move', sinon.fake());
 
     moveBuilder = ayva.moveBuilder();
@@ -22,7 +23,7 @@ describe('Move Builder Tests', function () {
 
   describe('#constructor', function () {
     it('should create functions for each axis', function () {
-      TEST_CONFIG().axes.forEach((axis) => {
+      createTestConfig().axes.forEach((axis) => {
         expect(moveBuilder).to.have.property(axis.name);
         expect(moveBuilder[axis.name]).to.be.a('function');
 
@@ -32,7 +33,7 @@ describe('Move Builder Tests', function () {
     });
 
     it('should allow creating moveBuilder from special property $.', function () {
-      TEST_CONFIG().axes.forEach((axis) => {
+      createTestConfig().axes.forEach((axis) => {
         expect(ayva.$).to.have.property(axis.name);
         expect(ayva.$[axis.name]).to.be.a('function');
 
@@ -182,6 +183,27 @@ describe('Move Builder Tests', function () {
         to: 0,
         speed: 1,
       });
+    });
+
+    it('should allow accessing value, min, and max through builder', async function () {
+      sinon.restore();
+      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+
+      expect(ayva.$.stroke).to.have.property('value');
+      expect(ayva.$.stroke).to.have.property('max');
+      expect(ayva.$.stroke).to.have.property('min');
+
+      ayva.$.stroke.value.should.equal(0.5);
+      ayva.$.stroke.max.should.equal(1);
+      ayva.$.stroke.min.should.equal(0);
+
+      await ayva.$.stroke(0, 1).execute();
+
+      ayva.$.stroke.value.should.equal(0);
+
+      ayva.updateLimits('stroke', 0.1, 0.9);
+      ayva.$.stroke.max.should.equal(0.9);
+      ayva.$.stroke.min.should.equal(0.1);
     });
   });
 

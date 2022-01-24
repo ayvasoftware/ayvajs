@@ -1,7 +1,7 @@
 /**
  * Return a simple OSR2 test configuration.
  */
-export function TEST_CONFIG () {
+export function createTestConfig () {
   return {
     name: 'OSR2',
     defaultAxis: 'stroke',

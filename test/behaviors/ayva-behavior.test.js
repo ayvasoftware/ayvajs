@@ -2,14 +2,14 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import AyvaBehavior from '../../src/behaviors/ayva-behavior.js';
-import { TEST_CONFIG } from '../test-helpers.js';
+import { createTestConfig } from '../test-helpers.js';
 
 describe('Behavior API Tests', function () {
   let ayva;
   let behavior;
 
   beforeEach(function () {
-    ayva = new Ayva(TEST_CONFIG());
+    ayva = new Ayva(createTestConfig());
     sinon.replace(ayva, 'move', sinon.fake());
     sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
 

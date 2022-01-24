@@ -2,7 +2,7 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { TEST_CONFIG } from '../test-helpers.js';
+import { createTestConfig } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Motion API.
@@ -43,7 +43,7 @@ describe('Motion API Tests', function () {
   };
 
   beforeEach(function () {
-    ayva = new Ayva(TEST_CONFIG());
+    ayva = new Ayva(createTestConfig());
 
     sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
     warn = sinon.replace(console, 'warn', sinon.fake());
@@ -150,7 +150,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if axis is not specified and there is no default axis', function () {
-      const configWithoutDefault = TEST_CONFIG();
+      const configWithoutDefault = createTestConfig();
       delete configWithoutDefault.defaultAxis;
 
       ayva = new Ayva(configWithoutDefault);
@@ -277,7 +277,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should throw an error if there are no output devices added', function () {
-      ayva = new Ayva(TEST_CONFIG());
+      ayva = new Ayva(createTestConfig());
       const errorMessage = 'No output devices have been added.';
 
       return ayva.move({

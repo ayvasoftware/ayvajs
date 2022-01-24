@@ -287,6 +287,7 @@ class Ayva {
 
   /**
    * Add the start of a move builder chain to $ for the specified axis.
+   * Also add shortcut properties for value, min, and max to each axis.
    */
   #createAxisMoveBuilder (axis) {
     Object.defineProperty(this.$, axis, {
@@ -294,6 +295,18 @@ class Ayva {
       writeable: false,
       configurable: true,
       enumerable: true,
+    });
+
+    Object.defineProperty(this.$[axis], 'value', {
+      get: () => this.#axes[axis].value,
+    });
+
+    Object.defineProperty(this.$[axis], 'min', {
+      get: () => this.#axes[axis].min,
+    });
+
+    Object.defineProperty(this.$[axis], 'max', {
+      get: () => this.#axes[axis].max,
     });
   }
 
