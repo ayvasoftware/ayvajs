@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import AyvaMoveBuilder from './ayva-move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty
@@ -15,6 +16,16 @@ class Ayva {
   #movements = new Set();
 
   #nextMovementId = 1;
+
+  #nextBehaviorId = 1;
+
+  #currentBehaviorId = null;
+
+  #performing = false;
+
+  get performing () {
+    return this.#performing;
+  }
 
   get axes () {
     const result = {};
@@ -70,6 +81,42 @@ class Ayva {
   }
 
   /**
+   * Perform the specified behavior until it completes or is explicitly stopped.
+   * If another behavior is running, it will be stopped.
+   *
+   * For full details on how to use this method, see the {@tutorial behavior-api} tutorial.
+   *
+   * @param {AyvaBehavior} behavior - the behavior to perform.
+   */
+  async do (behavior) {
+    this.stop();
+
+    const behaviorId = this.#nextBehaviorId++;
+    this.#currentBehaviorId = behaviorId;
+
+    while (this.#performing) {
+      await this.sleep();
+    }
+
+    this.#performing = true;
+
+    while (this.#currentBehaviorId === behaviorId && !behavior.complete) {
+      try {
+        await behavior.perform(this);
+      } catch (error) {
+        console.error(`Error performing behavior: ${error}`); // eslint-disable-line no-console
+        break;
+      }
+    }
+
+    if (this.#currentBehaviorId === behaviorId) {
+      this.#currentBehaviorId = null;
+    }
+
+    this.#performing = false;
+  }
+
+  /**
    * Performs movements along one or more axes. This is a powerful method that can synchronize
    * axis movement while allowing for fine control over position, speed, or move duration.
    * For full details on how to use this method, see the {@tutorial motion-api} tutorial.
@@ -103,7 +150,7 @@ class Ayva {
 
     while (this.#movements.has(movementId) && this.#movements.values().next().value !== movementId) {
       // Wait until current movements have completed to proceed.
-      await this.sleep(); // eslint-disable-line no-await-in-loop
+      await this.sleep();
     }
 
     if (!this.#movements.has(movementId)) {
@@ -150,9 +197,10 @@ class Ayva {
   }
 
   /**
-   * Cancels all running or pending movements immediately.
+   * Cancels all running or pending movements and clears the current behavior (if any).
    */
   stop () {
+    this.#currentBehaviorId = null;
     this.#movements.clear();
   }
 
@@ -351,7 +399,7 @@ class Ayva {
       const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
       this.#executeProviders(unfinishedProviders, index);
 
-      await this.sleep(this.#period); // eslint-disable-line no-await-in-loop
+      await this.sleep(this.#period);
 
       if (!this.#movements.has(movementId)) {
         // This move was cancelled.

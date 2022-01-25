@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop, no-console */
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
@@ -111,6 +112,18 @@ describe('Behavior API Tests', function () {
 
         ayva.sleep.callCount.should.equal(1);
         ayva.sleep.args[0][0].should.deep.equal(duration);
+      });
+
+      it(`${type}Complete()`, async function () {
+        behavior.complete.should.equal(false);
+
+        behavior.generateActions = () => {
+          behavior[`${type}Complete`]();
+        };
+
+        await behavior.perform(ayva);
+
+        behavior.complete.should.equal(true);
       });
     });
 
@@ -244,6 +257,122 @@ describe('Behavior API Tests', function () {
       ayva.move.callCount.should.equal(1);
       ayva.move.args[0][0].should.deep.equal(moves[0]);
       ayva.move.args[0][1].should.deep.equal(moves[1]);
+    });
+  });
+
+  describe('#ayva.do()', function () {
+    it('should run behavior until stopped', async function () {
+      const currentBehavior = {
+        perform: sinon.fake.returns(Promise.resolve()),
+      };
+
+      ayva.do(currentBehavior);
+
+      for (let i = 1; i < 10; i++) {
+        currentBehavior.perform.callCount.should.equal(i);
+        await ayva.sleep();
+      }
+
+      currentBehavior.perform.callCount.should.equal(10);
+      ayva.stop();
+
+      await ayva.sleep();
+
+      currentBehavior.perform.callCount.should.equal(10);
+    });
+
+    it('should stop current behavior when starting a new one', async function () {
+      const currentBehavior = {
+        perform: sinon.fake.returns(Promise.resolve()),
+      };
+
+      const nextBehavior = {
+        perform: sinon.fake.returns(Promise.resolve()),
+      };
+
+      ayva.do(currentBehavior);
+
+      for (let i = 1; i < 10; i++) {
+        currentBehavior.perform.callCount.should.equal(i);
+        await ayva.sleep();
+      }
+
+      currentBehavior.perform.callCount.should.equal(10);
+
+      ayva.do(nextBehavior);
+      await ayva.sleep(); // Give current behavior time to stop.
+
+      for (let i = 1; i < 10; i++) {
+        nextBehavior.perform.callCount.should.equal(i);
+        await ayva.sleep();
+      }
+
+      ayva.stop();
+      await ayva.sleep();
+
+      currentBehavior.perform.callCount.should.equal(10);
+      nextBehavior.perform.callCount.should.equal(10);
+    });
+
+    it('should stop all previous behaviors before starting a new one', async function () {
+      const firstBehavior = {
+        perform: sinon.fake.returns(Promise.resolve()),
+      };
+
+      const secondBehavior = {
+        perform: sinon.fake.returns(Promise.resolve()),
+      };
+
+      const thirdBehavior = {
+        perform: sinon.fake.returns(Promise.resolve()),
+      };
+
+      ayva.do(firstBehavior);
+      ayva.do(secondBehavior);
+      ayva.do(thirdBehavior);
+
+      await ayva.sleep();
+
+      firstBehavior.perform.callCount.should.equal(1);
+      secondBehavior.perform.callCount.should.equal(0);
+
+      for (let i = 1; i < 10; i++) {
+        thirdBehavior.perform.callCount.should.equal(i);
+        await ayva.sleep();
+      }
+
+      ayva.stop();
+      await ayva.sleep();
+
+      firstBehavior.perform.callCount.should.equal(1);
+      secondBehavior.perform.callCount.should.equal(0);
+      thirdBehavior.perform.callCount.should.equal(10);
+    });
+
+    it('should stop on a complete signal', async function () {
+      behavior.generateActions = () => {
+        behavior.queueComplete();
+      };
+
+      ayva.performing.should.equal(false);
+      const promise = ayva.do(behavior);
+      ayva.performing.should.equal(true);
+
+      await promise;
+      ayva.performing.should.equal(false);
+    });
+
+    it('should throw error if behavior throws error', async function () {
+      sinon.replace(console, 'error', sinon.fake());
+
+      await ayva.do({
+        perform () {
+          throw new Error('Failed.');
+        },
+      });
+
+      console.error.callCount.should.equal(1);
+      console.error.args[0][0].should.equal('Error performing behavior: Error: Failed.');
     });
   });
 });

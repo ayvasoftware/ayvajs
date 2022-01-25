@@ -6,6 +6,12 @@ import AyvaMoveBuilder from '../ayva-move-builder.js';
 class AyvaBehavior {
   #actions = [];
 
+  #complete = false;
+
+  get complete () {
+    return this.#complete;
+  }
+
   /**
    * Generate the actions that make up this behavior. Subclasses should implement this method.
    *
@@ -130,6 +136,15 @@ class AyvaBehavior {
   }
 
   /**
+   * Adds a function that flags this behavior as complete to the end of the action queue.
+   */
+  queueComplete () {
+    this.queueFunction(() => {
+      this.#complete = true;
+    });
+  }
+
+  /**
    * Add a move to the front of the action queue.
    *
    * @example
@@ -193,6 +208,15 @@ class AyvaBehavior {
   insertBehavior (behavior, ayva, iterations = 1) {
     // TODO: Cycle detection?
     this.#insertActions(behavior.emitActions(ayva, iterations));
+  }
+
+  /**
+   * Adds a function that flags this behavior as complete to the front of the action queue.
+   */
+  insertComplete () {
+    this.insertFunction(() => {
+      this.#complete = true;
+    });
   }
 
   #queueAction (action) {
