@@ -52,7 +52,7 @@ describe('Configuration Tests', function () {
         min: 0,
       };
 
-      expectedConfig = { ...config, value: DEFAULT_VALUE };
+      expectedConfig = { ...config, value: DEFAULT_VALUE, lastValue: DEFAULT_VALUE };
 
       ayva = new Ayva();
 

@@ -194,12 +194,14 @@ describe('Move Builder Tests', function () {
       expect(ayva.$.stroke).to.have.property('min');
 
       ayva.$.stroke.value.should.equal(0.5);
+      ayva.$.stroke.lastValue.should.equal(0.5);
       ayva.$.stroke.max.should.equal(1);
       ayva.$.stroke.min.should.equal(0);
 
       await ayva.$.stroke(0, 1).execute();
 
       ayva.$.stroke.value.should.equal(0);
+      ayva.$.stroke.lastValue.should.equal(0.02);
 
       ayva.updateLimits('stroke', 0.1, 0.9);
       ayva.$.stroke.max.should.equal(0.9);

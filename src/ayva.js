@@ -198,6 +198,7 @@ class Ayva {
 
     if (oldConfig) {
       resultConfig.value = oldConfig.value;
+      resultConfig.lastValue = oldConfig.lastValue;
       delete this.#axes[oldConfig.alias];
       delete this.$[oldConfig.alias];
     }
@@ -301,6 +302,10 @@ class Ayva {
       get: () => this.#axes[axis].value,
     });
 
+    Object.defineProperty(this.$[axis], 'lastValue', {
+      get: () => this.#axes[axis].lastValue,
+    });
+
     Object.defineProperty(this.$[axis], 'min', {
       get: () => this.#axes[axis].min,
     });
@@ -368,6 +373,7 @@ class Ayva {
       this.#write(`${tcodes.join(' ')}\n`);
 
       axisValues.forEach(({ axis, value }) => {
+        this.#axes[axis].lastValue = this.#axes[axis].value;
         this.#axes[axis].value = value;
       });
     }
@@ -748,11 +754,14 @@ class Ayva {
       fail(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
     }
 
+    const defaultValue = axisConfig.type === 'boolean' ? false : 0.5; // 0.5 is home position for linear, rotation, and auxiliary.
+
     const resultConfig = {
       ...axisConfig,
       max: axisConfig.max || 1,
       min: axisConfig.min || 0,
-      value: axisConfig.type === 'boolean' ? false : 0.5, // Default value. 0.5 is home position for linear, rotation, and auxiliary.
+      value: defaultValue,
+      lastValue: defaultValue,
     };
 
     if (resultConfig.max === resultConfig.min || resultConfig.min > resultConfig.max) {
@@ -779,37 +788,33 @@ class Ayva {
   /**
    * Value provider that generates motion towards a target position with constant velocity.
    */
-  static get RAMP_LINEAR () {
-    return ({ to, from, x }) => from + ((to - from) * x);
+  static RAMP_LINEAR ({ to, from, x }) {
+    return from + ((to - from) * x);
   }
 
   /**
    * Value provider that generates motion towards a target position that resembles part of a cos wave (0 - 180 degrees).
    */
-  static get RAMP_COS () {
-    return ({ to, from, x }) => {
-      const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
+  static RAMP_COS ({ to, from, x }) {
+    const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
 
-      return from + ((to - from) * value);
-    };
+    return from + ((to - from) * value);
   }
 
   /**
    * Value provider that generates motion towards a target position in the shape of the latter half of a parabola.
    */
-  static get RAMP_PARABOLIC () {
-    return ({ to, from, x }) => ((to - from) * x * x) + from;
+  static RAMP_PARABOLIC ({ to, from, x }) {
+    return ((to - from) * x * x) + from;
   }
 
   /**
    * Value provider that generates motion towards a target position in the shape of the first half of an upside down parabola.
    */
-  static get RAMP_NEGATIVE_PARABOLIC () {
-    return ({ to, from, x }) => {
-      const value = -((x - 1) ** 2) + 1;
+  static RAMP_NEGATIVE_PARABOLIC ({ to, from, x }) {
+    const value = -((x - 1) ** 2) + 1;
 
-      return ((to - from) * value) + from;
-    };
+    return ((to - from) * value) + from;
   }
 
   /**
