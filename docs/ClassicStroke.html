@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> Global</title>
+  <title> ClassicStroke</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -109,8 +109,8 @@
         <div class="core" id="main-content-wrapper">
             <div class="content">
                 <header class="page-title">
-                    <p>Title</p>
-                    <h1>Global</h1>
+                    <p>Class</p>
+                    <h1>ClassicStroke</h1>
                 </header>
                 
 
@@ -121,7 +121,11 @@
 
 <header>
     
-        <h2></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>ClassicStroke<span class="signature">()</span><span class="type-signature"></span></h2>
+        
+            <div class="class-description"><p>So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
+such as speed, positions, and twist. No frills. Just stroke.</p>
+<p>TODO: Fix extremely small strokes error (Ex: 0.3, 0.31)</p></div>
         
     
 </header>
@@ -130,8 +134,40 @@
     <div class="container-overview">
     
         
+            <div class='vertical-section'>
+                <div class="members">
+                    <div class="member">
+                        <div class=name>
+                            <span class="tag">Constructor</span>
+                        </div>
+                        
 
+
+    
+    <h4 class="name" id="ClassicStroke">
+        <a class="href-link" href="#ClassicStroke">#</a>
         
+        <span class="code-name">
+            
+                new ClassicStroke<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
 
 
 <dl class="details">
@@ -166,9 +202,39 @@
     
 
     
+        <p class="tag-source">
+            <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
+            <span>
+                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line26">line 26</a>
+            </span>
+        </p>
+    
 </dl>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    </div>
+                </div>
+            </div>
         
     
     </div>
@@ -186,104 +252,92 @@
     
 
     
+
+    
         <div class='vertical-section'>
-            <h1>Members</h1>
+            <h1>Methods</h1>
             <div class="members">
             
                 <div class="member">
 
-<h4 class="name" id="OSR2_CONFIG">
-    <a class="href-link" href="#OSR2_CONFIG">#</a>
+
     
+    <h4 class="name" id="generateActions">
+        <a class="href-link" href="#generateActions">#</a>
         
-            <span class='tag'>constant</span>
-        
-    
-    <span class="code-name">
-        OSR2_CONFIG
-    </span>
-    
-</h4>
-
-
-
-
-<div class="description">
-    <p>Base OSR2 Configuration</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="osr-configs.js.html" class="button">View Source</a>
-            <span>
-                <a href="osr-configs.js.html">osr-configs.js</a>, <a href="osr-configs.js.html#line4">line 4</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-</div>
+        <span class="code-name">
             
-                <div class="member">
-
-<h4 class="name" id="SR6_CONFIG">
-    <a class="href-link" href="#SR6_CONFIG">#</a>
+                generateActions<span class="signature">(ayva)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
     
+
+    
+    
+    <div class="description">
+        <p>A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke, based on
+where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
         
-            <span class='tag'>constant</span>
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>ayva</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type"><a href="Ayva.html">Ayva</a></span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"></td>
+</tr>
+
+
         
-    
-    <span class="code-name">
-        SR6_CONFIG
-    </span>
-    
-</h4>
-
-
-
-
-<div class="description">
-    <p>Base SR6 Configuration</p>
-<p>SR6 configuration is just the OSR2 configuration plus a couple axes.</p>
+        </tbody>
+    </table>
 </div>
 
 
@@ -323,13 +377,29 @@
 
     
         <p class="tag-source">
-            <a href="osr-configs.js.html" class="button">View Source</a>
+            <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
             <span>
-                <a href="osr-configs.js.html">osr-configs.js</a>, <a href="osr-configs.js.html#line59">line 59</a>
+                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line78">line 78</a>
             </span>
         </p>
     
 </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -339,8 +409,6 @@
             
             </div>
         </div>
-    
-
     
 
     
