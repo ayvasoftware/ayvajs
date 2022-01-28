@@ -5,7 +5,6 @@ import {
 } from './util.js';
 import { SR6_CONFIG } from './osr-configs.js';
 
-// TODO: Allow accessing min, max, and value on $ axis functions.
 class Ayva {
   #devices = [];
 

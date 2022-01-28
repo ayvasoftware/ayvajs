@@ -1,4 +1,4 @@
-/* eslint-disable no-new */
+/* eslint-disable no-new, no-await-in-loop */
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
@@ -8,7 +8,21 @@ import { createTestConfig } from '../test-helpers.js';
 describe('Classic Stroke Tests', function () {
   let ayva;
 
-  const verifyStroke = async function (stroke, bottom, top, speed, ramp) {
+  const verifyStroke = async function (index, stroke, expectedMove) {
+    await stroke.perform(ayva); // Generate stroke.
+    await stroke.perform(ayva); // Perform stroke.
+
+    ayva.move.args[index][0].should.deep.equal(expectedMove);
+    ayva.$.stroke.value.should.equal(expectedMove.to);
+  };
+
+  const verifyStrokes = async function (stroke, expectedMoves) {
+    for (let i = 0; i < expectedMoves.length; i++) {
+      await verifyStroke(i, stroke, expectedMoves[i]);
+    }
+  };
+
+  const verifyStrokeSequence = async function (stroke, bottom, top, speed, ramp) {
     const expectedDownStroke = { to: bottom, speed, value: ramp };
     const expectedUpStroke = { to: top, speed, value: ramp };
     ayva.$.stroke.value.should.equal(0.5);
@@ -17,26 +31,14 @@ describe('Classic Stroke Tests', function () {
     stroke.top.should.equal(top);
     stroke.bottom.should.equal(bottom);
 
-    await stroke.perform(ayva); // Generate stroke.
-    await stroke.perform(ayva); // Perform stroke.
-
-    ayva.move.callCount.should.equal(1);
-    ayva.move.args[0][0].should.deep.equal(expectedDownStroke);
-    ayva.$.stroke.value.should.equal(bottom);
-
-    await stroke.perform(ayva);
-    await stroke.perform(ayva);
-
-    ayva.move.callCount.should.equal(2);
-    ayva.move.args[1][0].should.deep.equal(expectedUpStroke);
-    ayva.$.stroke.value.should.equal(top);
-
-    await stroke.perform(ayva);
-    await stroke.perform(ayva);
-
-    ayva.move.callCount.should.equal(3);
-    ayva.move.args[2][0].should.deep.equal(expectedDownStroke);
-    ayva.$.stroke.value.should.equal(bottom);
+    await verifyStrokes(stroke, [
+      expectedDownStroke,
+      expectedUpStroke,
+      expectedDownStroke,
+      expectedUpStroke,
+      expectedDownStroke,
+      expectedUpStroke,
+    ]);
   };
 
   beforeEach(function () {
@@ -52,23 +54,23 @@ describe('Classic Stroke Tests', function () {
 
   describe('valid strokes', function () {
     it('should stroke with default from, to, speed, and ramp', async function () {
-      await verifyStroke(new ClassicStroke(), 0, 1, 1, Ayva.RAMP_COS);
+      await verifyStrokeSequence(new ClassicStroke(), 0, 1, 1, Ayva.RAMP_COS);
     });
 
     it('should stroke with default to, speed, and ramp', async function () {
-      await verifyStroke(new ClassicStroke(0.25), 0.25, 1, 1, Ayva.RAMP_COS);
+      await verifyStrokeSequence(new ClassicStroke(0.25), 0.25, 1, 1, Ayva.RAMP_COS);
     });
 
     it('should stroke with default speed and ramp', async function () {
-      await verifyStroke(new ClassicStroke(0.25, 0.75), 0.25, 0.75, 1, Ayva.RAMP_COS);
+      await verifyStrokeSequence(new ClassicStroke(0.25, 0.75), 0.25, 0.75, 1, Ayva.RAMP_COS);
     });
 
     it('should stroke with default ramp', async function () {
-      await verifyStroke(new ClassicStroke(0.25, 0.75, 2), 0.25, 0.75, 2, Ayva.RAMP_COS);
+      await verifyStrokeSequence(new ClassicStroke(0.25, 0.75, 2), 0.25, 0.75, 2, Ayva.RAMP_COS);
     });
 
     it('should stroke with specified parameters', async function () {
-      await verifyStroke(new ClassicStroke(0.25, 0.75, 2, Ayva.RAMP_PARABOLIC), 0.25, 0.75, 2, Ayva.RAMP_PARABOLIC);
+      await verifyStrokeSequence(new ClassicStroke(0.25, 0.75, 2, Ayva.RAMP_PARABOLIC), 0.25, 0.75, 2, Ayva.RAMP_PARABOLIC);
     });
 
     it('should stroke to the top if the last movement was down', async function () {
@@ -76,18 +78,8 @@ describe('Classic Stroke Tests', function () {
       ayva.$.stroke.value.should.equal(0.5);
 
       await ayva.$.stroke(0.25, 1).execute();
-
-      const stroke = new ClassicStroke();
-
-      await stroke.perform(ayva); // Generate stroke.
-      await stroke.perform(ayva); // Perform stroke.
-
-      ayva.move.callCount.should.equal(2);
-      ayva.move.args[1][0].should.deep.equal(expectedUpStroke);
-      ayva.$.stroke.value.should.equal(1);
+      await verifyStroke(1, new ClassicStroke(), expectedUpStroke);
     });
-
-    // TODO: The next few tests are very similar... Thou shalt not repeat thyself?
 
     it('should allow providing bottom of stroke with function', async function () {
       const bottomValues = [0, 0.1, 0.2];
@@ -98,53 +90,21 @@ describe('Classic Stroke Tests', function () {
 
       const stroke = new ClassicStroke(bottom);
 
-      const expectedDownStrokes = [
-        { to: bottomValues[0], speed, value: ramp },
-        { to: bottomValues[1], speed, value: ramp },
+      const expectedUpStroke = { to: top, speed, value: ramp };
+
+      const expectedStrokes = [
+        { to: bottomValues[0], speed, value: ramp }, expectedUpStroke,
+        { to: bottomValues[1], speed, value: ramp }, expectedUpStroke,
         { to: bottomValues[2], speed, value: ramp },
       ];
 
-      const expectedUpStroke = { to: top, speed, value: ramp };
       ayva.$.stroke.value.should.equal(0.5);
 
       stroke.speed.should.equal(speed);
       stroke.top.should.equal(top);
       stroke.bottom.should.equal(bottomValues[0]);
 
-      await stroke.perform(ayva); // Generate stroke.
-      await stroke.perform(ayva); // Perform stroke.
-
-      ayva.move.callCount.should.equal(1);
-      ayva.move.args[0][0].should.deep.equal(expectedDownStrokes[0]);
-      ayva.$.stroke.value.should.equal(bottomValues[0]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(2);
-      ayva.move.args[1][0].should.deep.equal(expectedUpStroke);
-      ayva.$.stroke.value.should.equal(top);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(3);
-      ayva.move.args[2][0].should.deep.equal(expectedDownStrokes[1]);
-      ayva.$.stroke.value.should.equal(bottomValues[1]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(4);
-      ayva.move.args[3][0].should.deep.equal(expectedUpStroke);
-      ayva.$.stroke.value.should.equal(top);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(5);
-      ayva.move.args[4][0].should.deep.equal(expectedDownStrokes[2]);
-      ayva.$.stroke.value.should.equal(bottomValues[2]);
+      await verifyStrokes(stroke, expectedStrokes);
     });
 
     it('should allow providing bottom and top of stroke with function', async function () {
@@ -156,16 +116,12 @@ describe('Classic Stroke Tests', function () {
       const bottom = (index) => bottomValues[index];
 
       const stroke = new ClassicStroke(bottom, top);
-
-      const expectedDownStrokes = [
+      const expectedStrokes = [
         { to: bottomValues[0], speed, value: ramp },
-        { to: bottomValues[1], speed, value: ramp },
-        { to: bottomValues[2], speed, value: ramp },
-      ];
-
-      const expectedUpStrokes = [
         { to: topValues[0], speed, value: ramp },
+        { to: bottomValues[1], speed, value: ramp },
         { to: topValues[1], speed, value: ramp },
+        { to: bottomValues[2], speed, value: ramp },
         { to: topValues[2], speed, value: ramp },
       ];
 
@@ -175,47 +131,7 @@ describe('Classic Stroke Tests', function () {
       stroke.top.should.equal(topValues[0]);
       stroke.bottom.should.equal(bottomValues[0]);
 
-      await stroke.perform(ayva); // Generate stroke.
-      await stroke.perform(ayva); // Perform stroke.
-
-      ayva.move.callCount.should.equal(1);
-      ayva.move.args[0][0].should.deep.equal(expectedDownStrokes[0]);
-      ayva.$.stroke.value.should.equal(bottomValues[0]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(2);
-      ayva.move.args[1][0].should.deep.equal(expectedUpStrokes[0]);
-      ayva.$.stroke.value.should.equal(topValues[0]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(3);
-      ayva.move.args[2][0].should.deep.equal(expectedDownStrokes[1]);
-      ayva.$.stroke.value.should.equal(bottomValues[1]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(4);
-      ayva.move.args[3][0].should.deep.equal(expectedUpStrokes[1]);
-      ayva.$.stroke.value.should.equal(topValues[1]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(5);
-      ayva.move.args[4][0].should.deep.equal(expectedDownStrokes[2]);
-      ayva.$.stroke.value.should.equal(bottomValues[2]);
-
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
-
-      ayva.move.callCount.should.equal(6);
-      ayva.move.args[5][0].should.deep.equal(expectedUpStrokes[2]);
-      ayva.$.stroke.value.should.equal(topValues[2]);
+      await verifyStrokes(stroke, expectedStrokes);
     });
 
     it('should allow providing speed with function', async function () {
@@ -227,15 +143,12 @@ describe('Classic Stroke Tests', function () {
 
       const stroke = new ClassicStroke(bottom, top, speed);
 
-      const expectedDownStrokes = [
+      const expectedStrokes = [
         { to: bottom, speed: speedValues[0], value: ramp },
-        { to: bottom, speed: speedValues[2], value: ramp },
-        { to: bottom, speed: speedValues[4], value: ramp },
-      ];
-
-      const expectedUpStrokes = [
         { to: top, speed: speedValues[1], value: ramp },
+        { to: bottom, speed: speedValues[2], value: ramp },
         { to: top, speed: speedValues[3], value: ramp },
+        { to: bottom, speed: speedValues[4], value: ramp },
         { to: top, speed: speedValues[5], value: ramp },
       ];
 
@@ -245,51 +158,73 @@ describe('Classic Stroke Tests', function () {
       stroke.top.should.equal(top);
       stroke.bottom.should.equal(bottom);
 
-      await stroke.perform(ayva); // Generate stroke.
-      await stroke.perform(ayva); // Perform stroke.
+      await verifyStrokes(stroke, expectedStrokes);
+    });
 
-      ayva.move.callCount.should.equal(1);
-      ayva.move.args[0][0].should.deep.equal(expectedDownStrokes[0]);
-      ayva.$.stroke.value.should.equal(bottom);
+    it('should allow providing shape of stroke with array', async function () {
+      const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, {
+        value: Ayva.RAMP_LINEAR,
+        relativeSpeed: 0.5,
+      }];
 
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
+      const top = 1;
+      const speed = 1;
+      const bottom = 0;
+      const stroke = new ClassicStroke(bottom, top, speed, shapeValues);
 
-      ayva.move.callCount.should.equal(2);
-      ayva.move.args[1][0].should.deep.equal(expectedUpStrokes[0]);
-      ayva.$.stroke.value.should.equal(top);
+      const expectedStrokes = [
+        { to: 0, speed, value: shapeValues[1] },
+        { to: 1, speed, value: shapeValues[2] },
+        { to: 0, speed: 0.5, value: shapeValues[3].value },
+        { to: 1, speed, value: shapeValues[0] },
+      ];
 
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
+      ayva.$.stroke.value.should.equal(0.5);
 
-      ayva.move.callCount.should.equal(3);
-      ayva.move.args[2][0].should.deep.equal(expectedDownStrokes[1]);
-      ayva.$.stroke.value.should.equal(bottom);
+      stroke.speed.should.equal(speed);
+      stroke.top.should.equal(top);
+      stroke.bottom.should.equal(bottom);
 
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
+      await verifyStrokes(stroke, expectedStrokes);
+    });
 
-      ayva.move.callCount.should.equal(4);
-      ayva.move.args[3][0].should.deep.equal(expectedUpStrokes[1]);
-      ayva.$.stroke.value.should.equal(top);
+    it('should map up strokes to even and down strokes to odd stroke shapes', async function () {
+      const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, {
+        value: Ayva.RAMP_LINEAR,
+        relativeSpeed: 0.5,
+      }];
 
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
+      const top = 1;
+      const speed = 1;
+      const bottom = 0;
+      const stroke = new ClassicStroke(bottom, top, speed, shapeValues);
 
-      ayva.move.callCount.should.equal(5);
-      ayva.move.args[4][0].should.deep.equal(expectedDownStrokes[2]);
-      ayva.$.stroke.value.should.equal(bottom);
+      const expectedStrokes = [
+        { to: 1, speed, value: shapeValues[0] },
+        { to: 0, speed, value: shapeValues[1] },
+        { to: 1, speed, value: shapeValues[2] },
+        { to: 0, speed: 0.5, value: shapeValues[3].value },
+      ];
 
-      await stroke.perform(ayva);
-      await stroke.perform(ayva);
+      ayva.$.stroke.value.should.equal(0.5);
 
-      ayva.move.callCount.should.equal(6);
-      ayva.move.args[5][0].should.deep.equal(expectedUpStrokes[2]);
-      ayva.$.stroke.value.should.equal(top);
+      stroke.speed.should.equal(speed);
+      stroke.top.should.equal(top);
+      stroke.bottom.should.equal(bottom);
+
+      await ayva.$.stroke(0.25, 1).execute();
+
+      await verifyStroke(1, stroke, expectedStrokes[0]);
+      await verifyStroke(2, stroke, expectedStrokes[1]);
+      await verifyStroke(3, stroke, expectedStrokes[2]);
+      await verifyStroke(4, stroke, expectedStrokes[3]);
+      await verifyStroke(5, stroke, expectedStrokes[0]);
+
+      await ayva.$.stroke(0.25, 1).execute();
+
+      await verifyStroke(7, stroke, expectedStrokes[2]); // Should skip to the next up shape appropriately.
     });
   });
-
-  // TODO: Implement stroke shapes array tests.
 
   describe('invalid strokes', function () {
     const testCreateStroke = function (...args) {

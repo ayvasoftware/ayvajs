@@ -135,8 +135,12 @@ export class StrokeParameterProvider {
     this.#value = valueFunction;
   }
 
-  value () {
+  next () {
     return this.#value(this.#index++);
+  }
+
+  get index () {
+    return this.#index;
   }
 }
 
@@ -201,14 +205,15 @@ class ClassicStroke extends AyvaBehavior {
   generateActions (ayva) {
     this.queueFunction((behavior) => {
       const { value, lastValue } = ayva.$.stroke;
+      const { target, shape } = this.#getTargetShape(value, lastValue);
 
       behavior.insertMove({
-        to: this.#getTarget(value, lastValue),
-        speed: this.#speed,
-        value: this.#config.shape, // TODO: Allow parameter provider here.
+        to: target,
+        speed: this.#speed * (shape.relativeSpeed || 1),
+        value: typeof shape === 'object' ? shape.value : shape,
       });
 
-      this.#speed = this.#config.speed.value();
+      this.#speed = this.#config.speed.next();
     });
   }
 
@@ -224,12 +229,20 @@ class ClassicStroke extends AyvaBehavior {
     strokeConfig.bottom = this.#createParameterProvider(strokeConfig.bottom);
     strokeConfig.speed = this.#createParameterProvider(strokeConfig.speed);
 
+    const { shape } = strokeConfig;
+
+    if (shape instanceof Array) {
+      strokeConfig.shape = new StrokeParameterProvider((index) => shape[index % shape.length]);
+    } else {
+      strokeConfig.shape = new StrokeParameterProvider(() => shape);
+    }
+
     this.#config = strokeConfig;
 
     // Compute initial stroke values.
-    this.#top = this.#config.top.value();
-    this.#bottom = this.#config.bottom.value();
-    this.#speed = this.#config.speed.value();
+    this.#top = this.#config.top.next();
+    this.#bottom = this.#config.bottom.next();
+    this.#speed = this.#config.speed.next();
   }
 
   #createParameterProvider (value) {
@@ -244,19 +257,28 @@ class ClassicStroke extends AyvaBehavior {
    * Decide where to stroke next based on the current position.
    * Applies some common sense so there are smoother transitions between patterns.
    */
-  #getTarget (currentValue, lastValue) {
+  #getTargetShape (currentValue, lastValue) {
     const lastStrokeWasUp = (currentValue - lastValue) >= 0;
+    const nextShapeDirection = this.#config.shape.index % 2 === 0 ? 'up' : 'down';
 
     let target;
     if (currentValue >= this.#top || lastStrokeWasUp) {
       target = this.#bottom;
-      this.#bottom = this.#config.bottom.value();
+      this.#bottom = this.#config.bottom.next();
+
+      if (nextShapeDirection === 'up') {
+        this.#config.shape.next(); // Skip to the next down shape.
+      }
     } else {
       target = this.#top;
-      this.#top = this.#config.top.value();
+      this.#top = this.#config.top.next();
+
+      if (nextShapeDirection === 'down') {
+        this.#config.shape.next(); // Skip to the next up shape.
+      }
     }
 
-    return target;
+    return { target, shape: this.#config.shape.next() };
   }
 
   #validate (config) {
