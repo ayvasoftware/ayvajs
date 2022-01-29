@@ -267,19 +267,19 @@ describe('Classic Stroke Tests', function () {
     });
 
     it('should handle very small strokes', async function () {
-      const stroke = new ClassicStroke(0.5, 0.55);
+      const stroke = new ClassicStroke(0.5, 0.51);
 
       const expectedStrokes = [
-        { to: 0.55, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.51, speed: 1, value: Ayva.RAMP_COS },
         { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
-        { to: 0.55, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.51, speed: 1, value: Ayva.RAMP_COS },
         { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
       ];
 
       ayva.$.stroke.value.should.equal(0.5);
 
       stroke.speed.should.equal(1);
-      stroke.top.should.equal(0.55);
+      stroke.top.should.equal(0.51);
       stroke.bottom.should.equal(0.5);
 
       await verifyStrokes(stroke, expectedStrokes);

@@ -394,16 +394,21 @@ class Ayva {
 
     this.#executeProviders(immediateProviders, 0);
 
-    for (let index = 0; index < stepCount; index++) {
-      const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
-      this.#executeProviders(unfinishedProviders, index);
+    if (stepCount) {
+      for (let index = 0; index < stepCount; index++) {
+        const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
+        this.#executeProviders(unfinishedProviders, index);
 
-      await this.sleep(this.#period);
+        await this.sleep(this.#period);
 
-      if (!this.#movements.has(movementId)) {
-        // This move was cancelled.
-        return false;
+        if (!this.#movements.has(movementId)) {
+          // This move was cancelled.
+          return false;
+        }
       }
+    } else {
+      // Always sleep at least a tick even when all providers are immediate.
+      await this.sleep(this.#period);
     }
 
     return true;
