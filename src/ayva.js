@@ -22,6 +22,11 @@ class Ayva {
 
   #performing = false;
 
+  static get precision () {
+    // Decimals to round to for internal values.
+    return 10;
+  }
+
   get performing () {
     return this.#performing;
   }
@@ -450,7 +455,7 @@ class Ayva {
 
     return {
       axis: parameters.axis,
-      value: Number.isFinite(nextValue) ? clamp(round(nextValue, 10), 0, 1) : nextValue,
+      value: Number.isFinite(nextValue) ? clamp(round(nextValue, Ayva.precision), 0, 1) : nextValue,
     };
   }
 
@@ -509,13 +514,13 @@ class Ayva {
 
         if (has(movement, 'duration')) {
           // { to: <number>, duration: <number> }
-          result.speed = round(absoluteDistance / movement.duration, 10);
+          result.speed = round(absoluteDistance / movement.duration, Ayva.precision);
         } else if (has(movement, 'speed')) {
           // { to: <number>, speed: <number> }
           // Uncomment the below to re-enable speed scaling.
           // const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
           // result.speed = movement.speed * axisScale;
-          result.duration = round(absoluteDistance / result.speed, 10);
+          result.duration = round(absoluteDistance / result.speed, Ayva.precision);
         }
 
         result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
@@ -553,7 +558,7 @@ class Ayva {
 
         if (has(movement, 'to')) {
           // Now we can compute a speed.
-          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, 10);
+          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, Ayva.precision);
         }
       } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
         // Implicit sync to max duration.
@@ -903,6 +908,18 @@ class Ayva {
       const angle = (index * angularVelocity) / frequency;
       return midpoint - scale * Math.cos(angle + (0.5 * Math.PI * phase) + (ecc * Math.sin(angle)));
     };
+  }
+
+  /**
+   * Creates a value provider that is a blending of the two value providers passed.
+   * The factor is the multiplier for the first provider. The second provider will be multiplied by 1 - factor.
+   *
+   * @param {Function} firstProvider
+   * @param {Function} secondProvider
+   * @param {Number} factor - value between 0 and 1
+   */
+  static blendMotion (firstProvider, secondProvider, factor) {
+    return (...args) => round(factor * firstProvider(...args) + (1 - factor) * secondProvider(...args), Ayva.precision);
   }
 }
 

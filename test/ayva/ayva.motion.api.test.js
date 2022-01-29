@@ -593,6 +593,22 @@ describe('Motion API Tests', function () {
 
       round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
     });
+
+    it('should allow blending motion', async function () {
+      const values1 = [0.0, 0.1, 0.2, 0.3, 0.4];
+      const values2 = [0.2, 0.3, 0.4, 0.5, 0.6];
+
+      const provider1 = ({ index }) => values1[index];
+      const provider2 = ({ index }) => values2[index];
+
+      const blended = Ayva.blendMotion(provider1, provider2, 0.5);
+
+      expect(blended({ index: 0 })).to.equal(0.1);
+      expect(blended({ index: 1 })).to.equal(0.2);
+      expect(blended({ index: 2 })).to.equal(0.3);
+      expect(blended({ index: 3 })).to.equal(0.4);
+      expect(blended({ index: 4 })).to.equal(0.5);
+    });
   });
 
   /**
