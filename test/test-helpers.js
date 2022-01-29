@@ -4,7 +4,7 @@
 export function createTestConfig () {
   return {
     name: 'OSR2',
-    defaultAxis: 'stroke',
+    defaultAxis: 'L0',
     frequency: 50,
     axes: [
       {

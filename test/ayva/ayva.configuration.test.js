@@ -2,25 +2,25 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { OSR2_CONFIG } from '../../src/osr-configs.js';
-import { createFunctionBinder } from '../test-helpers.js';
+import { createTestConfig, createFunctionBinder } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Axis Configuration.
  */
 describe('Configuration Tests', function () {
   const DEFAULT_VALUE = 0.5; // The default value for linear, auxiliary, and rotation axes.
+  const TEST_CONFIG = createTestConfig();
 
   describe('#constructor', function () {
     it('should set a valid configuration', function () {
-      const ayva = new Ayva(OSR2_CONFIG);
+      const ayva = new Ayva(TEST_CONFIG);
 
       expect(ayva.name).to.equal('OSR2');
       expect(ayva.defaultAxis).to.equal('L0');
       expect(ayva.frequency).to.equal(50);
       expect(ayva.period).to.equal(0.02);
 
-      for (const axis of OSR2_CONFIG.axes) {
+      for (const axis of TEST_CONFIG.axes) {
         const storedAxis = ayva.getAxis(axis.name);
 
         expect(storedAxis).to.not.be.undefined;
@@ -29,6 +29,19 @@ describe('Configuration Tests', function () {
         expect(storedAxis.type).to.equal(axis.type);
         expect(storedAxis.max).to.equal(1);
         expect(storedAxis.min).to.equal(0);
+
+        expect(ayva.$[axis.name]).to.not.be.undefined;
+
+        const $axis = ayva.$[axis.name];
+
+        expect($axis.max).to.equal(1);
+        expect($axis.min).to.equal(0);
+
+        if (storedAxis.type === 'boolean') {
+          expect($axis.value).to.equal(false);
+        } else {
+          expect($axis.value).to.equal(0.5);
+        }
       }
     });
   });
@@ -236,7 +249,7 @@ describe('Configuration Tests', function () {
 
   describe('#updateLimits', function () {
     it('should disallow invalid limits', function () {
-      const ayva = new Ayva(OSR2_CONFIG);
+      const ayva = new Ayva(TEST_CONFIG);
 
       ayva.getAxis('L0').min.should.equal(0);
       ayva.getAxis('L0').max.should.equal(1);
@@ -260,7 +273,7 @@ describe('Configuration Tests', function () {
     });
 
     it('should allow updating valid limits', function () {
-      const ayva = new Ayva(OSR2_CONFIG);
+      const ayva = new Ayva(TEST_CONFIG);
 
       ayva.getAxis('L0').min.should.equal(0);
       ayva.getAxis('L0').max.should.equal(1);
@@ -277,7 +290,7 @@ describe('Configuration Tests', function () {
     });
 
     it('should disallow changes through the axes property', function () {
-      const ayva = new Ayva(OSR2_CONFIG);
+      const ayva = new Ayva(TEST_CONFIG);
 
       ayva.getAxis('L0').min.should.equal(0);
       ayva.axes.L0.min.should.equal(0);

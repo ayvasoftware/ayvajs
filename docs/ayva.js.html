@@ -517,16 +517,21 @@ class Ayva {
 
     this.#executeProviders(immediateProviders, 0);
 
-    for (let index = 0; index &lt; stepCount; index++) {
-      const unfinishedProviders = stepProviders.filter((provider) => index &lt; provider.parameters.stepCount);
-      this.#executeProviders(unfinishedProviders, index);
+    if (stepCount) {
+      for (let index = 0; index &lt; stepCount; index++) {
+        const unfinishedProviders = stepProviders.filter((provider) => index &lt; provider.parameters.stepCount);
+        this.#executeProviders(unfinishedProviders, index);
 
-      await this.sleep(this.#period);
+        await this.sleep(this.#period);
 
-      if (!this.#movements.has(movementId)) {
-        // This move was cancelled.
-        return false;
+        if (!this.#movements.has(movementId)) {
+          // This move was cancelled.
+          return false;
+        }
       }
+    } else {
+      // Always sleep at least a tick even when all providers are immediate.
+      await this.sleep(this.#period);
     }
 
     return true;
@@ -617,7 +622,6 @@ class Ayva {
     const computedMovements = movements.map((movement) => {
       // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
-      const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
 
       const result = {
         ...movement,
@@ -635,7 +639,9 @@ class Ayva {
           result.speed = round(absoluteDistance / movement.duration, 10);
         } else if (has(movement, 'speed')) {
           // { to: &lt;number>, speed: &lt;number> }
-          result.speed = movement.speed * axisScale; // Convert real, absolute speed to scaled speed.
+          // Uncomment the below to re-enable speed scaling.
+          // const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
+          // result.speed = movement.speed * axisScale;
           result.duration = round(absoluteDistance / result.speed, 10);
         }
 

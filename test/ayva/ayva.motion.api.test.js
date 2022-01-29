@@ -175,7 +175,7 @@ describe('Motion API Tests', function () {
     it('should throw an error if axis specified more than once', function () {
       return Promise.all([
         ayva.move({ to: 0, speed: 1 }, { to: 0, speed: 1 })
-          .should.be.rejectedWith(Error, 'Duplicate axis movement: stroke'),
+          .should.be.rejectedWith(Error, 'Duplicate axis movement: L0'),
         ayva.move({ axis: 'roll', to: 0, speed: 1 }, { axis: 'roll', to: 0, speed: 1 })
           .should.be.rejectedWith(Error, 'Duplicate axis movement: roll'),
       ]);
@@ -354,7 +354,6 @@ describe('Motion API Tests', function () {
     });
 
     it('should call value provider with \'to\', \'speed\', and \'direction\' properties when \'to\' is specified (positive direction)', async function () { // eslint-disable-line max-len
-      // TODO: Thou shalt not repeat thyself?
       ayva.getAxis('R0').value.should.equal(0.5);
 
       const values = [0.600, 0.700, 0.800, 0.900, 1];
@@ -495,63 +494,19 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R0').value.should.equal(0);
     });
 
-    it('should scale speed to limit range', async function () {
+    it('should not scale speed to limit range', async function () {
       ayva.updateLimits('R0', 0.1, 0.9);
       ayva.getAxis('R0').value.should.equal(0.5);
 
-      const valueProvider = sinon.fake(Ayva.RAMP_LINEAR);
-
       const result = await ayva.move({
         axis: 'R0',
+        speed: 5,
         to: 0,
-        speed: 1,
-        value: valueProvider,
       });
 
       expect(result).to.be.true;
 
-      validateProviderParameters(valueProvider, {
-        axis: 'R0',
-        frequency: 50,
-        period: 0.02,
-        to: 0,
-        from: 0.5,
-        direction: -1,
-        stepCount: 20,
-        duration: 0.4,
-        speed: 1.25, // Since the limit range is squashed, relative speed is "faster" to compensate.
-      }, [
-        0.5,
-        0.475, 0.45, 0.425, 0.4,
-        0.375, 0.35, 0.325, 0.3,
-        0.275, 0.25, 0.225, 0.2,
-        0.175, 0.15, 0.125, 0.1,
-        0.075, 0.05, 0.025,
-      ]);
-
-      validateWriteOutput(
-        'R04800',
-        'R04600',
-        'R04400',
-        'R04200',
-        'R04000',
-        'R03800',
-        'R03600',
-        'R03400',
-        'R03200',
-        'R03000',
-        'R02800',
-        'R02600',
-        'R02400',
-        'R02200',
-        'R02000',
-        'R01800',
-        'R01600',
-        'R01400',
-        'R01200',
-        'R01000'
-      );
-
+      validateWriteOutput('R04200', 'R03400', 'R02600', 'R01800', 'R01000');
       ayva.getAxis('R0').value.should.equal(0);
     });
 
@@ -746,7 +701,7 @@ describe('Motion API Tests', function () {
     });
 
     it('should synchronize movements using the sync property (alias)', async function () {
-      // TODO: Thou shalt not repeat thyself.
+      // Thou shalt not repeat thyself?
       ayva.getAxis('L0').value.should.equal(0.5);
       ayva.getAxis('R0').value.should.equal(0.5);
       ayva.getAxis('R1').value.should.equal(0.5);

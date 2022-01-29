@@ -15,6 +15,7 @@ Features:
 - Agnostic about the nature of the target device(s) (doesn't care if device is [simulated](https://github.com/ayvajs/osr-emu) or actual).
 - Cross platform with zero dependencies.
 - Runs in a browser, as part of a Node.js app, or theoretically anywhere with a JavaScript runtime.
+- Extensively tested (100% coverage).
 - Quick and easy setup.
 
 ## Installation

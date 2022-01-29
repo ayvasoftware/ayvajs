@@ -25,7 +25,10 @@ export class StrokeParameterProvider {
  * So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
  * such as speed, positions, and twist. No frills. Just stroke.
  *
- * TODO: Fix extremely small strokes error (Ex: 0.3, 0.31)
+ * TODO: Maybe home other axes before starting stroke.
+ * TODO: Add constructor that takes config.
+ * TODO: Add twist and valve control.
+ * TODO: Allow shortcut passing array to top and bottom and speed.
  */
 class ClassicStroke extends AyvaBehavior {
   #top;

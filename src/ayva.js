@@ -499,7 +499,6 @@ class Ayva {
     const computedMovements = movements.map((movement) => {
       // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
-      const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
 
       const result = {
         ...movement,
@@ -517,7 +516,9 @@ class Ayva {
           result.speed = round(absoluteDistance / movement.duration, 10);
         } else if (has(movement, 'speed')) {
           // { to: <number>, speed: <number> }
-          result.speed = movement.speed * axisScale; // Convert real, absolute speed to scaled speed.
+          // Uncomment the below to re-enable speed scaling.
+          // const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
+          // result.speed = movement.speed * axisScale;
           result.duration = round(absoluteDistance / result.speed, 10);
         }
 
