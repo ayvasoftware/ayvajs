@@ -16,9 +16,9 @@ describe('Classic Stroke Tests', function () {
     ayva.$.stroke.value.should.equal(expectedMove.to);
   };
 
-  const verifyStrokes = async function (stroke, expectedMoves) {
+  const verifyStrokes = async function (stroke, expectedMoves, indexOffset = 0) {
     for (let i = 0; i < expectedMoves.length; i++) {
-      await verifyStroke(i, stroke, expectedMoves[i]);
+      await verifyStroke(i + indexOffset, stroke, expectedMoves[i]);
     }
   };
 
@@ -223,6 +223,66 @@ describe('Classic Stroke Tests', function () {
       await ayva.$.stroke(0.25, 1).execute();
 
       await verifyStroke(7, stroke, expectedStrokes[2]); // Should skip to the next up shape appropriately.
+    });
+
+    it('should not freeze up when travelling to a position its already at (up)', async function () {
+      const stroke = new ClassicStroke(0.5, 0.75);
+
+      const expectedStrokes = [
+        { to: 0.75, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.75, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
+      ];
+
+      ayva.$.stroke.value.should.equal(0.5);
+
+      stroke.speed.should.equal(1);
+      stroke.top.should.equal(0.75);
+      stroke.bottom.should.equal(0.5);
+
+      await verifyStrokes(stroke, expectedStrokes);
+    });
+
+    it('should not freeze up when travelling to a position its already at (down)', async function () {
+      const stroke = new ClassicStroke(0.25, 0.5);
+
+      const expectedStrokes = [
+        { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.25, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.25, speed: 1, value: Ayva.RAMP_COS },
+      ];
+
+      ayva.$.stroke.value.should.equal(0.5);
+
+      stroke.speed.should.equal(1);
+      stroke.top.should.equal(0.5);
+      stroke.bottom.should.equal(0.25);
+
+      await ayva.$.stroke(0.75, 1).execute();
+      await ayva.$.stroke(0.45, 1).execute();
+
+      await verifyStrokes(stroke, expectedStrokes, 2);
+    });
+
+    it('should handle very small strokes', async function () {
+      const stroke = new ClassicStroke(0.5, 0.55);
+
+      const expectedStrokes = [
+        { to: 0.55, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.55, speed: 1, value: Ayva.RAMP_COS },
+        { to: 0.5, speed: 1, value: Ayva.RAMP_COS },
+      ];
+
+      ayva.$.stroke.value.should.equal(0.5);
+
+      stroke.speed.should.equal(1);
+      stroke.top.should.equal(0.55);
+      stroke.bottom.should.equal(0.5);
+
+      await verifyStrokes(stroke, expectedStrokes);
     });
   });
 

@@ -139,19 +139,19 @@ class ClassicStroke extends AyvaBehavior {
     const nextShapeDirection = this.#config.shape.index % 2 === 0 ? 'up' : 'down';
 
     let target;
-    if (currentValue >= this.#top || lastStrokeWasUp) {
-      target = this.#bottom;
-      this.#bottom = this.#config.bottom.next();
-
-      if (nextShapeDirection === 'up') {
-        this.#config.shape.next(); // Skip to the next down shape.
-      }
-    } else {
+    if (currentValue <= this.#bottom || (currentValue < this.#top && !lastStrokeWasUp)) {
       target = this.#top;
       this.#top = this.#config.top.next();
 
       if (nextShapeDirection === 'down') {
         this.#config.shape.next(); // Skip to the next up shape.
+      }
+    } else {
+      target = this.#bottom;
+      this.#bottom = this.#config.bottom.next();
+
+      if (nextShapeDirection === 'up') {
+        this.#config.shape.next(); // Skip to the next down shape.
       }
     }
 
