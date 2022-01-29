@@ -3,6 +3,7 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import { createTestConfig } from '../test-helpers.js';
+import { round } from '../../src/util.js';
 
 /**
  * Contains all tests for Ayva's Motion API.
@@ -584,6 +585,14 @@ describe('Motion API Tests', function () {
       await ayva.move({ to: 0, duration: 1, value: Ayva.RAMP_NEGATIVE_PARABOLIC });
       ayva.getAxis('stroke').value.should.equal(0);
     });
+
+    it('should allow tempest motion', async function () {
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      await ayva.move({ value: Ayva.tempestMotion(0.5, 1, 0, 0), duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
   });
 
   /**
@@ -739,6 +748,45 @@ describe('Motion API Tests', function () {
       );
 
       ayva.getAxis('L0').value.should.equal(0.375);
+      ayva.getAxis('R0').value.should.equal(0.44);
+      ayva.getAxis('R1').value.should.equal(0.445);
+    });
+
+    it('should synchronize movements using the sync property (while using max duration)', async function () {
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('R0').value.should.equal(0.5);
+      ayva.getAxis('R1').value.should.equal(0.5);
+
+      const strokeValues = [0.475, 0.450, 0.425];
+      const twistValues = [0.480, 0.460, 0.440, 0, 0];
+      const rollValues = [0.485, 0.465, 0.445, 0, 0];
+
+      const strokeValueProvider = sinon.fake((parameters) => strokeValues[parameters.index]);
+      const twistValueProvider = sinon.fake((parameters) => twistValues[parameters.index]);
+      const rollValueProvider = sinon.fake((parameters) => rollValues[parameters.index]);
+
+      const result = await ayva.move({
+        axis: 'L0',
+        value: strokeValueProvider,
+        duration: 0.06,
+      }, {
+        axis: 'R1',
+        value: rollValueProvider,
+        sync: 'R0',
+      }, {
+        axis: 'R0',
+        value: twistValueProvider,
+      });
+
+      expect(result).to.be.true;
+
+      validateWriteOutput(
+        'L04750 R14850 R04800',
+        'L04500 R14650 R04600',
+        'L04250 R14450 R04400',
+      );
+
+      ayva.getAxis('L0').value.should.equal(0.4250);
       ayva.getAxis('R0').value.should.equal(0.44);
       ayva.getAxis('R1').value.should.equal(0.445);
     });

@@ -2,7 +2,7 @@
 ## What is Ayva?
 Ayva is a lightweight, behavior-based JavaScript library for controlling [Open Source Multi Axis Stroker Robots](https://www.patreon.com/tempestvr).
 
-The quickest way to get a feel for Ayva is with [this codepen example](https://codepen.io/soritesparadox/pen/YzrmaJq) that shows how easy it is to setup and perform a complex movement. It also demonstrates the usage of the [OSR Emulator](https://github.com/ayvajs/osr-emu)—a useful component for visualizing and testing movements without an actual hardware device.
+The quickest way to get a feel for some of the capabilities of Ayva is with [this codepen example](https://codepen.io/soritesparadox/pen/YzrmaJq) that shows how easy it is to setup and perform a complex movement (an orbit grind). It also demonstrates the usage of the [OSR Emulator](https://github.com/ayvajs/osr-emu)—a useful component for visualizing and testing movements without an actual hardware device.
 
 Features:
 - Perform arbitrarily complex movements across multiple axes using an expressive Motion API.

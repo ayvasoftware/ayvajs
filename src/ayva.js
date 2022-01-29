@@ -157,13 +157,9 @@ class Ayva {
       return false;
     }
 
-    try {
-      return await this.#performMovements(movementId, movements);
-    } catch (error) {
-      return Promise.reject(error);
-    } finally {
+    return this.#performMovements(movementId, movements).finally(() => {
       this.#movements.delete(movementId);
-    }
+    });
   }
 
   /**

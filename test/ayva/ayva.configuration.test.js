@@ -302,4 +302,13 @@ describe('Configuration Tests', function () {
       testAssign.should.throw('Cannot assign to read only property \'min\' of object \'#<Object>\'');
     });
   });
+
+  describe('#defaultConfiguraion', function () {
+    it('should allow using a default configuration', function () {
+      const ayva = new Ayva().defaultConfiguration();
+
+      expect(ayva.name).to.equal('SR6');
+      expect(ayva.defaultAxis).to.equal('L0');
+    });
+  });
 });
