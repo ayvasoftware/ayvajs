@@ -90,11 +90,12 @@ describe('Motion API Tests', function () {
   describe('#sleep', function () {
     it('should fulfill promise after number of seconds specified', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      const startTime = performance.now();
+      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
       await ayva.sleep(0.02).should.be.fulfilled;
-      const elapsed = performance.now() - startTime;
-      expect(Math.round(elapsed)).to.be.at.least(20); // TODO: This is flaky.
-      expect(elapsed).to.be.at.most(30);
+
+      setTimeout.callCount.should.equal(1);
+      setTimeout.args[0][0].should.be.a('function');
+      setTimeout.args[0][1].should.equal(20);
     });
   });
 
@@ -427,7 +428,7 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
 
-      validateWriteOutput('A19999');
+      validateWriteOutput('B19999');
       ayva.getAxis('test-boolean-axis').value.should.equal(true);
     });
 
@@ -875,7 +876,7 @@ describe('Motion API Tests', function () {
 
       expect(result).to.be.true;
 
-      validateWriteOutput('A19999 A29999');
+      validateWriteOutput('B19999 B29999');
 
       ayva.getAxis('test-boolean-axis').value.should.equal(true);
       ayva.getAxis('test-boolean-axis-2').value.should.equal(true);

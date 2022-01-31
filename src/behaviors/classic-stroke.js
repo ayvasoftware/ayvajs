@@ -3,7 +3,7 @@ import Ayva from '../ayva.js';
 import AyvaBehavior from './ayva-behavior.js';
 import { has, validNumber } from '../util.js';
 
-export class StrokeParameterProvider {
+class StrokeParameterProvider {
   #index = 0;
 
   #value;
@@ -23,11 +23,7 @@ export class StrokeParameterProvider {
 
 /**
  * So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
- * such as speed, positions, and twist. No frills. Just stroke.
- *
- * TODO: Maybe home other axes before starting stroke.
- * TODO: Add valve control.
- * TODO: Allow shortcut passing array to top and bottom and speed.
+ * such as speed, positions, shape, and twist.
  */
 class ClassicStroke extends AyvaBehavior {
   #top;
@@ -65,6 +61,17 @@ class ClassicStroke extends AyvaBehavior {
    * Create a new ClassicStroke.
    *
    * @example
+   * // Bounce stroke.
+   * ayva.do(new ClassicStroke(0, 1, 1, [ Ayva.RAMP_NEGATIVE_PARABOLIC, Ayva.RAMP_PARABOLIC ]));
+   *
+   * @param {Number} bottom - bottom of the stroke or a function that computes the bottom for each down stroke
+   * @param {Number} top - top of the stroke or a function that computes the top for each up stroke
+   * @param {Number} speed - speed of the stroke or a function that computes the speed for each stroke
+   * @param {Function|Array} shape - a value provider for the shape or an even-lengthed array of value providers
+   *//**
+   * Create a new ClassicStroke.
+   *
+   * @example
    * ayva.do(new ClassicStroke({
    *   bottom: 0,
    *   top: 1,
@@ -72,17 +79,6 @@ class ClassicStroke extends AyvaBehavior {
    * }));
    *
    * @param {Object} config - stroke configuration
-   *
-   *//**
-   * Create a new ClassicStroke.
-   *
-   * @example
-   * ayva.do(new ClassicStroke(0, 1, 1));
-   *
-   * @param {Number} bottom - bottom of the stroke or a function that computes the bottom for each down stroke
-   * @param {Number} top - top of the stroke or a function that computes the top for each up stroke
-   * @param {Number} speed - speed of the stroke or a function that computes the speed for each stroke
-   * @param {Function|Array} shape - a value provider for the shape or an even-lengthed array of value providers
    */
   constructor (bottom = 0, top = 1, speed = 1, shape = Ayva.RAMP_COS) {
     super();
@@ -103,8 +99,9 @@ class ClassicStroke extends AyvaBehavior {
   }
 
   /**
-   * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke, based on
-   * where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed.
+   * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
+   * where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
+   * and applied.
    *
    * @param {Ayva} ayva
    */
@@ -129,6 +126,10 @@ class ClassicStroke extends AyvaBehavior {
       behavior.insertMove(...moves);
 
       this.#speed = this.#config.speed.next();
+
+      if (validNumber(this.#config.suck, 0, 1)) {
+        ayva.$.suck.value = this.#config.suck;
+      }
     });
   }
 
@@ -295,6 +296,10 @@ class ClassicStroke extends AyvaBehavior {
           }
         }
       });
+    }
+
+    if (has(config, 'suck') && !validNumber(config.suck, 0, 1) && config.suck !== null) {
+      fail('suck', config.suck);
     }
   }
 }

@@ -331,6 +331,24 @@ describe('Classic Stroke Tests', function () {
 
       round(ayva.$.twist.value, 2).should.equal(1);
     });
+
+    it('should allow suck algorithm', async function () {
+      const write = sinon.fake();
+      ayva.addOutputDevice({ write });
+
+      const stroke = new ClassicStroke({
+        suck: 0.3,
+      });
+
+      ayva.$.suck.value.should.equal(0.5);
+
+      await stroke.perform(ayva);
+
+      ayva.$.suck.value.should.equal(0.3);
+
+      write.callCount.should.equal(1);
+      write.args[0][0].should.equal('A13000\n');
+    });
   });
 
   describe('invalid strokes', function () {
@@ -373,6 +391,10 @@ describe('Classic Stroke Tests', function () {
             phase: value,
           },
         }).should.throw(`Invalid stroke twist phase: ${value}`);
+
+        testCreateStroke({
+          suck: value,
+        }).should.throw(`Invalid stroke suck: ${value}`);
       });
 
       testCreateStroke({

@@ -34,11 +34,16 @@ export function createTestConfig () {
       },
       {
         name: 'A1',
+        type: 'auxiliary',
+        alias: 'suck',
+      },
+      {
+        name: 'B1',
         type: 'boolean',
         alias: 'test-boolean-axis',
       },
       {
-        name: 'A2',
+        name: 'B2',
         type: 'boolean',
         alias: 'test-boolean-axis-2',
       },

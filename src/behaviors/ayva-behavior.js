@@ -30,6 +30,7 @@ class AyvaBehavior {
    *
    * @param {Ayva} ayva - instance of Ayva to generate actions for.
    * @param {Number} iterations - how many iterations of this behavior to generate.
+   * @ignore
    */
   emitActions (ayva, iterations = 1) {
     for (let i = 0; i < iterations; i++) {

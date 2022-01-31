@@ -226,13 +226,13 @@ describe('Move Builder Tests', function () {
 
       ayva.$['test-boolean-axis'].value.should.equal(true);
       write.callCount.should.equal(2);
-      write.args[1][0].should.equal('A19999\n');
+      write.args[1][0].should.equal('B19999\n');
 
       ayva.$['test-boolean-axis'].value = false;
 
       ayva.$['test-boolean-axis'].value.should.equal(false);
       write.callCount.should.equal(3);
-      write.args[2][0].should.equal('A10000\n');
+      write.args[2][0].should.equal('B10000\n');
     });
 
     it('should prevent invalid values when updating value directly', function () {
