@@ -589,7 +589,14 @@ describe('Motion API Tests', function () {
     it('should allow tempest motion', async function () {
       ayva.getAxis('stroke').value.should.equal(0.5);
 
-      await ayva.move({ value: Ayva.tempestMotion(0.5, 1, 0, 0), duration: 1 });
+      const value = Ayva.tempestMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
 
       round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
     });

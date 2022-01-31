@@ -8,10 +8,12 @@ import { createTestConfig } from '../test-helpers.js';
 describe('Move Builder Tests', function () {
   let ayva;
   let moveBuilder;
+  let write;
 
   beforeEach(function () {
+    write = sinon.fake();
     ayva = new Ayva(createTestConfig());
-    ayva.addOutputDevice({ write: sinon.fake() });
+    ayva.addOutputDevice({ write });
     sinon.replace(ayva, 'move', sinon.fake());
 
     moveBuilder = ayva.moveBuilder();
@@ -206,6 +208,41 @@ describe('Move Builder Tests', function () {
       ayva.updateLimits('stroke', 0.1, 0.9);
       ayva.$.stroke.max.should.equal(0.9);
       ayva.$.stroke.min.should.equal(0.1);
+    });
+
+    it('should allow updating value directly', function () {
+      ayva.$.stroke.value.should.equal(0.5);
+
+      ayva.$.stroke.value = 0.2;
+
+      ayva.$.stroke.value.should.equal(0.2);
+      ayva.$.stroke.lastValue.should.equal(0.5);
+      write.callCount.should.equal(1);
+      write.args[0][0].should.equal('L02000\n');
+
+      ayva.$['test-boolean-axis'].value.should.equal(false);
+
+      ayva.$['test-boolean-axis'].value = true;
+
+      ayva.$['test-boolean-axis'].value.should.equal(true);
+      write.callCount.should.equal(2);
+      write.args[1][0].should.equal('A19999\n');
+
+      ayva.$['test-boolean-axis'].value = false;
+
+      ayva.$['test-boolean-axis'].value.should.equal(false);
+      write.callCount.should.equal(3);
+      write.args[2][0].should.equal('A10000\n');
+    });
+
+    it('should prevent invalid values when updating value directly', function () {
+      ayva.$.stroke.value.should.equal(0.5);
+
+      [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity, -1, 2].forEach((invalidValue) => {
+        (function () {
+          ayva.$.stroke.value = invalidValue;
+        }).should.throw(`Invalid value: ${invalidValue}`);
+      });
     });
   });
 

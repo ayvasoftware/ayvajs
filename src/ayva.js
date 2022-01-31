@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import AyvaMoveBuilder from './ayva-move-builder.js';
 import {
-  clamp, round, has, fail, createConstantProperty
+  clamp, round, has, fail, createConstantProperty, validNumber
 } from './util.js';
 import { SR6_CONFIG } from './osr-configs.js';
 
@@ -348,6 +348,20 @@ class Ayva {
 
     Object.defineProperty(this.$[axis], 'value', {
       get: () => this.#axes[axis].value,
+      set: (target) => {
+        // TODO: Thou shalt not repeat thyself?
+        const { type } = this.#axes[axis];
+
+        if (type !== 'boolean' && !validNumber(target, 0, 1)) {
+          throw new Error(`Invalid value: ${target}`);
+        }
+
+        const value = type === 'boolean' ? !!target : target;
+        const tcode = this.#tcode(axis, value);
+        this.#write(`${tcode}\n`);
+        this.#axes[axis].lastValue = this.#axes[axis].value;
+        this.#axes[axis].value = value;
+      },
     });
 
     Object.defineProperty(this.$[axis], 'lastValue', {
@@ -876,9 +890,12 @@ class Ayva {
    *
    * cos(x + phase·π/2 + ecc·sin(x))
    *
-   * The result is translated and scaled to fit the range specified.
+   * The result is translated and scaled to fit the range and beats per minute specified.
    * This formula was created by [TempestMAx]{@link https://www.patreon.com/tempestvr}—loosely based
    * on orbital motion calculations. Hence, tempestMotion.
+   *
+   * See [this graph]{@link https://www.desmos.com/calculator/mba8qzrqxd} of the function
+   * where you can adjust the parameters to see how they affect the motion.
    *
    * @example
    * // Note: These examples use the Builder Pattern of the Motion API.
@@ -904,10 +921,18 @@ class Ayva {
     const scale = 0.5 * (to - from);
     const midpoint = 0.5 * (to + from);
 
-    return ({ index, frequency }) => {
+    const provider = ({ index, frequency }) => {
       const angle = (index * angularVelocity) / frequency;
       return midpoint - scale * Math.cos(angle + (0.5 * Math.PI * phase) + (ecc * Math.sin(angle)));
     };
+
+    createConstantProperty(provider, 'from', from);
+    createConstantProperty(provider, 'to', to);
+    createConstantProperty(provider, 'phase', phase);
+    createConstantProperty(provider, 'ecc', ecc);
+    createConstantProperty(provider, 'bpm', bpm);
+
+    return provider;
   }
 
   /**

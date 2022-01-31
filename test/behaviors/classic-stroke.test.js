@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import ClassicStroke from '../../src/behaviors/classic-stroke.js';
 import { createTestConfig } from '../test-helpers.js';
+import { round } from '../../src/util.js';
 
 describe('Classic Stroke Tests', function () {
   let ayva;
@@ -71,6 +72,15 @@ describe('Classic Stroke Tests', function () {
 
     it('should stroke with specified parameters', async function () {
       await verifyStrokeSequence(new ClassicStroke(0.25, 0.75, 2, Ayva.RAMP_PARABOLIC), 0.25, 0.75, 2, Ayva.RAMP_PARABOLIC);
+    });
+
+    it('should allow passing a config object', async function () {
+      await verifyStrokeSequence(new ClassicStroke({
+        bottom: 0.25,
+        top: 0.75,
+        speed: 2,
+        shape: Ayva.RAMP_PARABOLIC,
+      }), 0.25, 0.75, 2, Ayva.RAMP_PARABOLIC);
     });
 
     it('should stroke to the top if the last movement was down', async function () {
@@ -284,6 +294,43 @@ describe('Classic Stroke Tests', function () {
 
       await verifyStrokes(stroke, expectedStrokes);
     });
+
+    it('should allow twist', async function () {
+      const stroke = new ClassicStroke({
+        twist: {
+          from: 0.25,
+          to: 1,
+        },
+      });
+
+      await stroke.perform(ayva); // Generate stroke.
+      await stroke.perform(ayva); // Perform stroke.
+
+      ayva.move.callCount.should.equal(1);
+      let move = ayva.move.args[0][1];
+
+      // When starting off axis, should just do a move towards the on-axis position.
+      move.axis.should.equal('twist');
+      move.to.should.equal(0.25);
+      move.value.should.equal(Ayva.RAMP_COS);
+      ayva.$.twist.value.should.equal(0.25);
+
+      await stroke.perform(ayva);
+      await stroke.perform(ayva);
+
+      ayva.move.callCount.should.equal(2);
+      move = ayva.move.args[1][1]; // eslint-disable-line prefer-destructuring
+
+      move.axis.should.equal('twist');
+      move.value.should.be.a('function');
+      move.value.from.should.equal(0.25);
+      move.value.to.should.equal(1);
+      move.value.phase.should.equal(0);
+      move.value.ecc.should.equal(0);
+      move.value.bpm.should.equal(30);
+
+      round(ayva.$.twist.value, 2).should.equal(1);
+    });
   });
 
   describe('invalid strokes', function () {
@@ -296,12 +343,41 @@ describe('Classic Stroke Tests', function () {
     it('should throw an error if parameters are invalid', function () {
       testCreateStroke(0, 0).should.throw('Invalid stroke range specified: (0, 0)');
 
-      ['', NaN, Infinity, true, false, {}].forEach((value) => {
+      ['', NaN, Infinity, true, false].forEach((value) => {
         testCreateStroke(value).should.throw(`Invalid stroke bottom: ${value}`);
         testCreateStroke(0, value).should.throw(`Invalid stroke top: ${value}`);
         testCreateStroke(0, 1, value).should.throw(`Invalid stroke speed: ${value}`);
         testCreateStroke(0, 1, 1, value).should.throw(`Invalid stroke shape: ${value}`);
+        testCreateStroke({
+          twist: value,
+        }).should.throw(`Invalid stroke twist: ${value}`);
+
+        testCreateStroke({
+          twist: {
+            from: value,
+            to: 1,
+          },
+        }).should.throw(`Invalid stroke twist from: ${value}`);
+
+        testCreateStroke({
+          twist: {
+            from: 1,
+            to: value,
+          },
+        }).should.throw(`Invalid stroke twist to: ${value}`);
+
+        testCreateStroke({
+          twist: {
+            from: 1,
+            to: 0,
+            phase: value,
+          },
+        }).should.throw(`Invalid stroke twist phase: ${value}`);
       });
+
+      testCreateStroke({
+        twist: {},
+      }).should.throw('Invalid stroke twist from: undefined');
     });
 
     it('should throw an error if parameters are out of bounds', function () {

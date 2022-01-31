@@ -149,8 +149,7 @@ export class StrokeParameterProvider {
  * such as speed, positions, and twist. No frills. Just stroke.
  *
  * TODO: Maybe home other axes before starting stroke.
- * TODO: Add constructor that takes config.
- * TODO: Add twist and valve control.
+ * TODO: Add valve control.
  * TODO: Allow shortcut passing array to top and bottom and speed.
  */
 class ClassicStroke extends AyvaBehavior {
@@ -180,23 +179,50 @@ class ClassicStroke extends AyvaBehavior {
       bottom: 0,
       speed: 1,
       shape: Ayva.RAMP_COS,
-      // valve: {
-      //   up: 0,
-      //   down: 1,
-      // },
-      // twist: null,
+      suck: null,
+      twist: null,
     };
   }
 
+  /**
+   * Create a new ClassicStroke.
+   *
+   * @example
+   * ayva.do(new ClassicStroke({
+   *   bottom: 0,
+   *   top: 1,
+   *   speed: 1,
+   * }));
+   *
+   * @param {Object} config - stroke configuration
+   *
+   *//**
+   * Create a new ClassicStroke.
+   *
+   * @example
+   * ayva.do(new ClassicStroke(0, 1, 1));
+   *
+   * @param {Number} bottom - bottom of the stroke or a function that computes the bottom for each down stroke
+   * @param {Number} top - top of the stroke or a function that computes the top for each up stroke
+   * @param {Number} speed - speed of the stroke or a function that computes the speed for each stroke
+   * @param {Function|Array} shape - a value provider for the shape or an even-lengthed array of value providers
+   */
   constructor (bottom = 0, top = 1, speed = 1, shape = Ayva.RAMP_COS) {
     super();
 
-    this.#init({
-      top,
-      bottom,
-      speed,
-      shape,
-    });
+    let config;
+    if (typeof bottom === 'object') {
+      config = bottom;
+    } else {
+      config = {
+        top,
+        bottom,
+        speed,
+        shape,
+      };
+    }
+
+    this.#init(config);
   }
 
   /**
@@ -208,13 +234,22 @@ class ClassicStroke extends AyvaBehavior {
   generateActions (ayva) {
     this.queueFunction((behavior) => {
       const { value, lastValue } = ayva.$.stroke;
-      const { target, shape } = this.#getTargetShape(value, lastValue);
+      const { target, shape, direction } = this.#getTargetShape(value, lastValue);
+      const speed = this.#speed * (shape.relativeSpeed || 1);
 
-      behavior.insertMove({
+      const moves = [{
+        speed,
         to: target,
-        speed: this.#speed * (shape.relativeSpeed || 1),
         value: typeof shape === 'object' ? shape.value : shape,
-      });
+      }];
+
+      if (this.#config.twist) {
+        moves.push(this.#computeTwistMove({
+          direction, value, target, speed, ayva,
+        }));
+      }
+
+      behavior.insertMove(...moves);
 
       this.#speed = this.#config.speed.next();
     });
@@ -248,6 +283,32 @@ class ClassicStroke extends AyvaBehavior {
     this.#speed = this.#config.speed.next();
   }
 
+  #computeTwistMove ({ direction, value, target, speed, ayva }) { // eslint-disable-line object-curly-newline
+    const { frequency } = ayva;
+    const phase = (direction === 'up' ? 0 : 2) + (this.#config.twist.phase || 0);
+    const distance = Math.abs(value - target);
+    const bpm = (speed * 60) / (2 * distance);
+    const twistMotion = Ayva.tempestMotion(this.#config.twist.from, this.#config.twist.to, phase, 0, bpm);
+    const expectedTwistValue = twistMotion({ index: 0, frequency });
+
+    if (Math.abs(expectedTwistValue - ayva.$.twist.value) > 0.05) {
+      // I'm starting off axis. Just do a smooth twist to the next position rather than jerking back.
+      const nextTwistMotion = Ayva.tempestMotion(this.#config.twist.from, this.#config.twist.to, phase + 2, 0, bpm);
+      const targetTwistValue = nextTwistMotion({ index: 0, frequency });
+
+      return {
+        axis: 'twist',
+        to: targetTwistValue,
+        value: Ayva.RAMP_COS,
+      };
+    }
+
+    return {
+      axis: 'twist',
+      value: twistMotion,
+    };
+  }
+
   #createParameterProvider (value) {
     if (typeof value !== 'function') {
       return new StrokeParameterProvider(() => value);
@@ -265,7 +326,10 @@ class ClassicStroke extends AyvaBehavior {
     const nextShapeDirection = this.#config.shape.index % 2 === 0 ? 'up' : 'down';
 
     let target;
+    let direction;
+
     if (currentValue &lt;= this.#bottom || (currentValue &lt; this.#top &amp;&amp; !lastStrokeWasUp)) {
+      direction = 'up';
       target = this.#top;
       this.#top = this.#config.top.next();
 
@@ -273,6 +337,7 @@ class ClassicStroke extends AyvaBehavior {
         this.#config.shape.next(); // Skip to the next up shape.
       }
     } else {
+      direction = 'down';
       target = this.#bottom;
       this.#bottom = this.#config.bottom.next();
 
@@ -281,7 +346,7 @@ class ClassicStroke extends AyvaBehavior {
       }
     }
 
-    return { target, shape: this.#config.shape.next() };
+    return { target, shape: this.#config.shape.next(), direction };
   }
 
   #validate (config) {
@@ -307,6 +372,24 @@ class ClassicStroke extends AyvaBehavior {
 
     if (typeof config.shape !== 'function' &amp;&amp; !(config.shape instanceof Array)) {
       fail('shape', config.shape);
+    }
+
+    if (typeof config.twist !== 'object') {
+      fail('twist', config.twist);
+    }
+
+    if (config.twist) {
+      if (!validNumber(config.twist.from, 0, 1)) {
+        fail('twist from', config.twist.from);
+      }
+
+      if (!validNumber(config.twist.to, 0, 1)) {
+        fail('twist to', config.twist.to);
+      }
+
+      if (has(config.twist, 'phase') &amp;&amp; !validNumber(config.twist.phase)) {
+        fail('twist phase', config.twist.phase);
+      }
     }
 
     if (config.shape instanceof Array) {
