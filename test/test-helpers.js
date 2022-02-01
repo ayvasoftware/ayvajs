@@ -15,6 +15,11 @@ export function createTestConfig () {
       {
         name: 'L1',
         type: 'linear',
+        alias: 'forward',
+      },
+      {
+        name: 'L2',
+        type: 'linear',
         alias: 'left',
       },
       {
@@ -26,6 +31,11 @@ export function createTestConfig () {
         name: 'R1',
         type: 'rotation',
         alias: 'roll',
+      },
+      {
+        name: 'R2',
+        type: 'rotation',
+        alias: 'pitch',
       },
       {
         name: 'A0',

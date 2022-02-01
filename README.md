@@ -9,7 +9,7 @@ Features:
 - Construct arbitrarily complex behaviors using an action queue based Behavior API.
 - Built-in common motion shapes (cosine, parabolic, linear, tempest).
 - Built-in Classic Stroke behavior and orbital motion based behavior (Tempest Stroke).
-- Configurable. Setup all axes with limits, alias, and type (linear, rotation, or auxiliary).
+- Configurable. Setup an arbitrary number of axes with limits, alias, and type (linear, rotation, or auxiliary).
 - Abstracts away low level details such as outputing TCode.
 - Supports outputing commands to multiple devices at once.
 - Agnostic about the nature of the target device(s) (doesn't care if device is [simulated](https://github.com/ayvajs/osr-emu) or actual).

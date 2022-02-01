@@ -1,6 +1,7 @@
 import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
+import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
 import { createConstantProperty, has } from '../util/util.js';
 
 class TempestStroke extends AyvaBehavior {
@@ -48,6 +49,14 @@ class TempestStroke extends AyvaBehavior {
    */
   constructor (config, bpm = 60) {
     super();
+
+    if (typeof config === 'string') {
+      if (!has(tempestStrokeLibrary, config)) {
+        throw new Error(`No stroke named ${config} found.`);
+      }
+
+      config = tempestStrokeLibrary[config]; // eslint-disable-line no-param-reassign
+    }
 
     createConstantProperty(this, 'axes', {});
 

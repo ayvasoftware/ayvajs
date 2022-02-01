@@ -3,6 +3,7 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import TempestStroke from '../../src/behaviors/tempest-stroke.js';
+import strokeLibrary from '../../src/util/tempest-stroke-library.js';
 import { createTestConfig } from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
@@ -132,5 +133,23 @@ describe('Tempest Stroke Tests', function () {
       motion.angle.should.equal(Math.PI * (i + 1));
       motion.bpm.should.equal(bpms[(i + 1) % bpms.length]);
     }
+  });
+
+  it('should allow performing library strokes by name', async function () {
+    const strokes = Object.keys(strokeLibrary);
+
+    for (let i = 0; i < strokes.length; i++) {
+      const motion = new TempestStroke(strokes[i]);
+
+      await motion.perform(ayva); // Generate
+      await motion.perform(ayva); // Perform
+
+      motion.angle.should.equal(Math.PI);
+      motion.bpm.should.equal(60);
+    }
+
+    (function () {
+      new TempestStroke('non-existent');
+    }).should.throw('No stroke named non-existent found.');
   });
 });

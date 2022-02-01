@@ -70,7 +70,7 @@ describe('Motion API Tests', function () {
 
       const { args } = move.getCall(0);
       const expectedParams = { to: 0.5, speed: 0.5 };
-      const expectedAxes = ['L0', 'L1', 'R0', 'R1'];
+      const expectedAxes = ['L0', 'L1', 'L2', 'R0', 'R1', 'R2'];
 
       args.length.should.equal(expectedAxes.length);
       expectedAxes.forEach((axis, index) => {
