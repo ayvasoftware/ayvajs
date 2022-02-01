@@ -3,7 +3,6 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import TempestStroke from '../../src/behaviors/tempest-stroke.js';
-import strokeLibrary from '../../src/util/tempest-stroke-library.js';
 import { createTestConfig } from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
@@ -136,7 +135,7 @@ describe('Tempest Stroke Tests', function () {
   });
 
   it('should allow performing library strokes by name', async function () {
-    const strokes = Object.keys(strokeLibrary);
+    const strokes = Object.keys(TempestStroke.library);
 
     for (let i = 0; i < strokes.length; i++) {
       const motion = new TempestStroke(strokes[i]);

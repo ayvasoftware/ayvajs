@@ -29,6 +29,10 @@ class TempestStroke extends AyvaBehavior {
     };
   }
 
+  static get library () {
+    return JSON.parse(JSON.stringify(tempestStrokeLibrary));
+  }
+
   /**
    * Create a new tempest stroke with the specified config.
    *
