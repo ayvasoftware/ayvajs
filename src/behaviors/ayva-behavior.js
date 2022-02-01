@@ -1,4 +1,4 @@
-import AyvaMoveBuilder from '../ayva-move-builder.js';
+import MoveBuilder from '../util/move-builder.js';
 
 /**
  * Base class for Ayva Behaviors.
@@ -61,7 +61,7 @@ class AyvaBehavior {
       return value.call(undefined, this, ayva);
     } else if (type === 'sleep' && Number.isFinite(value) && value >= 0) {
       return ayva.sleep(value);
-    } else if (type === 'move' && value instanceof AyvaMoveBuilder) {
+    } else if (type === 'move' && value instanceof MoveBuilder) {
       return value.execute();
     } else if (type === 'move' && value instanceof Array) {
       return ayva.move(...value);
@@ -98,10 +98,10 @@ class AyvaBehavior {
    *   }
    * }
    *
-   * @param {AyvaMoveBuilder} moveBuilder - a move builder.
+   * @param {MoveBuilder} moveBuilder - a move builder.
    */
   queueMove (...moves) {
-    const value = moves[0] instanceof AyvaMoveBuilder ? moves[0] : moves;
+    const value = moves[0] instanceof MoveBuilder ? moves[0] : moves;
     this.#queueAction({ type: 'move', value });
   }
 
@@ -173,10 +173,10 @@ class AyvaBehavior {
    *   }
    * }
    *
-   * @param {AyvaMoveBuilder} moveBuilder - a move builder.
+   * @param {MoveBuilder} moveBuilder - a move builder.
    */
   insertMove (...moves) {
-    const value = moves[0] instanceof AyvaMoveBuilder ? moves[0] : moves;
+    const value = moves[0] instanceof MoveBuilder ? moves[0] : moves;
     this.#insertAction({ type: 'move', value });
   }
 

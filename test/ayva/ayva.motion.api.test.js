@@ -3,7 +3,7 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import { createTestConfig } from '../test-helpers.js';
-import { round } from '../../src/util.js';
+import { round } from '../../src/util/util.js';
 
 /**
  * Contains all tests for Ayva's Motion API.

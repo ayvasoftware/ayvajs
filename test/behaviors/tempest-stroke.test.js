@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import TempestStroke from '../../src/behaviors/tempest-stroke.js';
 import { createTestConfig } from '../test-helpers.js';
-import { round } from '../../src/util.js';
+import { round } from '../../src/util/util.js';
 
 describe('Tempest Stroke Tests', function () {
   let ayva;

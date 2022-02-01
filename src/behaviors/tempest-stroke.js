@@ -1,7 +1,7 @@
 import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
-import StrokeParameterProvider from './stroke-parameter-provider.js';
-import { createConstantProperty, has } from '../util.js';
+import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
+import { createConstantProperty, has } from '../util/util.js';
 
 class TempestStroke extends AyvaBehavior {
   #angle;

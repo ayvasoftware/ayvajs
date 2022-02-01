@@ -104,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="AyvaMoveBuilder.html">AyvaMoveBuilder</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -124,8 +124,8 @@
             <pre class="prettyprint source linenums"><code>/* eslint-disable max-classes-per-file */
 import Ayva from '../ayva.js';
 import AyvaBehavior from './ayva-behavior.js';
-import { has, validNumber } from '../util.js';
-import StrokeParameterProvider from './stroke-parameter-provider.js';
+import { has, validNumber } from '../util/util.js';
+import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 
 /**
  * So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
@@ -206,7 +206,7 @@ class ClassicStroke extends AyvaBehavior {
 
   /**
    * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
-   * where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
+   * where the device is currently located, and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
    * and applied.
    *
    * @param {Ayva} ayva
@@ -247,9 +247,9 @@ class ClassicStroke extends AyvaBehavior {
 
     this.#validate(strokeConfig);
 
-    strokeConfig.top = this.#createParameterProvider(strokeConfig.top);
-    strokeConfig.bottom = this.#createParameterProvider(strokeConfig.bottom);
-    strokeConfig.speed = this.#createParameterProvider(strokeConfig.speed);
+    strokeConfig.top = StrokeParameterProvider.createFrom(strokeConfig.top);
+    strokeConfig.bottom = StrokeParameterProvider.createFrom(strokeConfig.bottom);
+    strokeConfig.speed = StrokeParameterProvider.createFrom(strokeConfig.speed);
 
     const { shape } = strokeConfig;
 
@@ -291,18 +291,6 @@ class ClassicStroke extends AyvaBehavior {
       axis: 'twist',
       value: twistMotion,
     };
-  }
-
-  #createParameterProvider (value) {
-    if (value instanceof Array) {
-      return new StrokeParameterProvider((index) => value[index % value.length]);
-    }
-
-    if (typeof value !== 'function') {
-      return new StrokeParameterProvider(() => value);
-    }
-
-    return new StrokeParameterProvider(value);
   }
 
   /**

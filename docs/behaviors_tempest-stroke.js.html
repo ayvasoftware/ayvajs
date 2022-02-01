@@ -104,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="AyvaMoveBuilder.html">AyvaMoveBuilder</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -123,8 +123,8 @@
         <article>
             <pre class="prettyprint source linenums"><code>import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
-import StrokeParameterProvider from './stroke-parameter-provider.js';
-import { createConstantProperty, has } from '../util.js';
+import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
+import { createConstantProperty, has } from '../util/util.js';
 
 class TempestStroke extends AyvaBehavior {
   #angle;
@@ -189,15 +189,7 @@ class TempestStroke extends AyvaBehavior {
     });
 
     this.#angle = 0;
-
-    if (bpm instanceof Array) {
-      this.#bpmProvider = new StrokeParameterProvider((index) => bpm[index % bpm.length]);
-    } else if (typeof bpm !== 'function') {
-      this.#bpmProvider = new StrokeParameterProvider(() => bpm);
-    } else {
-      this.#bpmProvider = new StrokeParameterProvider(bpm);
-    }
-
+    this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
   }
 

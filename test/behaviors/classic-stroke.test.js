@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import ClassicStroke from '../../src/behaviors/classic-stroke.js';
 import { createTestConfig } from '../test-helpers.js';
-import { round } from '../../src/util.js';
+import { round } from '../../src/util/util.js';
 
 describe('Classic Stroke Tests', function () {
   let ayva;

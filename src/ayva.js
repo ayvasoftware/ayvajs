@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
-import AyvaMoveBuilder from './ayva-move-builder.js';
+import MoveBuilder from './util/move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty, validNumber
-} from './util.js';
-import { SR6_CONFIG } from './osr-configs.js';
+} from './util/util.js';
+import { SR6_CONFIG } from './util/osr-configs.js';
 
 class Ayva {
   #devices = [];
@@ -173,7 +173,7 @@ class Ayva {
    * @returns the new move builder.
    */
   moveBuilder () {
-    return new AyvaMoveBuilder(this);
+    return new MoveBuilder(this);
   }
 
   /**
