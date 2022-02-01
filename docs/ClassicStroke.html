@@ -102,7 +102,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="AyvaMoveBuilder.html">AyvaMoveBuilder</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="AyvaMoveBuilder.html">AyvaMoveBuilder</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -121,7 +121,455 @@
 
 <header>
     
+        <h2><span class="attribs"><span class="type-signature"></span></span>ClassicStroke<span class="signature">(bottom, top, speed, shape)</span><span class="type-signature"></span></h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class='vertical-section'>
+                <div class="members">
+                    <div class="member">
+                        <div class=name>
+                            <span class="tag">Constructor</span>
+                        </div>
+                        
+
+
+    
+    <h4 class="name" id="ClassicStroke">
+        <a class="href-link" href="#ClassicStroke">#</a>
+        
+        <span class="code-name">
+            
+                new ClassicStroke<span class="signature">(bottom, top, speed, shape)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Create a new ClassicStroke.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>bottom</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>bottom of the stroke or a function that computes the bottom for each down stroke</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>top</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>top of the stroke or a function that computes the top for each up stroke</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>speed</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>speed of the stroke or a function that computes the speed for each stroke</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>shape</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">function</span>
+|
+
+<span class="param-type">Array</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>a value provider for the shape or an even-lengthed array of value providers</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
+            <span>
+                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line66">line 66</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>// Bounce stroke.
+ayva.do(new ClassicStroke(0, 1, 1, [ Ayva.RAMP_NEGATIVE_PARABOLIC, Ayva.RAMP_PARABOLIC ]));</code></pre>
+    
+
+
+
+                    </div>
+                </div>
+            </div>
+        
+    
+    </div>
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Methods</h1>
+            <div class="members">
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="generateActions">
+        <a class="href-link" href="#generateActions">#</a>
+        
+        <span class="code-name">
+            
+                generateActions<span class="signature">(ayva)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
+where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
+and applied.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>ayva</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type"><a href="Ayva.html">Ayva</a></span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
+            <span>
+                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line91">line 91</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
         <h2><span class="attribs"><span class="type-signature"></span></span>ClassicStroke<span class="signature">(config)</span><span class="type-signature"></span></h2>
+        
+            <div class="class-description"><p>So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
+such as speed, positions, shape, and twist.</p></div>
         
     
 </header>
@@ -256,7 +704,7 @@
         <p class="tag-source">
             <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
             <span>
-                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line87">line 87</a>
+                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line11">line 11</a>
             </span>
         </p>
     
@@ -338,8 +786,9 @@
     
     
     <div class="description">
-        <p>A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke, based on
-where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed.</p>
+        <p>A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
+where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
+and applied.</p>
     </div>
     
 
@@ -441,480 +890,7 @@ where the device is currently located and what the most recent movement along th
         <p class="tag-source">
             <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
             <span>
-                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line111">line 111</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-            
-            </div>
-        </div>
-    
-
-    
-
-    
-</article>
-
-</section>
-
-
-
-
-
-
-
-<section>
-
-<header>
-    
-        <h2><span class="attribs"><span class="type-signature"></span></span>ClassicStroke<span class="signature">(bottom, top, speed, shape)</span><span class="type-signature"></span></h2>
-        
-            <div class="class-description"><p>So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
-such as speed, positions, and twist. No frills. Just stroke.</p>
-<p>TODO: Maybe home other axes before starting stroke.
-TODO: Add valve control.
-TODO: Allow shortcut passing array to top and bottom and speed.</p></div>
-        
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-            <div class='vertical-section'>
-                <div class="members">
-                    <div class="member">
-                        <div class=name>
-                            <span class="tag">Constructor</span>
-                        </div>
-                        
-
-
-    
-    <h4 class="name" id="ClassicStroke">
-        <a class="href-link" href="#ClassicStroke">#</a>
-        
-        <span class="code-name">
-            
-                new ClassicStroke<span class="signature">(bottom, top, speed, shape)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Create a new ClassicStroke.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-            <th>Default</th>
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>bottom</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-
-  
-      <td class="default">
-      
-          0
-      
-      </td>
-  
-
-  <td class="description last"><p>bottom of the stroke or a function that computes the bottom for each down stroke</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>top</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-
-  
-      <td class="default">
-      
-          1
-      
-      </td>
-  
-
-  <td class="description last"><p>top of the stroke or a function that computes the top for each up stroke</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>speed</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-
-  
-      <td class="default">
-      
-          1
-      
-      </td>
-  
-
-  <td class="description last"><p>speed of the stroke or a function that computes the speed for each stroke</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>shape</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">function</span>
-|
-
-<span class="param-type">Array</span>
-
-
-  
-  </td>
-
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>a value provider for the shape or an even-lengthed array of value providers</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
-            <span>
-                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line32">line 32</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Example</h5>
-    
-    
-        <pre class="prettyprint"><code>ayva.do(new ClassicStroke(0, 1, 1));</code></pre>
-    
-
-
-
-                    </div>
-                </div>
-            </div>
-        
-    
-    </div>
-    
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <div class='vertical-section'>
-            <h1>Methods</h1>
-            <div class="members">
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="generateActions">
-        <a class="href-link" href="#generateActions">#</a>
-        
-        <span class="code-name">
-            
-                generateActions<span class="signature">(ayva)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke, based on
-where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>ayva</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type"><a href="Ayva.html">Ayva</a></span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="behaviors_classic-stroke.js.html" class="button">View Source</a>
-            <span>
-                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line111">line 111</a>
+                <a href="behaviors_classic-stroke.js.html">behaviors/classic-stroke.js</a>, <a href="behaviors_classic-stroke.js.html#line91">line 91</a>
             </span>
         </p>
     

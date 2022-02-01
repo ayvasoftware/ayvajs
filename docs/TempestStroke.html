@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> util.js</title>
+  <title> TempestStroke</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -111,86 +109,263 @@
         <div class="core" id="main-content-wrapper">
             <div class="content">
                 <header class="page-title">
-                    <p>Source</p>
-                    <h1>util.js</h1>
+                    <p>Class</p>
+                    <h1>TempestStroke</h1>
                 </header>
                 
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Various utility functions
- *
- * @module
- * @ignore
- */
+        <h2><span class="attribs"><span class="type-signature"></span></span>TempestStroke<span class="signature">(config, bpm)</span><span class="type-signature"></span></h2>
+        
+    
+</header>
 
-/**
- * Round a number to the specified number of decimals.
- */
-export function round (value, decimals = 0) {
-  const factor = 10 ** decimals;
-  return Math.round(factor * value) / factor;
-}
+<article>
+    <div class="container-overview">
+    
+        
+            <div class='vertical-section'>
+                <div class="members">
+                    <div class="member">
+                        <div class=name>
+                            <span class="tag">Constructor</span>
+                        </div>
+                        
 
-/**
- * Clamp a value to within the specified range.
- */
-export function clamp (value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
 
-/**
- * Check if a value is numeric and within a certain range.
- */
-export function validNumber (value, min, max) {
-  if (!Number.isFinite(value)) {
-    return false;
-  }
+    
+    <h4 class="name" id="TempestStroke">
+        <a class="href-link" href="#TempestStroke">#</a>
+        
+        <span class="code-name">
+            
+                new TempestStroke<span class="signature">(config, bpm)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
 
-  if (min !== undefined &amp;&amp; value &lt; min) {
-    return false;
-  }
+    
+    
+    <div class="description">
+        <p>Create a new tempest stroke with the specified config.</p>
+    </div>
+    
 
-  if (max !== undefined &amp;&amp; value > max) {
-    return false;
-  }
 
-  return true;
-}
 
-/**
- * Shorthand for defining a readonly property.
- */
-export function createConstantProperty (object, name, value) {
-  Object.defineProperty(object, name, {
-    value: value,
-    writeable: false,
-    configurable: false,
-    enumerable: true,
-  });
-}
 
-/**
- * Shorthand for Object.prototype.hasOwnProperty.call()
- */
-export function has (obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
 
-/**
- * Shorthand for throwing an error during validation.
- * @param {*} error
- */
-export function fail (error) {
-  throw new Error(error);
-}
-</code></pre>
-        </article>
-    </section>
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>config</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Object</span>
+
+
+  
+  </td>
+
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>bpm</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+      <td class="default">
+      
+          60
+      
+      </td>
+  
+
+  <td class="description last"></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="behaviors_tempest-stroke.js.html" class="button">View Source</a>
+            <span>
+                <a href="behaviors_tempest-stroke.js.html">behaviors/tempest-stroke.js</a>, <a href="behaviors_tempest-stroke.js.html#line46">line 46</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>ayva.do(new TempestStroke({
+  stroke: {
+    from: 0,
+    to: 1,
+  },
+  twist: {
+    from: 0.25,
+    to: 0.75,
+    phase: 1,
+  },
+}));</code></pre>
+    
+
+
+
+                    </div>
+                </div>
+            </div>
+        
+    
+    </div>
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 

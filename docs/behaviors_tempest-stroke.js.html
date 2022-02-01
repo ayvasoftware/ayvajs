@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> util.js</title>
+  <title> behaviors/tempest-stroke.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -112,7 +112,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>util.js</h1>
+                    <h1>behaviors/tempest-stroke.js</h1>
                 </header>
                 
 
@@ -121,73 +121,101 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Various utility functions
- *
- * @module
- * @ignore
- */
+            <pre class="prettyprint source linenums"><code>import AyvaBehavior from './ayva-behavior.js';
+import Ayva from '../ayva.js';
+import { createConstantProperty, has } from '../util.js';
 
-/**
- * Round a number to the specified number of decimals.
- */
-export function round (value, decimals = 0) {
-  const factor = 10 ** decimals;
-  return Math.round(factor * value) / factor;
-}
+class TempestStroke extends AyvaBehavior {
+  #angle;
 
-/**
- * Clamp a value to within the specified range.
- */
-export function clamp (value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
+  #bpm;
 
-/**
- * Check if a value is numeric and within a certain range.
- */
-export function validNumber (value, min, max) {
-  if (!Number.isFinite(value)) {
-    return false;
+  get angle () {
+    return this.#angle;
   }
 
-  if (min !== undefined &amp;&amp; value &lt; min) {
-    return false;
+  get bpm () {
+    return this.#bpm;
   }
 
-  if (max !== undefined &amp;&amp; value > max) {
-    return false;
+  static get DEFAULT_PARAMETERS () {
+    return {
+      from: 0,
+      to: 1,
+      phase: 0,
+      ecc: 0,
+      shift: 0,
+    };
   }
 
-  return true;
+  /**
+   * Create a new tempest stroke with the specified config.
+   *
+   * @example
+   * ayva.do(new TempestStroke({
+   *   stroke: {
+   *     from: 0,
+   *     to: 1,
+   *   },
+   *   twist: {
+   *     from: 0.25,
+   *     to: 0.75,
+   *     phase: 1,
+   *   },
+   * }));
+   * @param {Object} config
+   * @param {Number} bpm
+   */
+  constructor (config, bpm = 60) {
+    super();
+
+    createConstantProperty(this, 'axes', {});
+
+    Object.keys(config).forEach((axis) => {
+      createConstantProperty(this.axes, axis, {});
+
+      Object.keys(config[axis]).forEach((property) => {
+        createConstantProperty(this.axes[axis], property, config[axis][property]);
+      });
+
+      Object.keys(TempestStroke.DEFAULT_PARAMETERS).forEach((property) => {
+        if (!has(config[axis], property)) {
+          createConstantProperty(this.axes[axis], property, TempestStroke.DEFAULT_PARAMETERS[property]);
+        }
+      });
+    });
+
+    this.#angle = 0;
+    this.#bpm = bpm;
+  }
+
+  generateActions () {
+    this.queueFunction((behavior) => {
+      const moves = Object.keys(this.axes).map((axis) => {
+        const params = this.axes[axis];
+
+        return {
+          axis,
+          value: Ayva.tempestMotion(
+            params.from,
+            params.to,
+            params.phase,
+            params.ecc,
+            this.#bpm,
+            params.shift + this.#angle
+          ),
+          duration: 30 / this.#bpm,
+        };
+      });
+
+      behavior.insertMove(...moves);
+
+      this.#angle += Math.PI;
+    });
+  }
 }
 
-/**
- * Shorthand for defining a readonly property.
- */
-export function createConstantProperty (object, name, value) {
-  Object.defineProperty(object, name, {
-    value: value,
-    writeable: false,
-    configurable: false,
-    enumerable: true,
-  });
-}
-
-/**
- * Shorthand for Object.prototype.hasOwnProperty.call()
- */
-export function has (obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-/**
- * Shorthand for throwing an error during validation.
- * @param {*} error
- */
-export function fail (error) {
-  throw new Error(error);
-}
+export default TempestStroke;
 </code></pre>
         </article>
     </section>
