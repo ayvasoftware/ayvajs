@@ -287,6 +287,12 @@ describe('Motion API Tests', function () {
         duration: 1,
       }).should.be.rejectedWith(errorMessage);
     });
+
+    it('should throw an error for invalid tempest motion', function () {
+      (function () {
+        Ayva.tempestMotion(NaN, 1);
+      }).should.throw('One or more stroke parameters are invalid (NaN, 1, 0, 0, 60, 0)');
+    });
   });
 
   /**

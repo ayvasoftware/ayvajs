@@ -908,18 +908,21 @@ class Ayva {
    *
    * @param {Number} from - the start of the range of motion
    * @param {Number} to - the end of the range of motion
-   * @param {Number} [phase] - the phase of the wave in multiples of 90 degrees.
+   * @param {Number} [phase] - the phase of the wave in multiples of π/2
    * @param {Number} [ecc] - the eccentricity of the wave.
    * @param {Number} [bpm] - beats per minute
+   * @param {Number} [shift] - the phase shift of the wave in radians (slide wave horizontally left or right)
    * @returns the value provider.
    */
-  static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60) {
+  static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
+    this.#validateTempestParameters(from, to, phase, ecc, bpm, shift);
+
     const angularVelocity = (2 * Math.PI * bpm) / 60;
     const scale = 0.5 * (to - from);
     const midpoint = 0.5 * (to + from);
 
     const provider = ({ index, frequency }) => {
-      const angle = (index * angularVelocity) / frequency;
+      const angle = ((index * angularVelocity) / frequency) + shift;
       return midpoint - scale * Math.cos(angle + (0.5 * Math.PI * phase) + (ecc * Math.sin(angle)));
     };
 
@@ -930,6 +933,19 @@ class Ayva {
     createConstantProperty(provider, 'bpm', bpm);
 
     return provider;
+  }
+
+  static #validateTempestParameters (from, to, phase, ecc, bpm, shift) {
+    const valid = validNumber(from, 0, 1)
+      && validNumber(to, 0, 1)
+      && validNumber(phase)
+      && validNumber(ecc)
+      && validNumber(bpm) && bpm > 0
+      && validNumber(shift);
+
+    if (!valid) {
+      throw new Error(`One or more stroke parameters are invalid (${from}, ${to}, ${phase}, ${ecc}, ${bpm}, ${shift})`);
+    }
   }
 
   /**

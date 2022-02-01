@@ -2,24 +2,7 @@
 import Ayva from '../ayva.js';
 import AyvaBehavior from './ayva-behavior.js';
 import { has, validNumber } from '../util.js';
-
-class StrokeParameterProvider {
-  #index = 0;
-
-  #value;
-
-  constructor (valueFunction) {
-    this.#value = valueFunction;
-  }
-
-  next () {
-    return this.#value(this.#index++);
-  }
-
-  get index () {
-    return this.#index;
-  }
-}
+import StrokeParameterProvider from './stroke-parameter-provider.js';
 
 /**
  * So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
