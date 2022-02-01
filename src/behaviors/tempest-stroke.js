@@ -66,15 +66,7 @@ class TempestStroke extends AyvaBehavior {
     });
 
     this.#angle = 0;
-
-    if (bpm instanceof Array) {
-      this.#bpmProvider = new StrokeParameterProvider((index) => bpm[index % bpm.length]);
-    } else if (typeof bpm !== 'function') {
-      this.#bpmProvider = new StrokeParameterProvider(() => bpm);
-    } else {
-      this.#bpmProvider = new StrokeParameterProvider(bpm);
-    }
-
+    this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
   }
 

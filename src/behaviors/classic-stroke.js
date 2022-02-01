@@ -83,7 +83,7 @@ class ClassicStroke extends AyvaBehavior {
 
   /**
    * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
-   * where the device is currently located and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
+   * where the device is currently located, and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
    * and applied.
    *
    * @param {Ayva} ayva
@@ -124,9 +124,9 @@ class ClassicStroke extends AyvaBehavior {
 
     this.#validate(strokeConfig);
 
-    strokeConfig.top = this.#createParameterProvider(strokeConfig.top);
-    strokeConfig.bottom = this.#createParameterProvider(strokeConfig.bottom);
-    strokeConfig.speed = this.#createParameterProvider(strokeConfig.speed);
+    strokeConfig.top = StrokeParameterProvider.createFrom(strokeConfig.top);
+    strokeConfig.bottom = StrokeParameterProvider.createFrom(strokeConfig.bottom);
+    strokeConfig.speed = StrokeParameterProvider.createFrom(strokeConfig.speed);
 
     const { shape } = strokeConfig;
 
@@ -168,18 +168,6 @@ class ClassicStroke extends AyvaBehavior {
       axis: 'twist',
       value: twistMotion,
     };
-  }
-
-  #createParameterProvider (value) {
-    if (value instanceof Array) {
-      return new StrokeParameterProvider((index) => value[index % value.length]);
-    }
-
-    if (typeof value !== 'function') {
-      return new StrokeParameterProvider(() => value);
-    }
-
-    return new StrokeParameterProvider(value);
   }
 
   /**
