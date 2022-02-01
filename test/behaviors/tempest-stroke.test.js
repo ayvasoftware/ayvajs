@@ -88,4 +88,49 @@ describe('Tempest Stroke Tests', function () {
     round(ayva.$.twist.value, 2).should.equal(0.5);
     motion.angle.should.equal(Math.PI * 2);
   });
+
+  it('should allow specifying bpm as a function', async function () {
+    const bpms = [30, 60, 90, 120];
+    ayva.$.stroke.value.should.equal(0.5);
+
+    const motion = new TempestStroke({
+      stroke: {
+        from: 0.5,
+        to: 1,
+      },
+    }, (index) => bpms[index % bpms.length]);
+
+    motion.bpm.should.equal(bpms[0]);
+
+    for (let i = 0; i <= bpms.length; i++) {
+      await motion.perform(ayva); // Generate
+      await motion.perform(ayva); // Perform
+
+      motion.angle.should.equal(Math.PI * (i + 1));
+      motion.bpm.should.equal(bpms[(i + 1) % bpms.length]);
+    }
+  });
+
+  it('should allow specifying bpm as an array', async function () {
+    // Thou shalt not repeat thyself.
+    const bpms = [30, 60, 90, 120];
+    ayva.$.stroke.value.should.equal(0.5);
+
+    const motion = new TempestStroke({
+      stroke: {
+        from: 0.5,
+        to: 1,
+      },
+    }, bpms);
+
+    motion.bpm.should.equal(bpms[0]);
+
+    for (let i = 0; i <= bpms.length; i++) {
+      await motion.perform(ayva); // Generate
+      await motion.perform(ayva); // Perform
+
+      motion.angle.should.equal(Math.PI * (i + 1));
+      motion.bpm.should.equal(bpms[(i + 1) % bpms.length]);
+    }
+  });
 });

@@ -1,11 +1,14 @@
 import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
+import StrokeParameterProvider from './stroke-parameter-provider.js';
 import { createConstantProperty, has } from '../util.js';
 
 class TempestStroke extends AyvaBehavior {
   #angle;
 
   #bpm;
+
+  #bpmProvider;
 
   get angle () {
     return this.#angle;
@@ -63,7 +66,16 @@ class TempestStroke extends AyvaBehavior {
     });
 
     this.#angle = 0;
-    this.#bpm = bpm;
+
+    if (bpm instanceof Array) {
+      this.#bpmProvider = new StrokeParameterProvider((index) => bpm[index % bpm.length]);
+    } else if (typeof bpm !== 'function') {
+      this.#bpmProvider = new StrokeParameterProvider(() => bpm);
+    } else {
+      this.#bpmProvider = new StrokeParameterProvider(bpm);
+    }
+
+    this.#bpm = this.#bpmProvider.next();
   }
 
   generateActions () {
@@ -88,6 +100,7 @@ class TempestStroke extends AyvaBehavior {
       behavior.insertMove(...moves);
 
       this.#angle += Math.PI;
+      this.#bpm = this.#bpmProvider.next();
     });
   }
 }

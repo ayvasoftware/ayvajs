@@ -67,7 +67,7 @@ class ClassicStroke extends AyvaBehavior {
     super();
 
     let config;
-    if (typeof bottom === 'object') {
+    if (typeof bottom === 'object' && !(bottom instanceof Array)) {
       config = bottom;
     } else {
       config = {
@@ -171,6 +171,10 @@ class ClassicStroke extends AyvaBehavior {
   }
 
   #createParameterProvider (value) {
+    if (value instanceof Array) {
+      return new StrokeParameterProvider((index) => value[index % value.length]);
+    }
+
     if (typeof value !== 'function') {
       return new StrokeParameterProvider(() => value);
     }
@@ -215,11 +219,11 @@ class ClassicStroke extends AyvaBehavior {
       throw new Error(`Invalid stroke ${parameter}: ${value}`);
     };
 
-    if (!validNumber(config.bottom, 0, 1) && typeof config.bottom !== 'function') {
+    if (!validNumber(config.bottom, 0, 1) && typeof config.bottom !== 'function' && !(config.bottom instanceof Array)) {
       fail('bottom', config.bottom);
     }
 
-    if (!validNumber(config.top, 0, 1) && typeof config.top !== 'function') {
+    if (!validNumber(config.top, 0, 1) && typeof config.top !== 'function' && !(config.top instanceof Array)) {
       fail('top', config.top);
     }
 
@@ -227,7 +231,7 @@ class ClassicStroke extends AyvaBehavior {
       throw new Error(`Invalid stroke range specified: (${config.bottom}, ${config.top})`);
     }
 
-    if ((!validNumber(config.speed) || config.speed <= 0) && typeof config.speed !== 'function') {
+    if ((!validNumber(config.speed) || config.speed <= 0) && typeof config.speed !== 'function' && !(config.speed instanceof Array)) {
       fail('speed', config.speed);
     }
 

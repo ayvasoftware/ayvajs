@@ -171,6 +171,31 @@ describe('Classic Stroke Tests', function () {
       await verifyStrokes(stroke, expectedStrokes);
     });
 
+    it('should allow providing bottom, top, and speed as an array', async function () {
+      const bottomValues = [0.1, 0.2, 0.3];
+      const topValues = [0.9, 0.8];
+      const speedValues = [0.5, 1, 1.5, 2, 2.5, 3];
+      const ramp = Ayva.RAMP_COS;
+
+      const stroke = new ClassicStroke(bottomValues, topValues, speedValues);
+      const expectedStrokes = [
+        { to: bottomValues[0], speed: speedValues[0], value: ramp },
+        { to: topValues[0], speed: speedValues[1], value: ramp },
+        { to: bottomValues[1], speed: speedValues[2], value: ramp },
+        { to: topValues[1], speed: speedValues[3], value: ramp },
+        { to: bottomValues[2], speed: speedValues[4], value: ramp },
+        { to: topValues[0], speed: speedValues[5], value: ramp },
+      ];
+
+      ayva.$.stroke.value.should.equal(0.5);
+
+      stroke.speed.should.equal(speedValues[0]);
+      stroke.top.should.equal(topValues[0]);
+      stroke.bottom.should.equal(bottomValues[0]);
+
+      await verifyStrokes(stroke, expectedStrokes);
+    });
+
     it('should allow providing shape of stroke with array', async function () {
       const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, {
         value: Ayva.RAMP_LINEAR,
