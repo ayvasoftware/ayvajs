@@ -47,6 +47,11 @@ class BrowserSerialDevice {
     };
 
     this.#serial.addEventListener('disconnect', disconnectListener);
+
+    // Add a small delay so that the OSR has time to "boot" or w/e...
+    return new Promise((resolve) => {
+      setTimeout(resolve, 2000);
+    });
   }
 
   write (output) {
