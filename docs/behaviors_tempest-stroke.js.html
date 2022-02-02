@@ -104,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="BrowserSerialDevice.html">BrowserSerialDevice</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -124,6 +124,7 @@
             <pre class="prettyprint source linenums"><code>import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
+import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
 import { createConstantProperty, has } from '../util/util.js';
 
 class TempestStroke extends AyvaBehavior {
@@ -151,6 +152,10 @@ class TempestStroke extends AyvaBehavior {
     };
   }
 
+  static get library () {
+    return JSON.parse(JSON.stringify(tempestStrokeLibrary));
+  }
+
   /**
    * Create a new tempest stroke with the specified config.
    *
@@ -171,6 +176,14 @@ class TempestStroke extends AyvaBehavior {
    */
   constructor (config, bpm = 60) {
     super();
+
+    if (typeof config === 'string') {
+      if (!has(tempestStrokeLibrary, config)) {
+        throw new Error(`No stroke named ${config} found.`);
+      }
+
+      config = tempestStrokeLibrary[config]; // eslint-disable-line no-param-reassign
+    }
 
     createConstantProperty(this, 'axes', {});
 

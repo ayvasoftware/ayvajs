@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> util/osr-configs.js</title>
+  <title> devices/browser-serial-device.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -112,7 +112,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>util/osr-configs.js</h1>
+                    <h1>devices/browser-serial-device.js</h1>
                 </header>
                 
 
@@ -122,76 +122,66 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * Base OSR2 Configuration
+ * Small convenience class for easily connecting to a serial device from a browser.
+ * This class has been excluded from test coverage because mocking all the browser
+ * globals involved is cumbersome. But it works. Trust me :).
  */
-const OSR2_CONFIG = {
-  name: 'OSR2',
-  defaultAxis: 'L0',
-  axes: [
-    {
-      name: 'L0',
-      type: 'linear',
-      alias: 'stroke',
-    },
-    {
-      name: 'R0',
-      type: 'rotation',
-      alias: 'twist',
-    },
-    {
-      name: 'R1',
-      type: 'rotation',
-      alias: 'roll',
-    },
-    {
-      name: 'R2',
-      type: 'rotation',
-      alias: 'pitch',
-    },
-    {
-      name: 'A0',
-      alias: 'valve',
-      type: 'auxiliary',
-    },
-    {
-      name: 'A1',
-      alias: 'suck',
-      type: 'auxiliary',
-    },
-    {
-      name: 'A2',
-      alias: 'lube',
-      type: 'auxiliary',
-    },
-    {
-      name: 'V0',
-      type: 'auxiliary',
-    },
-    {
-      name: 'V1',
-      type: 'auxiliary',
-    },
-  ],
-};
+class BrowserSerialDevice {
+  #baudRate;
 
-/**
- * Base SR6 Configuration
- *
- * SR6 configuration is just the OSR2 configuration plus a couple axes.
- */
-const SR6_CONFIG = JSON.parse(JSON.stringify(OSR2_CONFIG));
-SR6_CONFIG.name = 'SR6';
-SR6_CONFIG.axes.push({
-  name: 'L1',
-  type: 'linear',
-  alias: 'forward',
-}, {
-  name: 'L2',
-  type: 'linear',
-  alias: 'left',
-});
+  #connected = false;
 
-export { OSR2_CONFIG, SR6_CONFIG };
+  #output = null;
+
+  #input = null;
+
+  #serial = null;
+
+  get connected () {
+    return this.#connected;
+  }
+
+  constructor (baudRate = 115200, serial = null) {
+    this.#baudRate = baudRate;
+    this.#serial = serial || (globalThis.navigator ? globalThis.navigator.serial : null);
+  }
+
+  async requestConnection () {
+    const port = await this.#serial.requestPort();
+
+    await port.open({ baudRate: this.#baudRate });
+
+    const encoder = new TextEncoderStream();
+    encoder.readable.pipeTo(port.writable);
+
+    const decoder = new TextDecoderStream();
+    port.readable.pipeTo(decoder.writable);
+
+    this.#output = encoder.writable.getWriter();
+    this.#input = decoder.readable.getReader();
+    this.#connected = true;
+
+    const disconnectListener = (event) => {
+      if (event.target === port) {
+        this.#connected = false;
+
+        this.#serial.removeEventListener('disconnect', disconnectListener);
+      }
+    };
+
+    this.#serial.addEventListener('disconnect', disconnectListener);
+  }
+
+  write (output) {
+    if (this.#connected) {
+      this.#output.write(output);
+    } else {
+      throw new Error('No device connected.');
+    }
+  }
+}
+
+export default BrowserSerialDevice;
 </code></pre>
         </article>
     </section>

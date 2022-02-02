@@ -104,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="BrowserSerialDevice.html">BrowserSerialDevice</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
                 
             </nav>
         </div>
@@ -121,7 +121,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import AyvaMoveBuilder from '../ayva-move-builder.js';
+            <pre class="prettyprint source linenums"><code>import MoveBuilder from '../util/move-builder.js';
 
 /**
  * Base class for Ayva Behaviors.
@@ -184,7 +184,7 @@ class AyvaBehavior {
       return value.call(undefined, this, ayva);
     } else if (type === 'sleep' &amp;&amp; Number.isFinite(value) &amp;&amp; value >= 0) {
       return ayva.sleep(value);
-    } else if (type === 'move' &amp;&amp; value instanceof AyvaMoveBuilder) {
+    } else if (type === 'move' &amp;&amp; value instanceof MoveBuilder) {
       return value.execute();
     } else if (type === 'move' &amp;&amp; value instanceof Array) {
       return ayva.move(...value);
@@ -221,10 +221,10 @@ class AyvaBehavior {
    *   }
    * }
    *
-   * @param {AyvaMoveBuilder} moveBuilder - a move builder.
+   * @param {MoveBuilder} moveBuilder - a move builder.
    */
   queueMove (...moves) {
-    const value = moves[0] instanceof AyvaMoveBuilder ? moves[0] : moves;
+    const value = moves[0] instanceof MoveBuilder ? moves[0] : moves;
     this.#queueAction({ type: 'move', value });
   }
 
@@ -296,10 +296,10 @@ class AyvaBehavior {
    *   }
    * }
    *
-   * @param {AyvaMoveBuilder} moveBuilder - a move builder.
+   * @param {MoveBuilder} moveBuilder - a move builder.
    */
   insertMove (...moves) {
-    const value = moves[0] instanceof AyvaMoveBuilder ? moves[0] : moves;
+    const value = moves[0] instanceof MoveBuilder ? moves[0] : moves;
     this.#insertAction({ type: 'move', value });
   }
 
