@@ -13,6 +13,7 @@ describe('Move Builder Tests', function () {
   beforeEach(function () {
     write = sinon.fake();
     ayva = new Ayva(createTestConfig());
+    ayva.defaultRamp = Ayva.RAMP_LINEAR;
     ayva.addOutputDevice({ write });
     sinon.replace(ayva, 'move', sinon.fake());
 

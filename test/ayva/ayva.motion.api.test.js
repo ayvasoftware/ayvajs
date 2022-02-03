@@ -45,6 +45,7 @@ describe('Motion API Tests', function () {
 
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
+    ayva.defaultRamp = Ayva.RAMP_LINEAR;
 
     sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
     warn = sinon.replace(console, 'warn', sinon.fake());

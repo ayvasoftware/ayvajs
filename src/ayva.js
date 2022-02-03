@@ -22,6 +22,8 @@ class Ayva {
 
   #performing = false;
 
+  defaultRamp = Ayva.RAMP_COS;
+
   static get precision () {
     // Decimals to round to for internal values.
     return 10;
@@ -595,7 +597,7 @@ class Ayva {
         if (this.#axes[movement.axis].type === 'boolean') {
           provider.valueProvider = () => movement.to;
         } else if (movement.to !== movement.from) {
-          provider.valueProvider = Ayva.RAMP_LINEAR;
+          provider.valueProvider = this.defaultRamp;
         } else {
           // No movement.
           provider.valueProvider = () => {};
