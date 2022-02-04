@@ -10,8 +10,18 @@ class VariableDuration {
 
   /**
    * Create and start the duration timer immediately.
-   * @param {Number} from
-   * @param {Number} [to]
+   *
+   * @example
+   * // Create a duration that will be somewhere between 10 and 20 seconds.
+   * const duration = new VariableDuration(10, 20);
+   *
+   * // ...
+   *
+   * if (!duration.complete) {
+   *   // ...
+   * }
+   * @param {Number} from - start of the duration range in seconds.
+   * @param {Number} [to] - end of the duration range in seconds.
    */
   constructor (from, to) {
     if (validNumber(from, 0) && to === undefined) {

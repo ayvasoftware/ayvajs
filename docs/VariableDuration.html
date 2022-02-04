@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> behaviors/tempest-stroke.js</title>
+  <title> VariableDuration</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -111,132 +109,415 @@
         <div class="core" id="main-content-wrapper">
             <div class="content">
                 <header class="page-title">
-                    <p>Source</p>
-                    <h1>behaviors/tempest-stroke.js</h1>
+                    <p>Class</p>
+                    <h1>VariableDuration</h1>
                 </header>
                 
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>import AyvaBehavior from './ayva-behavior.js';
-import Ayva from '../ayva.js';
-import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
-import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
-import { createConstantProperty, has } from '../util/util.js';
+        <h2><span class="attribs"><span class="type-signature"></span></span>VariableDuration<span class="signature">(from, to<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h2>
+        
+            <div class="class-description"><p>A variable duration is a timer that completes within some variable time range.</p></div>
+        
+    
+</header>
 
-class TempestStroke extends AyvaBehavior {
-  #angle;
+<article>
+    <div class="container-overview">
+    
+        
+            <div class='vertical-section'>
+                <div class="members">
+                    <div class="member">
+                        <div class=name>
+                            <span class="tag">Constructor</span>
+                        </div>
+                        
 
-  #bpm;
 
-  #bpmProvider;
+    
+    <h4 class="name" id="VariableDuration">
+        <a class="href-link" href="#VariableDuration">#</a>
+        
+        <span class="code-name">
+            
+                new VariableDuration<span class="signature">(from, to<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
 
-  get angle () {
-    return this.#angle;
-  }
+    
+    
+    <div class="description">
+        <p>Create and start the duration timer immediately.</p>
+    </div>
+    
 
-  get bpm () {
-    return this.#bpm;
-  }
 
-  static get DEFAULT_PARAMETERS () {
-    return {
-      from: 0,
-      to: 1,
-      phase: 0,
-      ecc: 0,
-      shift: 0,
-    };
-  }
 
-  static get library () {
-    return JSON.parse(JSON.stringify(tempestStrokeLibrary));
-  }
 
-  /**
-   * Create a new tempest stroke with the specified config.
-   *
-   * @example
-   * ayva.do(new TempestStroke({
-   *   stroke: {
-   *     from: 0,
-   *     to: 1,
-   *   },
-   *   twist: {
-   *     from: 0.25,
-   *     to: 0.75,
-   *     phase: 1,
-   *   },
-   * }));
-   * @param {Object} config
-   * @param {Number} bpm
-   */
-  constructor (config, bpm = 60) {
-    super();
 
-    if (typeof config === 'string') {
-      if (!has(tempestStrokeLibrary, config)) {
-        throw new Error(`No stroke named ${config} found.`);
-      }
 
-      config = tempestStrokeLibrary[config]; // eslint-disable-line no-param-reassign
-    }
 
-    createConstantProperty(this, 'axes', {});
 
-    Object.keys(config).forEach((axis) => {
-      createConstantProperty(this.axes, axis, {});
 
-      Object.keys(config[axis]).forEach((property) => {
-        createConstantProperty(this.axes[axis], property, config[axis][property]);
-      });
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
 
-      Object.keys(TempestStroke.DEFAULT_PARAMETERS).forEach((property) => {
-        if (!has(config[axis], property)) {
-          createConstantProperty(this.axes[axis], property, TempestStroke.DEFAULT_PARAMETERS[property]);
-        }
-      });
-    });
+            <th>Type</th>
 
-    this.#angle = 0;
-    this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
-    this.#bpm = this.#bpmProvider.next();
-  }
+            
+            <th>Attributes</th>
+            
 
-  generateActions () {
-    this.queueFunction((behavior) => {
-      const moves = Object.keys(this.axes).map((axis) => {
-        const params = this.axes[axis];
+            
 
-        return {
-          axis,
-          value: Ayva.tempestMotion(
-            params.from,
-            params.to,
-            params.phase,
-            params.ecc,
-            this.#bpm,
-            params.shift + this.#angle
-          ),
-          duration: 30 / this.#bpm,
-        };
-      });
+            <th class="last">Description</th>
+        </tr>
+        </thead>
 
-      behavior.insertMove(...moves);
+        <tbody>
+        
 
-      this.#angle += Math.PI;
-      this.#bpm = this.#bpmProvider.next();
-    });
-  }
-}
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>from</code></td>
+  
 
-export default TempestStroke;
-</code></pre>
-        </article>
-    </section>
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>start of the duration range in seconds.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>to</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+
+  <td class="description last"><p>end of the duration range in seconds.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="util_variable-duration.js.html" class="button">View Source</a>
+            <span>
+                <a href="util_variable-duration.js.html">util/variable-duration.js</a>, <a href="util_variable-duration.js.html#line6">line 6</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>// Create a duration that will be somewhere between 10 and 20 seconds.
+const duration = new VariableDuration(10, 20); 
+
+// ...
+
+if (!duration.complete) {
+  // ...
+}</code></pre>
+    
+
+
+
+                    </div>
+                </div>
+            </div>
+        
+    
+    </div>
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Members</h1>
+            <div class="members">
+            
+                <div class="member">
+
+<h4 class="name" id="complete">
+    <a class="href-link" href="#complete">#</a>
+    
+    <span class="code-name">
+        complete
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>True if this duration's target time has been reached.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="util_variable-duration.js.html" class="button">View Source</a>
+            <span>
+                <a href="util_variable-duration.js.html">util/variable-duration.js</a>, <a href="util_variable-duration.js.html#line47">line 47</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="percentage">
+    <a class="href-link" href="#percentage">#</a>
+    
+    <span class="code-name">
+        percentage
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Returns the percent complete of this duration.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="util_variable-duration.js.html" class="button">View Source</a>
+            <span>
+                <a href="util_variable-duration.js.html">util/variable-duration.js</a>, <a href="util_variable-duration.js.html#line54">line 54</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 
