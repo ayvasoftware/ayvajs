@@ -34,3 +34,7 @@ code .tag {
 .footer .content {
   display: none;
 }
+
+.cp_embed_iframe {
+  height: 300px;
+}

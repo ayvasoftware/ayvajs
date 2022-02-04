@@ -138,27 +138,32 @@
     <section>
         <article><h1>ayva</h1>
 <h2>What is Ayva?</h2>
-<p>Ayva is a lightweight, behavior-based JavaScript library for controlling <a href="https://www.patreon.com/tempestvr">Open Source Multi Axis Stroker Robots</a>.</p>
-<p>The quickest way to get a feel for some of the capabilities of Ayva is with <a href="https://codepen.io/soritesparadox/pen/YzrmaJq">this codepen example</a> that shows how easy it is to setup and perform a complex movement (an orbit grind). It also demonstrates the usage of the <a href="https://github.com/ayvajs/osr-emu">OSR Emulator</a>—a useful component for visualizing and testing movements without an actual hardware device.</p>
+<p>Ayva is a lightweight, behavior-based JavaScript library for controlling <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a>.</p>
+<p>The following codepen examples give a quick demo of some of the capabilities of Ayva. They show how easy it is to setup and perform complex movements, as well as demonstrate the usage of the <a href="https://github.com/ayvajs/osr-emu" target="_blank">OSR Emulator</a>—a useful component for visualizing and testing movements without an actual hardware device:</p>
+<p><a href="https://ayvajs.github.io/ayvajs/orbit-grind-example.html" target="_blank">Orbit Grind</a><br>
+<a href="https://ayvajs.github.io/ayvajs/classic-stroke-example.html" target="_blank">Classic Stroke</a><br>
+<a href="https://ayvajs.github.io/ayvajs/custom-behavior-example.html" target="_blank">Custom Behavior</a><br>
+<a href="https://ayvajs.github.io/ayvajs/random-stroker-example.html" target="_blank">Random Stroker</a></p>
 <p>Features:</p>
 <ul>
 <li>Perform arbitrarily complex movements across multiple axes using an expressive Motion API.</li>
 <li>Construct arbitrarily complex behaviors using an action queue based Behavior API.</li>
 <li>Built-in common motion shapes (cosine, parabolic, linear, tempest).</li>
 <li>Built-in Classic Stroke behavior and orbital motion based behavior (Tempest Stroke).</li>
+<li>Run built-in patterns by name (orbit-grind, vortex-tease, swirl-tease, etc)</li>
 <li>Configurable. Setup an arbitrary number of axes with limits, alias, and type (linear, rotation, or auxiliary).</li>
 <li>Abstracts away low level details such as outputing TCode.</li>
 <li>Supports outputing commands to multiple devices at once.</li>
-<li>Agnostic about the nature of the target device(s) (doesn't care if device is <a href="https://github.com/ayvajs/osr-emu">simulated</a> or actual).</li>
+<li>Agnostic about the nature of the target device(s) (doesn't care if device is <a href="https://github.com/ayvajs/osr-emu" target="_blank">simulated</a> or actual).</li>
 <li>Cross platform with zero dependencies.</li>
 <li>Runs in a browser, as part of a Node.js app, or theoretically anywhere with a JavaScript runtime.</li>
 <li>Extensively tested (100% coverage).</li>
-<li>Thoroughly <a href="https://ayvajs.github.io/ayvajs/index.html">documented</a>.</li>
+<li>Thoroughly <a href="https://ayvajs.github.io/ayvajs/index.html" target="_blank">documented</a>.</li>
 <li>Quick and easy setup.</li>
 </ul>
-<h2>Installation</h2>
+<h2>Quick Start</h2>
 <h3>CDN</h3>
-<p>In a browser, Ayva can be imported as an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules">ES6 module</a> using a CDN such as unpkg:</p>
+<p>In a browser, Ayva can be imported as an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules" target="_blank">ES6 module</a> using a CDN such as unpkg:</p>
 <pre class="prettyprint source lang-html"><code>&lt;!DOCTYPE html>
 &lt;body>
   &lt;script type=&quot;module&quot;>
@@ -170,7 +175,7 @@
   &lt;/script>
 &lt;/body>
 </code></pre>
-<p>One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a <em>write</em> method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API">Web Serial API</a> based <em>BrowserSerialDevice</em> provided:</p>
+<p>One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a <em>write</em> method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API" target="_blank">Web Serial API</a> based <em>BrowserSerialDevice</em> provided:</p>
 <pre class="prettyprint source lang-html"><code>&lt;!DOCTYPE html>
 &lt;body>
   &lt;button id=&quot;connect&quot;>Connect&lt;/button>
@@ -197,7 +202,7 @@
 </code></pre>
 <p><em>Note: in the example above we needed to request a connection to the device after a button click. This is because the Web Serial API only allows a request to connect if it was triggered by a user gesture.</em></p>
 <h3>npm</h3>
-<p>Ayva can be installed in a <a href="https://nodejs.org/en/">Node.js</a> app via <a href="https://docs.npmjs.com/about-npm">npm</a>:</p>
+<p>Ayva can be installed in a <a href="https://nodejs.org/en/" target="_blank">Node.js</a> app via <a href="https://docs.npmjs.com/about-npm" target="_blank">npm</a>:</p>
 <pre class="prettyprint source"><code>npm install ayvajs
 </code></pre>
 <p>And imported like so:</p>
@@ -207,7 +212,7 @@ const ayva = new Ayva().defaultConfiguration();
 
 // ...
 </code></pre>
-<p>Ayva does not provide any device implementations that work in a Node.js app. Instead, Ayva can work with an external library. The recommended serial library for Node.js is <a href="https://serialport.io/">serialport</a>:</p>
+<p>Ayva does not provide any device implementations that work in a Node.js app. Instead, Ayva can work with an external library. The recommended serial library for Node.js is <a href="https://serialport.io/" target="_blank">serialport</a>):</p>
 <pre class="prettyprint source"><code>npm install serialport
 </code></pre>
 <p>Then:</p>
@@ -223,11 +228,11 @@ ayva.move({ to: 0; speed: 1 });
 </code></pre>
 <p><em>Note: The port used above (/dev/cu.usbserial-0001) is just an example. Yours may be different.</em></p>
 <h2>Tutorials</h2>
-<p>For more detailed information on how to use Ayva, see the following tutorials provided in the <a href="https://ayvajs.github.io/ayvajs/index.html">Documentation</a>:</p>
-<p><a href="https://ayvajs.github.io/ayvajs/tutorial-getting-started.html">Getting Started</a><br>
-<a href="https://ayvajs.github.io/ayvajs/tutorial-configuration.html">Configuration</a><br>
-<a href="https://ayvajs.github.io/ayvajs/tutorial-motion-api.html">Motion API</a><br>
-<a href="https://ayvajs.github.io/ayvajs/tutorial-behavior-api.html">Behavior API</a></p></article>
+<p>For more detailed information on how to use Ayva, see the following tutorials provided in the <a href="https://ayvajs.github.io/ayvajs/index.html" target="_blank">Documentation</a>:</p>
+<p><a href="https://ayvajs.github.io/ayvajs/tutorial-getting-started.html" target="_blank">Getting Started</a><br>
+<a href="https://ayvajs.github.io/ayvajs/tutorial-configuration.html" target="_blank">Configuration</a><br>
+<a href="https://ayvajs.github.io/ayvajs/tutorial-motion-api.html" target="_blank">Motion API</a><br>
+<a href="https://ayvajs.github.io/ayvajs/tutorial-behavior-api.html" target="_blank">Behavior API</a></p></article>
     </section>
 
 
