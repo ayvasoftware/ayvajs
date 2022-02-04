@@ -197,10 +197,7 @@ describe('Classic Stroke Tests', function () {
     });
 
     it('should allow providing shape of stroke with array', async function () {
-      const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, {
-        value: Ayva.RAMP_LINEAR,
-        relativeSpeed: 0.5,
-      }];
+      const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, Ayva.RAMP_LINEAR];
 
       const top = 1;
       const speed = 1;
@@ -210,7 +207,7 @@ describe('Classic Stroke Tests', function () {
       const expectedStrokes = [
         { to: 0, speed, value: shapeValues[1] },
         { to: 1, speed, value: shapeValues[2] },
-        { to: 0, speed: 0.5, value: shapeValues[3].value },
+        { to: 0, speed, value: shapeValues[3] },
         { to: 1, speed, value: shapeValues[0] },
       ];
 
@@ -223,11 +220,79 @@ describe('Classic Stroke Tests', function () {
       await verifyStrokes(stroke, expectedStrokes);
     });
 
+    it('should allow providing relative speeds with an array', async function () {
+      const relativeSpeeds = [0.125, 0.25, 0.5, 0.75];
+
+      const speed = 2;
+      const stroke = new ClassicStroke({
+        speed,
+        relativeSpeeds,
+      });
+
+      const expectedSpeeds = [
+        relativeSpeeds[1] * speed,
+        relativeSpeeds[2] * speed,
+        relativeSpeeds[3] * speed,
+        relativeSpeeds[0] * speed,
+      ];
+
+      const expectedStrokes = [
+        { to: 0, speed: expectedSpeeds[0], value: Ayva.RAMP_COS },
+        { to: 1, speed: expectedSpeeds[1], value: Ayva.RAMP_COS },
+        { to: 0, speed: expectedSpeeds[2], value: Ayva.RAMP_COS },
+        { to: 1, speed: expectedSpeeds[3], value: Ayva.RAMP_COS },
+      ];
+
+      ayva.$.stroke.value.should.equal(0.5);
+
+      stroke.speed.should.equal(speed);
+      stroke.top.should.equal(1);
+      stroke.bottom.should.equal(0);
+
+      await verifyStrokes(stroke, expectedStrokes);
+    });
+
+    it('should map up strokes to even and down strokes to odd relative speeds', async function () {
+      // TODO: Some of these tests are a little hard to follow. Cleanup.
+      const relativeSpeeds = [0.125, 0.25, 0.5, 0.75];
+
+      const speed = 2;
+      const stroke = new ClassicStroke({
+        speed,
+        relativeSpeeds,
+      });
+
+      const expectedSpeeds = [
+        relativeSpeeds[0] * speed,
+        relativeSpeeds[1] * speed,
+        relativeSpeeds[2] * speed,
+        relativeSpeeds[3] * speed,
+      ];
+
+      const expectedStrokes = [
+        { to: 1, speed: expectedSpeeds[0], value: Ayva.RAMP_COS },
+        { to: 0, speed: expectedSpeeds[1], value: Ayva.RAMP_COS },
+        { to: 1, speed: expectedSpeeds[2], value: Ayva.RAMP_COS },
+        { to: 0, speed: expectedSpeeds[3], value: Ayva.RAMP_COS },
+      ];
+
+      ayva.$.stroke.value.should.equal(0.5);
+
+      stroke.speed.should.equal(speed);
+      stroke.top.should.equal(1);
+      stroke.bottom.should.equal(0);
+
+      await ayva.$.stroke(0.25, 1).execute();
+
+      await verifyStrokes(stroke, expectedStrokes, 1);
+
+      await ayva.$.stroke(0.25, 1).execute();
+
+      await verifyStroke(6, stroke, expectedStrokes[1]); // Should skip to the next down speed appropriately
+    });
+
     it('should map up strokes to even and down strokes to odd stroke shapes', async function () {
-      const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, {
-        value: Ayva.RAMP_LINEAR,
-        relativeSpeed: 0.5,
-      }];
+      const shapeValues = [Ayva.RAMP_COS, Ayva.RAMP_PARABOLIC, Ayva.RAMP_NEGATIVE_PARABOLIC, Ayva.RAMP_LINEAR];
 
       const top = 1;
       const speed = 1;
@@ -238,7 +303,7 @@ describe('Classic Stroke Tests', function () {
         { to: 1, speed, value: shapeValues[0] },
         { to: 0, speed, value: shapeValues[1] },
         { to: 1, speed, value: shapeValues[2] },
-        { to: 0, speed: 0.5, value: shapeValues[3].value },
+        { to: 0, speed, value: shapeValues[3] },
       ];
 
       ayva.$.stroke.value.should.equal(0.5);
@@ -420,6 +485,14 @@ describe('Classic Stroke Tests', function () {
         testCreateStroke({
           suck: value,
         }).should.throw(`Invalid stroke suck: ${value}`);
+
+        testCreateStroke({
+          relativeSpeeds: value,
+        }).should.throw(`Invalid stroke relative speeds: ${value}`);
+
+        testCreateStroke({
+          relativeSpeeds: [value, value],
+        }).should.throw(`Invalid stroke relative speed: ${value}`);
       });
 
       testCreateStroke({
@@ -443,13 +516,12 @@ describe('Classic Stroke Tests', function () {
       ['', NaN, Infinity, true, false, {}].forEach((value) => {
         testCreateStroke(0, 1, 1, [value, value]).should.throw(`Invalid stroke shape: ${value}`);
       });
+    });
 
-      ['', NaN, Infinity, true, false, {}, -1, 0].forEach((relativeSpeed) => {
-        testCreateStroke(0, 1, 1, [
-          { value: Ayva.RAMP_COS, relativeSpeed },
-          { value: Ayva.RAMP_COS, relativeSpeed },
-        ]).should.throw(`Invalid relative speed specified in stroke shape: ${relativeSpeed}`);
-      });
+    it('should throw an error if relative speeds are invalid', function () {
+      testCreateStroke({
+        relativeSpeeds: [1],
+      }).should.throw('Must specify an even number of relative speeds.');
     });
   });
 });

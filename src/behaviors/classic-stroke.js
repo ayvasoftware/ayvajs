@@ -35,6 +35,7 @@ class ClassicStroke extends AyvaBehavior {
       bottom: 0,
       speed: 1,
       shape: Ayva.RAMP_COS,
+      relativeSpeeds: [1, 1],
       suck: null,
       twist: null,
     };
@@ -91,13 +92,15 @@ class ClassicStroke extends AyvaBehavior {
   generateActions (ayva) {
     this.queueFunction((behavior) => {
       const { value, lastValue } = ayva.$.stroke;
-      const { target, shape, direction } = this.#getTargetShape(value, lastValue);
-      const speed = this.#speed * (shape.relativeSpeed || 1);
+      const {
+        target, shape, direction, relativeSpeed,
+      } = this.#getTargetShape(value, lastValue);
+      const speed = this.#speed * relativeSpeed;
 
       const moves = [{
         speed,
         to: target,
-        value: typeof shape === 'object' ? shape.value : shape,
+        value: shape,
       }];
 
       if (this.#config.twist) {
@@ -127,6 +130,7 @@ class ClassicStroke extends AyvaBehavior {
     strokeConfig.top = StrokeParameterProvider.createFrom(strokeConfig.top);
     strokeConfig.bottom = StrokeParameterProvider.createFrom(strokeConfig.bottom);
     strokeConfig.speed = StrokeParameterProvider.createFrom(strokeConfig.speed);
+    strokeConfig.relativeSpeeds = StrokeParameterProvider.createFrom(strokeConfig.relativeSpeeds);
 
     const { shape } = strokeConfig;
 
@@ -177,6 +181,7 @@ class ClassicStroke extends AyvaBehavior {
   #getTargetShape (currentValue, lastValue) {
     const lastStrokeWasUp = (currentValue - lastValue) >= 0;
     const nextShapeDirection = this.#config.shape.index % 2 === 0 ? 'up' : 'down';
+    const nextRelativeSpeedDirection = this.#config.relativeSpeeds.index % 2 === 0 ? 'up' : 'down';
 
     let target;
     let direction;
@@ -189,6 +194,10 @@ class ClassicStroke extends AyvaBehavior {
       if (nextShapeDirection === 'down') {
         this.#config.shape.next(); // Skip to the next up shape.
       }
+
+      if (nextRelativeSpeedDirection === 'down') {
+        this.#config.relativeSpeeds.next(); // Skip to the next up speed
+      }
     } else {
       direction = 'down';
       target = this.#bottom;
@@ -197,9 +206,15 @@ class ClassicStroke extends AyvaBehavior {
       if (nextShapeDirection === 'up') {
         this.#config.shape.next(); // Skip to the next down shape.
       }
+
+      if (nextRelativeSpeedDirection === 'up') {
+        this.#config.relativeSpeeds.next(); // Skip to the next down speed.
+      }
     }
 
-    return { target, shape: this.#config.shape.next(), direction };
+    return {
+      target, shape: this.#config.shape.next(), direction, relativeSpeed: this.#config.relativeSpeeds.next(),
+    };
   }
 
   #validate (config) {
@@ -225,6 +240,10 @@ class ClassicStroke extends AyvaBehavior {
 
     if (typeof config.shape !== 'function' && !(config.shape instanceof Array)) {
       fail('shape', config.shape);
+    }
+
+    if (has(config, 'relativeSpeeds') && !(config.relativeSpeeds instanceof Array)) {
+      fail('relative speeds', config.relativeSpeeds);
     }
 
     if (typeof config.twist !== 'object') {
@@ -255,20 +274,20 @@ class ClassicStroke extends AyvaBehavior {
       }
 
       config.shape.forEach((shape) => {
-        if (typeof shape !== 'function' && typeof shape !== 'object') {
+        if (typeof shape !== 'function') {
           fail('shape', shape);
         }
+      });
+    }
 
-        if (typeof shape === 'object') {
-          if (typeof shape.value !== 'function') {
-            fail('shape', shape);
-          }
+    if (config.relativeSpeeds instanceof Array) {
+      if (config.relativeSpeeds.length % 2 !== 0) {
+        throw new Error('Must specify an even number of relative speeds.');
+      }
 
-          if (has(shape, 'relativeSpeed')) {
-            if (!validNumber(shape.relativeSpeed) || shape.relativeSpeed <= 0) {
-              throw new Error(`Invalid relative speed specified in stroke shape: ${shape.relativeSpeed}`);
-            }
-          }
+      config.relativeSpeeds.forEach((relativeSpeed) => {
+        if (!validNumber(relativeSpeed) || relativeSpeed <= 0) {
+          fail('relative speed', relativeSpeed);
         }
       });
     }
