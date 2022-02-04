@@ -28,11 +28,11 @@ class AyvaBehavior {
    * Any actions that were already on this behaviors action queue will also be returned.
    * The action queue of the behavior will be clear after this operation.
    *
-   * @param {Ayva} ayva - instance of Ayva to generate actions for.
    * @param {Number} iterations - how many iterations of this behavior to generate.
+   * @param {Ayva} ayva - instance of Ayva to generate actions for.
    * @ignore
    */
-  emitActions (ayva, iterations = 1) {
+  emitActions (iterations = 1, ayva = null) {
     for (let i = 0; i < iterations; i++) {
       this.generateActions(ayva);
     }
@@ -128,12 +128,12 @@ class AyvaBehavior {
    * Allows for behavior composition.
    *
    * @param {AyvaBehavior} behavior - the sub behavior.
-   * @param {Ayva} ayva - instance of Ayva.
    * @param {Number} iterations - how many iterations of the sub behavior to generate.
+   * @param {Ayva} ayva - instance of Ayva.
    */
-  queueBehavior (behavior, ayva, iterations = 1) {
+  queueBehavior (behavior, iterations = 1, ayva = null) {
     // TODO: Cycle detection?
-    this.#queueActions(behavior.emitActions(ayva, iterations));
+    this.#queueActions(behavior.emitActions(iterations, ayva));
   }
 
   /**
@@ -203,12 +203,12 @@ class AyvaBehavior {
    * Allows for behavior composition.
    *
    * @param {AyvaBehavior} behavior - the sub behavior.
-   * @param {Ayva} ayva - instance of Ayva.
    * @param {Number} iterations - how many iterations of the sub behavior to generate.
+   * @param {Ayva} ayva - instance of Ayva.
    */
-  insertBehavior (behavior, ayva, iterations = 1) {
+  insertBehavior (behavior, iterations = 1, ayva = null) {
     // TODO: Cycle detection?
-    this.#insertActions(behavior.emitActions(ayva, iterations));
+    this.#insertActions(behavior.emitActions(iterations, ayva));
   }
 
   /**

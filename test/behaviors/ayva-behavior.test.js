@@ -149,6 +149,7 @@ describe('Behavior API Tests', function () {
     });
 
     it('should allow mixed operations', async function () {
+      // TODO: Break this out and clean it up :O
       const startFunction = sinon.fake();
 
       const startMoves = [{
@@ -184,7 +185,7 @@ describe('Behavior API Tests', function () {
         behavior.queueMove(...moves);
         behavior.queueSleep(duration);
         behavior.queueFunction(testFunction);
-        behavior.queueBehavior(subBehavior);
+        behavior.queueBehavior(subBehavior, 2);
 
         behavior.insertMove(...startMoves);
         behavior.insertFunction(startFunction);
@@ -227,6 +228,16 @@ describe('Behavior API Tests', function () {
 
       ayva.move.callCount.should.equal(3);
       ayva.move.args[2][0].should.deep.equal(subMoves[0]);
+
+      await behavior.perform(ayva);
+
+      ayva.sleep.callCount.should.equal(3);
+      ayva.sleep.args[2][0].should.deep.equal(duration);
+
+      await behavior.perform(ayva);
+
+      ayva.move.callCount.should.equal(4);
+      ayva.move.args[3][0].should.deep.equal(subMoves[0]);
     });
 
     it('should allow inserting new moves with function', async function () {
