@@ -231,6 +231,27 @@ class TempestStroke extends AyvaBehavior {
       this.#bpm = this.#bpmProvider.next();
     });
   }
+
+  getTransitionMoves (ayva, speed = 1) {
+    return Object.keys(this.axes).map((axis) => {
+      const params = this.axes[axis];
+
+      const to = Ayva.tempestMotion(
+        params.from,
+        params.to,
+        params.phase,
+        params.ecc,
+        this.#bpm,
+        params.shift + this.#angle
+      )({ index: 0, frequency: ayva.frequency });
+
+      return {
+        axis,
+        to,
+        speed,
+      };
+    });
+  }
 }
 
 export default TempestStroke;
