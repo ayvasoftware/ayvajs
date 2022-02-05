@@ -151,4 +151,31 @@ describe('Tempest Stroke Tests', function () {
       new TempestStroke('non-existent');
     }).should.throw('No stroke named non-existent found.');
   });
+
+  it('should allow creating transition moves that put receiver into position', async function () {
+    const stroke = new TempestStroke({
+      stroke: {
+        from: 0,
+        to: 1,
+      },
+      twist: {
+        from: 0.25,
+        to: 1,
+      },
+      roll: {
+        from: 0.75,
+        to: 1,
+      },
+    });
+
+    ayva.$.stroke.value.should.equal(0.5);
+    ayva.$.twist.value.should.equal(0.5);
+    ayva.$.roll.value.should.equal(0.5);
+
+    await ayva.move(...stroke.getTransitionMoves(ayva));
+
+    ayva.$.stroke.value.should.equal(0);
+    ayva.$.twist.value.should.equal(0.25);
+    ayva.$.roll.value.should.equal(0.75);
+  });
 });
