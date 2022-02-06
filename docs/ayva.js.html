@@ -104,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="BrowserSerialDevice.html">BrowserSerialDevice</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li><li><a href="VariableDuration.html">VariableDuration</a></li></ul><h3>Global</h3><ul><li><a href="global.html#OSR2_CONFIG">OSR2_CONFIG</a></li><li><a href="global.html#SR6_CONFIG">SR6_CONFIG</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="BrowserSerialDevice.html">BrowserSerialDevice</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li><li><a href="VariableDuration.html">VariableDuration</a></li></ul></div>
                 
             </nav>
         </div>
@@ -126,7 +126,7 @@ import MoveBuilder from './util/move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty, validNumber
 } from './util/util.js';
-import { SR6_CONFIG } from './util/osr-configs.js';
+import OSR_CONFIG from './util/osr-config.js';
 
 class Ayva {
   #devices = [];
@@ -205,7 +205,7 @@ class Ayva {
    * @returns the instance of Ayva
    */
   defaultConfiguration () {
-    this.#configure(SR6_CONFIG);
+    this.#configure(OSR_CONFIG);
     return this;
   }
 
@@ -1084,6 +1084,15 @@ class Ayva {
    */
   static blendMotion (firstProvider, secondProvider, factor) {
     return (...args) => round((1 - factor) * firstProvider(...args) + factor * secondProvider(...args), Ayva.precision);
+  }
+
+  /**
+   * Return a copy of the default configuration.
+   */
+  static get defaultConfiguration () {
+    return {
+      ...OSR_CONFIG,
+    };
   }
 }
 
