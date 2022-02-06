@@ -15,6 +15,8 @@ class ClassicStroke extends AyvaBehavior {
 
   #speed;
 
+  #duration;
+
   #config;
 
   get speed () {
@@ -27,6 +29,10 @@ class ClassicStroke extends AyvaBehavior {
 
   get bottom () {
     return this.#bottom;
+  }
+
+  get duration () {
+    return this.#duration;
   }
 
   static get DEFAULT_CONFIG () {
@@ -97,21 +103,32 @@ class ClassicStroke extends AyvaBehavior {
       } = this.#getTargetShape(value, lastValue);
       const speed = this.#speed * relativeSpeed;
 
-      const moves = [{
-        speed,
+      const strokeMove = {
         to: target,
         value: shape,
-      }];
+      };
+
+      if (this.#config.speed !== undefined) {
+        strokeMove.speed = speed;
+        this.#speed = this.#config.speed.next();
+      } else {
+        strokeMove.duration = this.#duration / relativeSpeed;
+        this.#duration = this.#config.duration.next();
+      }
+
+      const moves = [strokeMove];
 
       if (this.#config.twist) {
         moves.push(this.#computeTwistMove({
-          direction, value, target, speed, ayva,
+          direction,
+          value,
+          target,
+          ayva,
+          speed: this.#config.speed !== undefined ? speed : Math.abs(target - value) / strokeMove.duration,
         }));
       }
 
       behavior.insertMove(...moves);
-
-      this.#speed = this.#config.speed.next();
 
       if (validNumber(this.#config.suck, 0, 1)) {
         ayva.$.suck.value = this.#config.suck;
@@ -120,8 +137,14 @@ class ClassicStroke extends AyvaBehavior {
   }
 
   #init (config) {
+    const defaultConfig = ClassicStroke.DEFAULT_CONFIG;
+
+    if (has(config, 'duration')) {
+      delete defaultConfig.speed;
+    }
+
     const strokeConfig = {
-      ...ClassicStroke.DEFAULT_CONFIG,
+      ...defaultConfig,
       ...config,
     };
 
@@ -129,8 +152,13 @@ class ClassicStroke extends AyvaBehavior {
 
     strokeConfig.top = StrokeParameterProvider.createFrom(strokeConfig.top);
     strokeConfig.bottom = StrokeParameterProvider.createFrom(strokeConfig.bottom);
-    strokeConfig.speed = StrokeParameterProvider.createFrom(strokeConfig.speed);
     strokeConfig.relativeSpeeds = StrokeParameterProvider.createFrom(strokeConfig.relativeSpeeds);
+
+    if (has(strokeConfig, 'duration')) {
+      strokeConfig.duration = StrokeParameterProvider.createFrom(strokeConfig.duration);
+    } else {
+      strokeConfig.speed = StrokeParameterProvider.createFrom(strokeConfig.speed);
+    }
 
     const { shape } = strokeConfig;
 
@@ -145,7 +173,12 @@ class ClassicStroke extends AyvaBehavior {
     // Compute initial stroke values.
     this.#top = this.#config.top.next();
     this.#bottom = this.#config.bottom.next();
-    this.#speed = this.#config.speed.next();
+
+    if (this.#config.speed !== undefined) {
+      this.#speed = this.#config.speed.next();
+    } else {
+      this.#duration = this.#config.duration.next();
+    }
   }
 
   #computeTwistMove ({ direction, value, target, speed, ayva }) { // eslint-disable-line object-curly-newline
@@ -217,6 +250,7 @@ class ClassicStroke extends AyvaBehavior {
     };
   }
 
+  // TODO: We really need to standardize / generalize validation... :(
   #validate (config) {
     const fail = (parameter, value) => {
       throw new Error(`Invalid stroke ${parameter}: ${value}`);
@@ -234,8 +268,20 @@ class ClassicStroke extends AyvaBehavior {
       throw new Error(`Invalid stroke range specified: (${config.bottom}, ${config.top})`);
     }
 
-    if ((!validNumber(config.speed) || config.speed <= 0) && typeof config.speed !== 'function' && !(config.speed instanceof Array)) {
+    if (has(config, 'speed') && has(config, 'duration')) {
+      throw new Error('Cannot specify both a speed and duration');
+    }
+
+    if (has(config, 'speed')
+      && (!validNumber(config.speed) || config.speed <= 0)
+      && typeof config.speed !== 'function' && !(config.speed instanceof Array)) {
       fail('speed', config.speed);
+    }
+
+    if (has(config, 'duration') && (!validNumber(config.duration) || config.duration <= 0)
+      && typeof config.duration !== 'function'
+      && !(config.duration instanceof Array)) {
+      fail('duration', config.duration);
     }
 
     if (typeof config.shape !== 'function' && !(config.shape instanceof Array)) {
