@@ -2,6 +2,7 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
+import OSR_CONFIG from '../../src/util/osr-config.js';
 import { createTestConfig, createFunctionBinder } from '../test-helpers.js';
 
 /**
@@ -309,6 +310,10 @@ describe('Configuration Tests', function () {
 
       expect(ayva.name).to.equal('SR6');
       expect(ayva.defaultAxis).to.equal('L0');
+    });
+
+    it('should have a default configuration static property', function () {
+      expect(Ayva.defaultConfiguration).to.deep.equal(OSR_CONFIG);
     });
   });
 });

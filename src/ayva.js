@@ -3,7 +3,7 @@ import MoveBuilder from './util/move-builder.js';
 import {
   clamp, round, has, fail, createConstantProperty, validNumber
 } from './util/util.js';
-import { SR6_CONFIG } from './util/osr-configs.js';
+import OSR_CONFIG from './util/osr-config.js';
 
 class Ayva {
   #devices = [];
@@ -82,7 +82,7 @@ class Ayva {
    * @returns the instance of Ayva
    */
   defaultConfiguration () {
-    this.#configure(SR6_CONFIG);
+    this.#configure(OSR_CONFIG);
     return this;
   }
 
@@ -961,6 +961,15 @@ class Ayva {
    */
   static blendMotion (firstProvider, secondProvider, factor) {
     return (...args) => round((1 - factor) * firstProvider(...args) + factor * secondProvider(...args), Ayva.precision);
+  }
+
+  /**
+   * Return a copy of the default configuration.
+   */
+  static get defaultConfiguration () {
+    return {
+      ...OSR_CONFIG,
+    };
   }
 }
 
