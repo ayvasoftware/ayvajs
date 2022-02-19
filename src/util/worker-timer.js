@@ -1,7 +1,7 @@
 /**
  * A worker timer is a timer that delegates setTimeout to a Web Worker.
- * Performing a timeout in a Web Worker provides greater accuracy.
- * It prevents a timeout from being severely delayed when switching tabs for example.
+ * Performing a timeout in a Web Worker provides greater accuracy (it prevents
+ * a timeout from being severely delayed when switching tabs for example).
  */
 class WorkerTimer {
   #worker;

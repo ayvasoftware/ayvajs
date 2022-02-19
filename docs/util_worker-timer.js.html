@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> devices/browser-serial-device.js</title>
+  <title> util/worker-timer.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -112,7 +112,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>devices/browser-serial-device.js</h1>
+                    <h1>util/worker-timer.js</h1>
                 </header>
                 
 
@@ -122,71 +122,75 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * Small convenience class for easily connecting to a serial device from a browser.
- * This class has been excluded from test coverage because mocking all the browser
- * globals involved is cumbersome. But it works. Trust me :).
+ * A worker timer is a timer that delegates setTimeout to a Web Worker.
+ * Performing a timeout in a Web Worker provides greater accuracy (it prevents 
+ * a timeout from being severely delayed when switching tabs for example).
  */
-class BrowserSerialDevice {
-  #baudRate;
+class WorkerTimer {
+  #worker;
 
-  #connected = false;
+  #resolves = {};
 
-  #output = null;
+  #nextResolveId = 1;
 
-  #input = null;
+  constructor () {
+    /* c8 ignore start */
+    /* Web Worker Script - Ignored from coverage as this only ever runs as a worker in a Browser. */
+    const workerScript = function () {
+      onmessage = function (message) {
+        const { id, delay } = message.data;
+        const start = performance.now();
 
-  #serial = null;
-
-  get connected () {
-    return this.#connected;
-  }
-
-  constructor (baudRate = 115200, serial = null) {
-    this.#baudRate = baudRate;
-    this.#serial = serial || (globalThis.navigator ? globalThis.navigator.serial : null);
-  }
-
-  async requestConnection () {
-    const port = await this.#serial.requestPort();
-
-    await port.open({ baudRate: this.#baudRate });
-
-    const encoder = new TextEncoderStream();
-    encoder.readable.pipeTo(port.writable);
-
-    const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
-
-    this.#output = encoder.writable.getWriter();
-    this.#input = decoder.readable.getReader();
-    this.#connected = true;
-
-    const disconnectListener = (event) => {
-      if (event.target === port) {
-        this.#connected = false;
-
-        this.#serial.removeEventListener('disconnect', disconnectListener);
-      }
+        setTimeout(() => {
+          postMessage({
+            id,
+            expected: delay,
+            actual: performance.now() - start,
+          });
+        }, delay);
+      };
     };
+    /* c8 ignore stop */
 
-    this.#serial.addEventListener('disconnect', disconnectListener);
+    this.#worker = new Worker(this.#getWorkerUrl(workerScript));
 
-    // Add a small delay so that the OSR has time to "boot" or w/e...
+    this.#worker.onmessage = (message) => {
+      const { data } = message;
+      const { id } = data;
+
+      this.#resolves[id](data);
+      delete this.#resolves[id];
+    };
+  }
+
+  /**
+   * Returns a Promise that resolves when the specified delay has elapsed.
+   *
+   * @param {Number} delay - delay in milliseconds
+   * @returns {Promise}
+   */
+  sleep (delay) {
     return new Promise((resolve) => {
-      setTimeout(resolve, 2000);
+      const id = this.#nextResolveId++;
+
+      this.#resolves[id] = resolve;
+      this.#worker.postMessage({ id, delay });
     });
   }
 
-  write (output) {
-    if (this.#connected) {
-      this.#output.write(output);
-    } else {
-      throw new Error('No device connected.');
-    }
+  /**
+   * Convert a function into a Blob, then generate an object URL from that blob to
+   * be used for a Web Worker.
+   *
+   * https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
+   */
+  #getWorkerUrl (fn) {
+    const blob = new Blob([`(${fn.toString()})()`], { type: 'text/javascript' });
+    return URL.createObjectURL(blob);
   }
 }
 
-export default BrowserSerialDevice;
+export default WorkerTimer;
 </code></pre>
         </article>
     </section>

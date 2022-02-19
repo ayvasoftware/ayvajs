@@ -115,7 +115,7 @@ class TempestStroke extends AyvaBehavior {
    *
    * @param {Ayva} ayva
    * @param {Object} [mixinConfig] - configuration options to add or override for each move.
-   * @returns
+   * @returns array of moves
    */
   getTransitionMoves (ayva, mixinConfig) {
     const speedConfig = {};
