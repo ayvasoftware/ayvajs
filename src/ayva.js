@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import MoveBuilder from './util/move-builder.js';
+import WorkerTimer from './util/worker-timer.js';
 import {
   clamp, round, has, fail, createConstantProperty, validNumber
 } from './util/util.js';
@@ -23,6 +24,8 @@ class Ayva {
   #performing = false;
 
   defaultRamp = Ayva.RAMP_COS;
+
+  #timer;
 
   static get precision () {
     // Decimals to round to for internal values.
@@ -71,6 +74,19 @@ class Ayva {
     if (config) {
       this.#configure(config);
     }
+
+    if (typeof Worker === 'undefined') {
+      this.#timer = {
+        // Default timer is just a basic timeout.
+        sleep (milliseconds) {
+          return new Promise((resolve) => {
+            setTimeout(resolve, milliseconds);
+          });
+        },
+      };
+    } else {
+      this.#timer = new WorkerTimer();
+    }
   }
 
   /**
@@ -84,6 +100,10 @@ class Ayva {
   defaultConfiguration () {
     this.#configure(OSR_CONFIG);
     return this;
+  }
+
+  getTimer () {
+    return this.#timer;
   }
 
   /**
@@ -212,10 +232,8 @@ class Ayva {
    * @param {*} seconds
    * @returns {Promise} a Promise that resolves when the number of seconds have passed.
    */
-  async sleep (seconds) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, seconds * 1000);
-    });
+  sleep (seconds) {
+    return this.#timer.sleep(seconds * 1000);
   }
 
   /**
@@ -580,7 +598,7 @@ class Ayva {
       }
 
       if (has(movement, 'duration')) {
-        movement.stepCount = round(movement.duration * this.#frequency);
+        movement.stepCount = Math.ceil(movement.duration * this.#frequency);
       } // else if (this.#axes[movement.axis].type !== 'boolean') {
       // By this point, the only movements without a duration should be boolean.
       // This should literally never happen because of validation. But including here for debugging and clarity.

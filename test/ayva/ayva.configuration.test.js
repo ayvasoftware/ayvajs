@@ -1,7 +1,9 @@
 /* eslint-disable no-unused-expressions */
+import { Blob } from 'buffer';
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
+import WorkerTimer from '../../src/util/worker-timer.js';
 import OSR_CONFIG from '../../src/util/osr-config.js';
 import { createTestConfig, createFunctionBinder } from '../test-helpers.js';
 
@@ -314,6 +316,25 @@ describe('Configuration Tests', function () {
 
     it('should have a default configuration static property', function () {
       expect(Ayva.defaultConfiguration).to.deep.equal(OSR_CONFIG);
+    });
+  });
+
+  describe('#timers', function () {
+    it('should create a worker timer if global Worker class is available.', async function () {
+      global.Worker = class {};
+      global.Blob = Blob;
+
+      const ayva = new Ayva().defaultConfiguration();
+      expect(ayva.getTimer() instanceof WorkerTimer).to.be.true;
+
+      delete global.Worker;
+      delete global.Blob;
+    });
+
+    it('should create an internal timer if no global Worker class is available.', function () {
+      const ayva = new Ayva().defaultConfiguration();
+
+      expect(ayva.getTimer() instanceof WorkerTimer).to.be.false;
     });
   });
 });
