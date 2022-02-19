@@ -109,7 +109,21 @@ class TempestStroke extends AyvaBehavior {
     });
   }
 
-  getTransitionMoves (ayva, speed = 1) {
+  /**
+   * Returns an array of moves that will move to the start position of this Tempest Stroke.
+   * The speed of the moves default to 1 unit per second.
+   *
+   * @param {Ayva} ayva
+   * @param {Object} [mixinConfig] - configuration options to add or override for each move.
+   * @returns
+   */
+  getTransitionMoves (ayva, mixinConfig) {
+    const speedConfig = {};
+
+    if (!mixinConfig || !(has(mixinConfig, 'speed') || has(mixinConfig, 'duration'))) {
+      speedConfig.speed = 1;
+    }
+
     return Object.keys(this.axes).map((axis) => {
       const params = this.axes[axis];
 
@@ -125,7 +139,8 @@ class TempestStroke extends AyvaBehavior {
       return {
         axis,
         to,
-        speed,
+        ...speedConfig,
+        ...mixinConfig,
       };
     });
   }

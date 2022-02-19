@@ -152,30 +152,71 @@ describe('Tempest Stroke Tests', function () {
     }).should.throw('No stroke named non-existent found.');
   });
 
-  it('should allow creating transition moves that put receiver into position', async function () {
-    const stroke = new TempestStroke({
-      stroke: {
-        from: 0,
-        to: 1,
-      },
-      twist: {
-        from: 0.25,
-        to: 1,
-      },
-      roll: {
-        from: 0.75,
-        to: 1,
-      },
+  describe('transition moves', function () {
+    let stroke;
+    const verifyStart = () => {
+      ayva.$.stroke.value.should.equal(0.5);
+      ayva.$.twist.value.should.equal(0.5);
+      ayva.$.roll.value.should.equal(0.5);
+    };
+
+    const verifyEnd = () => {
+      ayva.$.stroke.value.should.equal(0);
+      ayva.$.twist.value.should.equal(0.25);
+      ayva.$.roll.value.should.equal(0.75);
+    };
+
+    beforeEach(function () {
+      stroke = new TempestStroke({
+        stroke: {
+          from: 0,
+          to: 1,
+        },
+        twist: {
+          from: 0.25,
+          to: 1,
+        },
+        roll: {
+          from: 0.75,
+          to: 1,
+        },
+      });
     });
 
-    ayva.$.stroke.value.should.equal(0.5);
-    ayva.$.twist.value.should.equal(0.5);
-    ayva.$.roll.value.should.equal(0.5);
+    it('with default speed', async function () {
+      verifyStart();
+      const moves = stroke.getTransitionMoves(ayva);
 
-    await ayva.move(...stroke.getTransitionMoves(ayva));
+      moves.forEach((move) => {
+        move.speed.should.equal(1);
+      });
 
-    ayva.$.stroke.value.should.equal(0);
-    ayva.$.twist.value.should.equal(0.25);
-    ayva.$.roll.value.should.equal(0.75);
+      await ayva.move(...moves);
+      verifyEnd();
+    });
+
+    it('with speed specified', async function () {
+      verifyStart();
+      const moves = stroke.getTransitionMoves(ayva, { speed: 2 });
+
+      moves.forEach((move) => {
+        move.speed.should.equal(2);
+      });
+
+      await ayva.move(...moves);
+      verifyEnd();
+    });
+
+    it('with duration specified', async function () {
+      verifyStart();
+      const moves = stroke.getTransitionMoves(ayva, { duration: 2 });
+
+      moves.forEach((move) => {
+        move.duration.should.equal(2);
+      });
+
+      await ayva.move(...moves);
+      verifyEnd();
+    });
   });
 });
