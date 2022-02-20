@@ -78,10 +78,14 @@ class Ayva {
     if (typeof Worker === 'undefined') {
       this.#timer = {
         // Default timer is just a basic timeout.
-        sleep (milliseconds) {
+        sleep (seconds) {
           return new Promise((resolve) => {
-            setTimeout(resolve, milliseconds);
+            setTimeout(resolve, seconds * 1000);
           });
+        },
+
+        now () {
+          return performance.now() / 1000;
         },
       };
     } else {
@@ -233,7 +237,7 @@ class Ayva {
    * @returns {Promise} a Promise that resolves when the number of seconds have passed.
    */
   sleep (seconds) {
-    return this.#timer.sleep(seconds * 1000);
+    return this.#timer.sleep(seconds);
   }
 
   /**
@@ -421,18 +425,21 @@ class Ayva {
 
   async #performMovements (movementId, movements) {
     const allProviders = this.#createValueProviders(movements);
-    const stepCount = this.#computeStepCount(allProviders);
+    const { stepCount, duration } = this.#computeStepParameters(allProviders);
     const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
     const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
 
     this.#executeProviders(immediateProviders, 0);
+
+    let errorCorrection = 0;
+    const startTime = this.#timer.now();
 
     if (stepCount) {
       for (let index = 0; index < stepCount; index++) {
         const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
         this.#executeProviders(unfinishedProviders, index);
 
-        await this.sleep(this.#period);
+        errorCorrection = await this.#stepSleep(index, stepCount, duration, startTime, errorCorrection);
 
         if (!this.#movements.has(movementId)) {
           // This move was cancelled.
@@ -445,6 +452,23 @@ class Ayva {
     }
 
     return true;
+  }
+
+  /**
+   * Sleep for a single step. Aims to sleep for this.#period seconds on average. This method corrects for
+   * deviations in the underlying timer.
+   *
+   * @returns the new error correction
+   */
+  async #stepSleep (index, stepCount, duration, startTime, errorCorrection) {
+    const sleepTime = index === stepCount - 1 ? duration % (this.#timer.now() - startTime) : this.#period;
+
+    await this.sleep(sleepTime - errorCorrection);
+
+    const actualElapsed = this.#timer.now() - startTime;
+    const expectedElapsed = (index + 1) * this.#period;
+
+    return actualElapsed - expectedElapsed;
   }
 
   #executeProviders (providers, index) {
@@ -634,23 +658,29 @@ class Ayva {
   }
 
   /**
-   * Compute the total steps of the move given a list of value providers.
-   * i.e. The maximum number of steps.
+   * Compute the total steps and duration of the move given a list of value providers.
+   * i.e. The maximum number of steps and maximum duration.
    *
    * @param {Object[]} valueProviders
    */
-  #computeStepCount (valueProviders) {
-    let maxStepCount = 0;
+  #computeStepParameters (valueProviders) {
+    let stepCount = 0;
+    let duration = 0;
 
     valueProviders.forEach((provider) => {
-      const steps = provider.parameters.stepCount;
+      const nextStepCount = provider.parameters.stepCount;
+      const nextDuration = provider.parameters.duration;
 
-      if (steps) {
-        maxStepCount = Math.max(steps, maxStepCount);
+      if (nextStepCount) {
+        stepCount = Math.max(nextStepCount, stepCount);
+      }
+
+      if (nextDuration) {
+        duration = Math.max(nextDuration, duration);
       }
     });
 
-    return maxStepCount;
+    return { stepCount, duration };
   }
 
   /**

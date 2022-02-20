@@ -19,7 +19,7 @@ class WorkerTimer {
 
         setTimeout(() => {
           postMessage(id);
-        }, delay);
+        }, delay * 1000);
       };
     };
     /* c8 ignore stop */
@@ -37,7 +37,7 @@ class WorkerTimer {
   /**
    * Returns a Promise that resolves when the specified delay has elapsed.
    *
-   * @param {Number} delay - delay in milliseconds
+   * @param {Number} delay - delay in seconds
    * @returns {Promise}
    */
   sleep (delay) {
@@ -47,6 +47,15 @@ class WorkerTimer {
       this.#resolves[id] = resolve;
       this.#worker.postMessage({ id, delay });
     });
+  }
+
+  /**
+   * Get the current time in seconds.
+   *
+   * @returns - the current time in seconds.
+   */
+  now () {
+    return performance.now() / 1000;
   }
 
   /**
