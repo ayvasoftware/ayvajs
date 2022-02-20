@@ -11,16 +11,11 @@ describe('Timer Tests', function () {
 
   beforeEach(function () {
     global.Blob = Blob;
-
     global.Worker = class {
       // Fake worker that resolves message immediately.
-      postMessage ({ id, delay }) {
+      postMessage ({ id }) {
         this.onmessage({
-          data: {
-            id,
-            expected: delay,
-            actual: delay,
-          },
+          data: id,
         });
       }
     };
@@ -30,6 +25,8 @@ describe('Timer Tests', function () {
     ayva.addOutputDevice({
       write: sinon.fake(),
     });
+
+    sinon.replace(ayva, 'sleep', sinon.fake(ayva.sleep));
   });
 
   afterEach(function () {

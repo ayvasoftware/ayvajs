@@ -42,7 +42,7 @@ In a browser, Ayva can be imported as an <a href="https://developer.mozilla.org/
 </body>
 ```
 
-One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a _write_ method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API" target="_blank">Web Serial API</a> based _BrowserSerialDevice_ provided:
+One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a _write_ method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API" target="_blank">Web Serial API</a> based _WebSerialDevice_ provided:
 
 ```html
 <!DOCTYPE html>
@@ -50,10 +50,10 @@ One or more output devices must be added to an instance of Ayva in order to do a
   <button id="connect">Connect</button>
 
   <script type="module">
-    import Ayva, { BrowserSerialDevice } from 'https://unpkg.com/ayvajs';
+    import Ayva, { WebSerialDevice } from 'https://unpkg.com/ayvajs';
 
     const ayva = new Ayva().defaultConfiguration();
-    const device = new BrowserSerialDevice();
+    const device = new WebSerialDevice();
 
     document.querySelector('#connect').addEventListener('click', () => {
       device.requestConnection().then(() => {

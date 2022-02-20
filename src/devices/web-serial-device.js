@@ -3,7 +3,7 @@
  * This class has been excluded from test coverage because mocking all the browser
  * globals involved is cumbersome. But it works. Trust me :).
  */
-class BrowserSerialDevice {
+class WebSerialDevice {
   #baudRate;
 
   #connected = false;
@@ -63,4 +63,4 @@ class BrowserSerialDevice {
   }
 }
 
-export default BrowserSerialDevice;
+export default WebSerialDevice;

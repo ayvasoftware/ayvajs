@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> devices/browser-serial-device.js</title>
+  <title> devices/web-serial-device.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -104,7 +104,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="BrowserSerialDevice.html">BrowserSerialDevice</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li><li><a href="VariableDuration.html">VariableDuration</a></li><li><a href="WorkerTimer.html">WorkerTimer</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="Ayva.html">Ayva</a></li><li><a href="AyvaBehavior.html">AyvaBehavior</a></li><li><a href="ClassicStroke.html">ClassicStroke</a></li><li><a href="TempestStroke.html">TempestStroke</a></li><li><a href="VariableDuration.html">VariableDuration</a></li><li><a href="WebSerialDevice.html">WebSerialDevice</a></li><li><a href="WorkerTimer.html">WorkerTimer</a></li></ul></div>
                 
             </nav>
         </div>
@@ -112,7 +112,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>devices/browser-serial-device.js</h1>
+                    <h1>devices/web-serial-device.js</h1>
                 </header>
                 
 
@@ -126,7 +126,7 @@
  * This class has been excluded from test coverage because mocking all the browser
  * globals involved is cumbersome. But it works. Trust me :).
  */
-class BrowserSerialDevice {
+class WebSerialDevice {
   #baudRate;
 
   #connected = false;
@@ -186,7 +186,7 @@ class BrowserSerialDevice {
   }
 }
 
-export default BrowserSerialDevice;
+export default WebSerialDevice;
 </code></pre>
         </article>
     </section>

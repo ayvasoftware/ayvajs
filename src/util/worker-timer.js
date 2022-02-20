@@ -16,14 +16,9 @@ class WorkerTimer {
     const workerScript = function () {
       onmessage = function (message) {
         const { id, delay } = message.data;
-        const start = performance.now();
 
         setTimeout(() => {
-          postMessage({
-            id,
-            expected: delay,
-            actual: performance.now() - start,
-          });
+          postMessage(id);
         }, delay);
       };
     };
@@ -31,11 +26,10 @@ class WorkerTimer {
 
     this.#worker = new Worker(this.#getWorkerUrl(workerScript));
 
-    this.#worker.onmessage = (message) => {
-      const { data } = message;
-      const { id } = data;
+    this.#worker.onmessage = ({ data }) => {
+      const id = data;
 
-      this.#resolves[id](data);
+      this.#resolves[id]();
       delete this.#resolves[id];
     };
   }
