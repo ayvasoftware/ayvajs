@@ -23,9 +23,9 @@ class Ayva {
 
   #performing = false;
 
-  defaultRamp = Ayva.RAMP_COS;
-
   #timer;
+
+  defaultRamp = Ayva.RAMP_COS;
 
   static get precision () {
     // Decimals to round to for internal values.
@@ -106,6 +106,11 @@ class Ayva {
     return this;
   }
 
+  /**
+   * Get the timer that Ayva uses to time movements.
+   *
+   * @returns the timer
+   */
   getTimer () {
     return this.#timer;
   }
@@ -166,7 +171,7 @@ class Ayva {
    * });
    *
    * @param  {...Object} movements
-   * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
+   * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move was cancelled.
    */
   async move (...movements) {
     if (!this.#devices || !this.#devices.length) {
@@ -194,7 +199,7 @@ class Ayva {
   }
 
   /**
-   * Creates an MoveBuilder for this instance.
+   * Creates a MoveBuilder for this instance.
    *
    * @returns the new move builder.
    */
@@ -219,7 +224,7 @@ class Ayva {
     }
 
     console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
 
   /**
