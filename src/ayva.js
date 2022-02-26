@@ -262,8 +262,8 @@ class Ayva {
    * @param {Object} axisConfig - axis configuration object
    * @param {String} axisConfig.name - the machine name of this axis (such as L0, R0, etc...)
    * @param {String} axisConfig.type - linear, rotation, auxiliary, or boolean
-   * @param {String|String[]} [axisConfig.alias] - an alias used to refer to this axis
-   * @param {Object} [axisConfig.max = 1] - specifies maximum value for this axis (not applicable for boolean axes)
+   * @param {String} [axisConfig.alias] - an alias used to refer to this axis
+   * @param {Number} [axisConfig.max = 1] - specifies maximum value for this axis (not applicable for boolean axes)
    * @param {Number} [axisConfig.min = 0] - specifies minimum value for this axis (not applicable for boolean axes)
    */
   configureAxis (axisConfig) {

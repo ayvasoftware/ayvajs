@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<body>
+  <!-- 
+    Create a button to request a connection to the device. We need to do this because the
+    Web Serial API only allows a request to connect if it was triggered by a user gesture.
+  -->
+  <button id="connect">Connect</button>
+
+  <script type="module">
+    import Ayva, { WebSerialDevice } from 'https://unpkg.com/ayvajs';
+
+    // Construct a new instance of Ayva using the default configuration (a stroker with 6+ axes)
+    const ayva = new Ayva().defaultConfiguration();
+
+    // Construct a new WebSerialDevice.
+    const device = new WebSerialDevice();
+
+    // Setup event listener to request device connection after the Connect button is clicked.
+    document.querySelector('#connect').addEventListener('click', () => {
+      device.requestConnection().then(() => {
+        // Add the output device to the Ayva instance.
+        ayva.addOutputDevice(device);
+
+        // I can now start using Ayva to control the device.
+        // The following line sends a command to move the default axis to position zero at 1 unit per second.
+        ayva.move({ to: 0, speed: 1 });
+      }).catch((error) => {
+        console.error('Error connecting to device:', error);
+      });
+    });
+  </script>
+</body>

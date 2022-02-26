@@ -146,9 +146,9 @@ class Ayva {
 
   #performing = false;
 
-  defaultRamp = Ayva.RAMP_COS;
-
   #timer;
+
+  defaultRamp = Ayva.RAMP_COS;
 
   static get precision () {
     // Decimals to round to for internal values.
@@ -229,6 +229,11 @@ class Ayva {
     return this;
   }
 
+  /**
+   * Get the timer that Ayva uses to time movements.
+   *
+   * @returns the timer
+   */
   getTimer () {
     return this.#timer;
   }
@@ -289,7 +294,7 @@ class Ayva {
    * });
    *
    * @param  {...Object} movements
-   * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move is cancelled.
+   * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move was cancelled.
    */
   async move (...movements) {
     if (!this.#devices || !this.#devices.length) {
@@ -317,7 +322,7 @@ class Ayva {
   }
 
   /**
-   * Creates an MoveBuilder for this instance.
+   * Creates a MoveBuilder for this instance.
    *
    * @returns the new move builder.
    */
@@ -342,7 +347,7 @@ class Ayva {
     }
 
     console.warn('No linear or rotation axes configured.'); // eslint-disable-line no-console
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
 
   /**
@@ -380,8 +385,8 @@ class Ayva {
    * @param {Object} axisConfig - axis configuration object
    * @param {String} axisConfig.name - the machine name of this axis (such as L0, R0, etc...)
    * @param {String} axisConfig.type - linear, rotation, auxiliary, or boolean
-   * @param {String|String[]} [axisConfig.alias] - an alias used to refer to this axis
-   * @param {Object} [axisConfig.max = 1] - specifies maximum value for this axis (not applicable for boolean axes)
+   * @param {String} [axisConfig.alias] - an alias used to refer to this axis
+   * @param {Number} [axisConfig.max = 1] - specifies maximum value for this axis (not applicable for boolean axes)
    * @param {Number} [axisConfig.min = 0] - specifies minimum value for this axis (not applicable for boolean axes)
    */
   configureAxis (axisConfig) {

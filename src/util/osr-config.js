@@ -51,10 +51,12 @@ export default {
     },
     {
       name: 'V0',
+      alias: 'vibe0',
       type: 'auxiliary',
     },
     {
       name: 'V1',
+      alias: 'vibe1',
       type: 'auxiliary',
     },
   ],
