@@ -1,7 +1,5 @@
 /**
  * Small convenience class for easily connecting to a serial device from a browser.
- * This class has been excluded from test coverage because mocking all the browser
- * globals involved is cumbersome. But it works. Trust me :).
  */
 class WebSerialDevice {
   #baudRate;

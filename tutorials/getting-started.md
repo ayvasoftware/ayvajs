@@ -1,7 +1,7 @@
 > This tutorial assumes basic familiarity with <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a>, TCode, and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">JavaScript</a>.
 
 ## What is Ayva?
-Ayva is a lightweight, behavior-based JavaScript library for controlling <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a> such as the <a href="https://www.thingiverse.com/thing:4843410" target="_blank">OSR2+</a>, SR6, or any device that can be controlled with TCode. It allows specifying simple or complex multi-axis movements using an expressive Motion API, and constructing more complex behaviors using a Behavior API.
+Ayva is a lightweight, behavior-based JavaScript library for controlling <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a> such as the <a href="https://www.thingiverse.com/thing:4843410" target="_blank">OSR2+</a>, SR6, or any device that can be controlled with TCode. It allows specifying simple or complex multi-axis movements using an expressive Motion API. More complex behaviors can be constructed using a Behavior API.
 ## Quick Start
 ### CDN
 In a web app, Ayva can be imported as an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules" target="_blank">ES6 module</a> using a <a href="https://developer.mozilla.org/en-US/docs/Glossary/CDN" target="_blank">CDN</a> such as <a href="https://unpkg.com/" target="_blank">unpkg</a>:
@@ -23,7 +23,7 @@ In a web app, Ayva can be imported as an <a href="https://developer.mozilla.org/
 </body>
 ```
 
-One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a _write()_ method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API" target="_blank">Web Serial API</a> based _WebSerialDevice_ provided:
+One or more output devices must be added to an instance of Ayva in order to do anything. You may create your own device object (any object with a ```write()``` method is considered an output device), or you may use the simple <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API" target="_blank">Web Serial API</a> based _WebSerialDevice_ provided:
 
 ```html
 <!DOCTYPE html>
@@ -90,7 +90,7 @@ Then:
 import Ayva from 'ayvajs';
 import SerialPort from 'serialport';
 
-// Create a new SerialPort on the specified port. 
+// Create a new device on the specified port. 
 // Note: /dev/cu.usbserial-0001 is just an example. Your port will likely be different.
 const device = new SerialPort('/dev/cu.usbserial-0001');
 
