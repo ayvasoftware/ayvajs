@@ -463,6 +463,8 @@ class Ayva {
    * Sleep for a single step. Aims to sleep for this.#period seconds on average. This method corrects for
    * deviations in the underlying timer.
    *
+   * TODO: Maybe add a threshold for the error.
+   *
    * @returns the new error correction
    */
   async #stepSleep (index, stepCount, duration, startTime, errorCorrection) {
@@ -496,7 +498,7 @@ class Ayva {
   #executeProvider (provider, index) {
     const time = index * this.#period;
     const { parameters, valueProvider } = provider;
-    const { stepCount } = parameters;
+    const { duration } = parameters;
 
     const nextValue = valueProvider({
       ...parameters,
@@ -505,7 +507,7 @@ class Ayva {
       period: this.#period,
       frequency: this.#frequency,
       currentValue: this.#axes[parameters.axis].value,
-      x: stepCount === 0 ? 1 : (index + 1) / stepCount,
+      x: Math.min(1, (index + 1) / (duration * this.#frequency)),
     });
 
     const notNullOrUndefined = nextValue !== null && nextValue !== undefined; // Allow null or undefined to indicate no movement.
@@ -923,6 +925,7 @@ class Ayva {
 
   /**
    * Value provider that generates motion towards a target position in the shape of the latter half of a parabola.
+   * This creates the effect of "falling" towards the target position.
    */
   static RAMP_PARABOLIC ({ to, from, x }) {
     return ((to - from) * x * x) + from;
@@ -930,6 +933,7 @@ class Ayva {
 
   /**
    * Value provider that generates motion towards a target position in the shape of the first half of an upside down parabola.
+   * This creates the effect of "launching" towards the target position.
    */
   static RAMP_NEGATIVE_PARABOLIC ({ to, from, x }) {
     const value = -((x - 1) ** 2) + 1;
