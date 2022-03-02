@@ -89,7 +89,7 @@ class AyvaBehavior {
    * @param {...Object} moves - objects that describe the moves per the {@tutorial motion-api}.
    *//**
    * Add a move constructed with a move builder to the end of the action queue.
-   * See the {@tutorial builder-pattern} tutorial.
+   * See the {@tutorial move-builder} tutorial.
    *
    * @example
    * class ExampleBehavior extends AyvaBehavior {
@@ -164,7 +164,7 @@ class AyvaBehavior {
    * @param {...Object} moves - objects that describe the moves per the {@tutorial motion-api}.
    *//**
    * Add a move constructed with a move builder to the front of the action queue.
-   * See the {@tutorial builder-pattern} tutorial.
+   * See the {@tutorial move-builder} tutorial.
    *
    * @example
    * class ExampleBehavior extends AyvaBehavior {

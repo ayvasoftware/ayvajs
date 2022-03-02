@@ -102,7 +102,7 @@
             
             <nav>
                 
-                    <div class="category"><h3>Tutorials</h3><ul><li><a href="tutorial-getting-started.html">Getting Started</a></li><li><a href="tutorial-configuration.html">Configuration</a></li><li><a href="tutorial-motion-api.html">Motion API</a><ul><li><a href="tutorial-builder-pattern.html">Move Builder</a></li></ul></li><li><a href="tutorial-behavior-api.html">Behavior API</a></li></ul></div>
+                    <div class="category"><h3>Tutorials</h3><ul><li><a href="tutorial-getting-started.html">Getting Started</a></li><li><a href="tutorial-configuration.html">Configuration</a></li><li><a href="tutorial-motion-api.html">Motion API</a><ul><li><a href="tutorial-motion-api-overview.html">Overview</a></li><li><a href="tutorial-motion-api-value-providers.html">Value Providers</a></li><li><a href="tutorial-motion-api-multiaxis.html">Multiaxis Movements</a></li><li><a href="tutorial-motion-api-move-builder.html">Move Builder</a></li><li><a href="tutorial-motion-api-syntactic-sugar.html">Syntactic Sugar ($)</a></li></ul></li><li><a href="tutorial-behavior-api.html">Behavior API</a></li></ul></div>
                 
             </nav>
         </div>
@@ -116,50 +116,8 @@
 
 <article>
     <blockquote>
-<p>This tutorial assumes that you have completed the <a href="https://ayvajs.github.io/ayvajs/tutorial-getting-started.html" target="_blank">Getting Started</a> and <a href="https://ayvajs.github.io/ayvajs/tutorial-configuration.html" target="_blank">Configuration</a> tutorials, and that you have some familiarity with <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a>, TCode, and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">JavaScript</a>.</p>
+<p>This tutorial assumes that you have completed the <a href="./tutorial-getting-started.html" target="_blank">Getting Started</a> and <a href="./tutorial-configuration.html" target="_blank">Configuration</a> tutorials, and that you have some familiarity with <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a>, TCode, and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">JavaScript</a>.</p>
 </blockquote>
-<h2>move()</h2>
-<p>The core of Ayva's Motion API is the <code>move()</code> method. The <code>move()</code> method takes an arbitrary number of arguments, each of which is an object describing the movement along a single axis. The simplest description is just a target position and speed:</p>
-<pre class="prettyprint source"><code>ayva.move({
-  axis: 'stroke', // The axis to move.
-  to: 0,          // Target position in normalized units [0 - 1].
-  speed: 1        // Speed in units per second.
-});
-</code></pre>
-<p>This command tells Ayva to move the stroke axis (L0 in the default configuration) to the <strong>bottom of its range</strong> (position 0) at <strong>1 unit per second</strong>. A <em>unit</em> in this context is the full length of the range of the axis. Therefore, another way to interpret speed is <em>strokes per second</em>.</p>
-<blockquote>
-<p><a href="./tutorial-examples/move-speed.html" target="_blank">Try it out!</a> Examples in this tutorial will make use of the <a href="https://github.com/ayvajs/osr-emu" target="_blank">OSR Emulator</a> embedded in editable codepens. That way, you can run and experiment with them without using an actual device!</p>
-</blockquote>
-<p>Alternatively, a duration for the move can be specified:</p>
-<pre class="prettyprint source"><code>ayva.move({
-  axis: 'stroke',
-  to: 1,    
-  duration: 1,   // Duration of the move in seconds
-});
-</code></pre>
-<p>This command tells Ayva to move the stroke axis to the <strong>top of its range</strong> (position 1) over the course of one second.</p>
-<p><a href="./tutorial-examples/move-duration.html" target="_blank">Try it out!</a></p>
-<p>These examples could be viewed as somewhat analagous to speed and interval commands in TCode (ex: L000S100 or L099I1000 respectively). However, internally Ayva uses <em>live updates</em> when generating TCode. This allows for movement shapes that are not linear. As you may have been able to tell from the examples, the <em>default ramp</em> (shape of the motion) used by Ayva is actually a cosine wave. This behavior can be changed by setting the <code>defaultRamp</code> property on an instance of Ayva.</p>
-<h3>Default Ramp</h3>
-<p>There are four built-in ramp types available as static properties of the Ayva class:</p>
-<h4>Cosine</h4>
-<p><code>ayva.defaultRamp = Ayva.RAMP_COS;</code></p>
-<img class="ramp-example" width="150px" src="./images/cos-ramp.png">
-<a class="try-it-out" href="./tutorial-examples/move-cos-ramp.html" target="_blank">Try it out!</a>  
-<h4>Linear</h4>
-<p><code>ayva.defaultRamp = Ayva.RAMP_LINEAR;</code></p>
-<img class="ramp-example" width="150px" src="./images/linear-ramp.png">
-<a class="try-it-out" href="./tutorial-examples/move-linear-ramp.html" target="_blank">Try it out!</a>  
-<h4>Parabolic</h4>
-<p><code>ayva.defaultRamp = Ayva.RAMP_PARABOLIC;</code></p>
-<img class="ramp-example" width="150px" src="./images/parabolic-ramp.png">
-<a class="try-it-out"href="./tutorial-examples/move-parabolic-ramp.html" target="_blank">Try it out!</a>  
-<h4>Negative Parabolic</h4>
-<p><code>ayva.defaultRamp = Ayva.RAMP_NEGATIVE_PARABOLIC</code></p>
-<img class="ramp-example" width="150px" src="./images/negative-parabolic-ramp.png">
-<a class="try-it-out" href="./tutorial-examples/move-negative-parabolic-ramp.html" target="_blank">Try it out!</a>  
-<p>You can also supply your own ramp function. The default ramp is actually what is called a <strong>value provider</strong>, and how to create one will be covered in the next section.</p>
-<h3>Value Providers</h3>
 </article>
 
 </section>

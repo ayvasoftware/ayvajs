@@ -144,7 +144,7 @@ ayva.move({
   duration: 1
 });
 ```
-## Custom Axis Configuration
+<h2 id="custom-configuration">Custom Axis Configuration</h2>
 
 An axis configuration consists of the following parameters:
 
