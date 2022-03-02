@@ -38,3 +38,13 @@ code .tag {
 .cp_embed_iframe {
   height: 300px;
 }
+
+.ramp-example {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.try-it-out {
+  margin-bottom: 40px;
+  display: block;
+}

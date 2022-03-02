@@ -1,5 +1,6 @@
 /**
- * Small convenience class for easily connecting to a serial device from a browser.
+ * Small convenience class for easily connecting to a serial device from a browser
+ * using the [Web Serial API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API}.
  */
 class WebSerialDevice {
   #baudRate;
@@ -12,15 +13,38 @@ class WebSerialDevice {
 
   #serial = null;
 
+  /**
+   * Whether the device is currently connected.
+   */
   get connected () {
     return this.#connected;
   }
 
+  /**
+   * Create a new WebSerialDevice.
+   *
+   * @example
+   * const device = new WebSerialDevice();
+   *
+   * @param {Number} [baudRate=115200] - Communication rate.
+   * @param {Serial} [serial=navigator.serial] - Web Serial API interface.
+   */
   constructor (baudRate = 115200, serial = null) {
     this.#baudRate = baudRate;
     this.#serial = serial || (globalThis.navigator ? globalThis.navigator.serial : null);
   }
 
+  /**
+   * Opens a request to connect to a serial device.
+   *
+   * @example
+   * const device = new WebSerialDevice();
+   * device.requestConnection().then(() => {
+   *   // ...
+   * });
+   *
+   * @returns {Promise} a promise that resolves when the device is connected, and rejects if the device failed to connect.
+   */
   async requestConnection () {
     const port = await this.#serial.requestPort();
 
@@ -52,6 +76,11 @@ class WebSerialDevice {
     });
   }
 
+  /**
+   * Write output to the device.
+   *
+   * @param {String} output - string to send to the device.
+   */
   write (output) {
     if (this.#connected) {
       this.#output.write(output);

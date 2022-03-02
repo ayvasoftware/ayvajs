@@ -9,7 +9,7 @@
     "title": "Motion API",
     "children": {
       "builder-pattern": {
-        "title": "Builder Pattern"
+        "title": "Move Builder"
       }
     }
   },

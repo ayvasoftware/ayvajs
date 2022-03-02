@@ -1,4 +1,4 @@
-> This tutorial assumes basic familiarity with <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a>, TCode, and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">JavaScript</a>.
+> This tutorial assumes that you have completed the <a href="https://ayvajs.github.io/ayvajs/tutorial-getting-started.html" target="_blank">Getting Started</a> tutorial, and that you have some familiarity with <a href="https://www.patreon.com/tempestvr" target="_blank">Open Source Multi Axis Stroker Robots</a>, TCode, and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">JavaScript</a>.
 
 ## Default Configuration
 To control a device with an instance of Ayva, the axes for the device must be configured. The default configuration consists of the axes needed to control an OSR2 or SR6 device: 
@@ -117,7 +117,7 @@ ayva.move({
 });
 ```
 
-To connect to an actual device using the Web Serial API, a <a href="./WebSerialDevice.html" target="_blank">WebSerialDevice</a> can be used (as demonstrated in the <a href="./tutorial-getting-started.html" target="_blank">Getting Started</a> tutorial). In a Node.js app, <a href="https://serialport.io/" target="_blank">serialport</a> may be used. For graphical simulation, there is the <a href="https://github.com/ayvajs/osr-emu" target="_blank">OSR Emulator</a>.
+When Ayva is being used within a web application, the convenience class <a href="./WebSerialDevice.html" target="_blank">WebSerialDevice</a> may be used to connect to an actual device. For graphical simulation, there is the <a href="https://github.com/ayvajs/osr-emu" target="_blank">OSR Emulator</a>. In a Node.js app, the serial library <a href="https://serialport.io/" target="_blank">serialport</a> may be used.
 
 ## Axis Limits
 
