@@ -17,9 +17,6 @@
       "motion-api-multiaxis": {
         "title": "Multiaxis Movements"
       },
-      "motion-api-move-builder": {
-        "title": "Move Builder"
-      },
       "motion-api-syntactic-sugar": {
         "title": "Syntactic Sugar ($)"
       }

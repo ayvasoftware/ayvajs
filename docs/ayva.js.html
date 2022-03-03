@@ -1031,37 +1031,55 @@ class Ayva {
   }
 
   /**
+   * Convert the function provided into a ramp function.
+   *
+   * @param {Function} fn
+   * @returns
+   */
+  static RAMP_FUNCTION (fn) {
+    return (parameters) => {
+      const { from, to } = parameters;
+
+      return from + ((to - from) * fn(parameters));
+    };
+  }
+
+  /**
    * Value provider that generates motion towards a target position with constant velocity.
    */
-  static RAMP_LINEAR ({ to, from, x }) {
-    return from + ((to - from) * x);
+  static RAMP_LINEAR (parameters) {
+    const fn = ({ x }) => x;
+
+    return Ayva.RAMP_FUNCTION(fn)(parameters);
   }
 
   /**
    * Value provider that generates motion towards a target position that resembles part of a cos wave (0 - 180 degrees).
    */
-  static RAMP_COS ({ to, from, x }) {
-    const value = (-Math.cos(Math.PI * x) / 2) + 0.5;
+  static RAMP_COS (parameters) {
+    const fn = ({ x }) => (-Math.cos(Math.PI * x) / 2) + 0.5;
 
-    return from + ((to - from) * value);
+    return Ayva.RAMP_FUNCTION(fn)(parameters);
   }
 
   /**
    * Value provider that generates motion towards a target position in the shape of the latter half of a parabola.
    * This creates the effect of "falling" towards the target position.
    */
-  static RAMP_PARABOLIC ({ to, from, x }) {
-    return ((to - from) * x * x) + from;
+  static RAMP_PARABOLIC (parameters) {
+    const fn = ({ x }) => x * x;
+
+    return Ayva.RAMP_FUNCTION(fn)(parameters);
   }
 
   /**
    * Value provider that generates motion towards a target position in the shape of the first half of an upside down parabola.
    * This creates the effect of "launching" towards the target position.
    */
-  static RAMP_NEGATIVE_PARABOLIC ({ to, from, x }) {
-    const value = -((x - 1) ** 2) + 1;
+  static RAMP_NEGATIVE_PARABOLIC (parameters) {
+    const fn = ({ x }) => -((x - 1) ** 2) + 1;
 
-    return ((to - from) * value) + from;
+    return Ayva.RAMP_FUNCTION(fn)(parameters);
   }
 
   /**

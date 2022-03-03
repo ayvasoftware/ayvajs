@@ -11,7 +11,7 @@ ayva.move({
 
 This command tells Ayva to move the stroke axis (L0 in the default configuration) to the **bottom of its range** (position 0) with an _average speed_ of **1 unit per second**. A _unit_ in this context is the full length of the range of the axis. Therefore, another way to interpret speed is _strokes per second_.
 
-> <a href="./tutorial-examples/move-speed.html" target="_blank">Try it out!</a> Examples in this tutorial will make use of the <a href="https://github.com/ayvajs/osr-emu" target="_blank">OSR Emulator</a> embedded in editable codepens. That way, you can run and experiment with them without using an actual device!
+<a href="./tutorial-examples/move-speed.html" target="_blank">Try it out!</a>
 
 Alternatively, a duration for the move can be specified:
 
@@ -31,7 +31,7 @@ These examples could be viewed as somewhat analagous to speed and interval comma
 
 ### Default Axis
 
-In the examples shown so far we have explicitly set the axis to _stroke_. In the default configuration, the _stroke_ axis is the default axis, so we actually didn't have to specify it. i.e.
+In the examples shown so far we have explicitly set the axis to _stroke_. In the default configuration, the _stroke_ axis is actually the default axis, so we didn't really have to specify it in those cases. i.e.
 
 ```
 ayva.move({
@@ -76,7 +76,7 @@ myStroke();
 
 ### Move Order
 
-Internally, Ayva uses a queue to keep track of moves. If a move is already in progress when ```move()``` is called, the requested move is added to a queue and will not execute until all preceding moves have finished. All moves are therefore guaranteed to occur in the order ```move()``` was called. The following example illustrates this:
+Internally, Ayva uses a queue to keep track of moves. If a move is already in progress when ```move()``` is called, the requested move is added to a queue and will not execute until all preceding moves have finished. So while ```move()``` is asynchronous, all moves are guaranteed to execute in the order they were called. The following example illustrates this:
 
 ```
 // Perform a few down and up strokes (with up strokes performed at half speed).
@@ -114,7 +114,7 @@ stopButton.addEventListener('click', () => ayva.stop());
 
 // Start a long running move (10 seconds).
 ayva.move({ to: 1, duration: 10 }).then((complete) => {
-  // A move's Promise resolves with the value true if the move completed successfully, false otherwise.
+  // Note: A move's Promise resolves with the value true if the move completed successfully, false otherwise.
   if (!complete) {
     console.log('The move was stopped before it finished.');
   } else {
