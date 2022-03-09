@@ -117,7 +117,7 @@
 <article>
     <h2>move()</h2>
 <p>The core of Ayva's Motion API is the <code>move()</code> method. The <code>move()</code> method takes an arbitrary number of arguments, each of which is an object describing the motion along a single axis. The simplest description is just a target position and speed:</p>
-<pre class="prettyprint source"><code>ayva.move({
+<pre class="prettyprint source lang-javascript"><code>ayva.move({
   axis: 'stroke', // The axis to move.
   to: 0,          // Target position in normalized units [0 - 1].
   speed: 1        // Speed in units per second.
@@ -126,7 +126,7 @@
 <p>This command tells Ayva to move the stroke axis (L0 in the default configuration) to the <strong>bottom of its range</strong> (position 0) with an <em>average speed</em> of <strong>1 unit per second</strong>. A <em>unit</em> in this context is the full length of the range of the axis. Therefore, another way to interpret speed is <em>strokes per second</em>.</p>
 <p><a href="./tutorial-examples/move-speed.html" target="_blank">Try it out!</a></p>
 <p>Alternatively, a duration for the move can be specified:</p>
-<pre class="prettyprint source"><code>ayva.move({
+<pre class="prettyprint source lang-javascript"><code>ayva.move({
   axis: 'stroke',
   to: 1,    
   duration: 1,   // Duration of the move in seconds
@@ -137,29 +137,29 @@
 <p>These examples could be viewed as somewhat analagous to speed and interval commands in TCode (ex: L000S100 or L099I1000, respectively). However, internally Ayva uses <em>live updates</em> when generating TCode. This allows for movement shapes that are not linear. As you may have been able to tell from the examples, the <em>default ramp</em> (shape of the motion) used by Ayva is actually a cosine wave. Later, we will discuss how to change this behavior.</p>
 <h3>Default Axis</h3>
 <p>In the examples shown so far we have explicitly set the axis to <em>stroke</em>. In the default configuration, the <em>stroke</em> axis is actually the default axis, so we didn't really have to specify it in those cases. i.e.</p>
-<pre class="prettyprint source"><code>ayva.move({
+<pre class="prettyprint source lang-javascript"><code>ayva.move({
   to: 0,
   speed: 1
 });
 </code></pre>
 <p>or</p>
-<pre class="prettyprint source"><code>ayva.move({
+<pre class="prettyprint source lang-javascript"><code>ayva.move({
   to: 1,    
   duration: 1,
 });
 </code></pre>
 <p>would also have worked, respectively. This can be changed by setting the <code>defaultAxis</code> property.</p>
-<pre class="prettyprint source"><code>ayva.defaultAxis = 'twist';
+<pre class="prettyprint source lang-javascript"><code>ayva.defaultAxis = 'twist';
 </code></pre>
 <p>Alternatively, the default axis can be specified when <a href="./tutorial-configuration.html#custom-configuration" target="_blank">creating a configuration</a>.</p>
 <h3>Asynchronous Movement</h3>
 <p>The <code>move()</code> method is <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function" target="_blank">asynchronous</a>. It returns a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise" target="_blank">Promise</a> that resolves when the move is finished. If you need to execute code only after a move is done, you can use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#chaining" target="_blank">Promise chaining</a>:</p>
-<pre class="prettyprint source"><code>ayva.move({ to: 0, speed: 1 }).then(() => {
+<pre class="prettyprint source lang-javascript"><code>ayva.move({ to: 0, speed: 1 }).then(() => {
   console.log('The move is complete!')
 });
 </code></pre>
 <p>Or you can use the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await" target="_blank">await</a> keyword inside of an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function" target="_blank">async</a> function:</p>
-<pre class="prettyprint source"><code>async function myStroke() {
+<pre class="prettyprint source lang-javascript"><code>async function myStroke() {
   await ayva.move({ to: 0, speed: 1 });
   console.log('The move is complete!');
 }
@@ -168,7 +168,7 @@ myStroke();
 </code></pre>
 <h3>Move Order</h3>
 <p>Internally, Ayva uses a queue to keep track of moves. If a move is already in progress when <code>move()</code> is called, the requested move is added to a queue and will not execute until all preceding moves have finished. So while <code>move()</code> is asynchronous, all moves are guaranteed to execute in the order they were called. The following example illustrates this:</p>
-<pre class="prettyprint source"><code>// Perform a few down and up strokes (with up strokes performed at half speed).
+<pre class="prettyprint source lang-javascript"><code>// Perform a few down and up strokes (with up strokes performed at half speed).
 ayva.move({ to: 0, speed: 1 });
 ayva.move({ to: 1, speed: 0.5 });
 ayva.move({ to: 0, speed: 1 });
@@ -184,7 +184,7 @@ console.log('Stroking...');
 <p><em>In this example, if you open the Developer Tools in your browser while running, you should see the text</em> &quot;Stroking...&quot; <em>print to the console first, and then when all strokes have finished you should see the text</em> &quot;Finished all strokes!&quot; <em>print.</em></p>
 <h3>Stopping</h3>
 <p>The <code>stop()</code> method can be called to stop all movements (running or pending). The following example demonstrates <code>stop()</code> by creating a button that the user can click to stop the movement:</p>
-<pre class="prettyprint source"><code>// Create a large stop button positioned towards the top right.
+<pre class="prettyprint source lang-javascript"><code>// Create a large stop button positioned towards the top right.
 const stopButton = document.createElement('button');
 stopButton.textContent = 'Click to Stop!';
 stopButton.style.fontSize = '32px';

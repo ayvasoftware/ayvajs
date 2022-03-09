@@ -261,6 +261,7 @@ Alternatively a configuration object with multiple axes can be passed to Ayva's 
 const config = {
   name: 'OSR2',      // Optional name of the config.
   defaultAxis: 'L0', // Optional default axis. When an axis is not specified in commands, this axis is used.
+  frequency: 50,     // Optional. The frequency of updates to devices in Hz. The default is 50.
   axes: [{
     name: 'L0',
     type: 'linear',
