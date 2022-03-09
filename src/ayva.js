@@ -913,7 +913,7 @@ class Ayva {
    * @param {Function} fn
    * @returns
    */
-  static RAMP_FUNCTION (fn) {
+  static ramp (fn) {
     return (parameters) => {
       const { from, to } = parameters;
 
@@ -927,7 +927,7 @@ class Ayva {
   static RAMP_LINEAR (parameters) {
     const fn = ({ x }) => x;
 
-    return Ayva.RAMP_FUNCTION(fn)(parameters);
+    return Ayva.ramp(fn)(parameters);
   }
 
   /**
@@ -936,7 +936,7 @@ class Ayva {
   static RAMP_COS (parameters) {
     const fn = ({ x }) => (-Math.cos(Math.PI * x) / 2) + 0.5;
 
-    return Ayva.RAMP_FUNCTION(fn)(parameters);
+    return Ayva.ramp(fn)(parameters);
   }
 
   /**
@@ -946,7 +946,7 @@ class Ayva {
   static RAMP_PARABOLIC (parameters) {
     const fn = ({ x }) => x * x;
 
-    return Ayva.RAMP_FUNCTION(fn)(parameters);
+    return Ayva.ramp(fn)(parameters);
   }
 
   /**
@@ -956,7 +956,7 @@ class Ayva {
   static RAMP_NEGATIVE_PARABOLIC (parameters) {
     const fn = ({ x }) => -((x - 1) ** 2) + 1;
 
-    return Ayva.RAMP_FUNCTION(fn)(parameters);
+    return Ayva.ramp(fn)(parameters);
   }
 
   /**
