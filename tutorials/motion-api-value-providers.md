@@ -120,7 +120,20 @@ ayva.move({
 });
 ```
 
-<a href="./tutorial-examples/value-providers-sin.html" target="_blank">Try it out!</a>  
+<a href="./tutorial-examples/value-providers-sin.html" target="_blank">Try it out!</a>
+
+When you do not specify a target value you _must_ specify a duration (and not a speed). Ayva needs a way to compute how many steps the move will
+take. Therefore the following is invalid:
+
+```javascript
+// This will result in an error no matter what the value provider is!
+ayva.move({
+  speed: 1,
+  value: () => {
+    // ...
+  }
+});
+```
 
 ### Parameters
 
@@ -281,4 +294,6 @@ There are many more parameters available for value providers to use if needed. T
   </table>
 </div>
 <br/>
+
+<div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-motion-api-multiaxis.html">Multiaxis Movements</a></div>
 

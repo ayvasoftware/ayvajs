@@ -591,9 +591,16 @@ class Ayva {
    * @returns the new error correction
    */
   async #stepSleep (index, stepCount, duration, startTime, errorCorrection) {
-    const sleepTime = index === stepCount - 1 ? duration % (this.#timer.now() - startTime) : this.#period;
-
-    await this.sleep(sleepTime - errorCorrection);
+    if (index === stepCount - 1) {
+      // This shenanigans is to (attempt to) account for the fact that a move is
+      // an integer number of steps but a duration may be fractional. In the final step
+      // we may have time remaining that is less than the period.
+      const currentElapsed = this.#timer.now() - startTime;
+      const remaining = Math.min(Math.max(duration - currentElapsed, 0), this.#period);
+      await this.sleep(remaining);
+    } else {
+      await this.sleep(this.#period - errorCorrection);
+    }
 
     const actualElapsed = this.#timer.now() - startTime;
     const expectedElapsed = (index + 1) * this.#period;

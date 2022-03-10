@@ -215,6 +215,16 @@ ayva.move({
 });
 </code></pre>
 <p><a href="./tutorial-examples/value-providers-sin.html" target="_blank">Try it out!</a></p>
+<p>When you do not specify a target value you <em>must</em> specify a duration (and not a speed). Ayva needs a way to compute how many steps the move will
+take. Therefore the following is invalid:</p>
+<pre class="prettyprint source lang-javascript"><code>// This will result in an error no matter what the value provider is!
+ayva.move({
+  speed: 1,
+  value: () => {
+    // ...
+  }
+});
+</code></pre>
 <h3>Parameters</h3>
 <p>There are many more parameters available for value providers to use if needed. The full list is provided below:</p>
 <div class="table-container">
@@ -372,6 +382,7 @@ ayva.move({
   </table>
 </div>
 <br/>
+<div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-motion-api-multiaxis.html">Multiaxis Movements</a></div>
 </article>
 
 </section>
