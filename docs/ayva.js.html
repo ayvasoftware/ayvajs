@@ -485,6 +485,24 @@ class Ayva {
   }
 
   /**
+   * Return a list of all output devices.
+   */
+  getOutputDevices () {
+    return [...this.#devices];
+  }
+
+  /**
+   * Remove the specified device.
+   */
+  removeOutputDevice (device) {
+    const index = this.#devices.indexOf(device);
+
+    if (index !== -1) {
+      this.#devices.splice(index, 1);
+    }
+  }
+
+  /**
    * Add the start of a move builder chain to $ for the specified axis.
    * Also add shortcut properties for value, min, and max to each axis.
    */

@@ -33,4 +33,31 @@ describe('Device Protocols', function () {
       testAddDevice({ write: function () {} }).should.not.throw(Error);
     });
   });
+
+  it('#getOutputDevices()', function () {
+    const device = { write: function () {} };
+    const device2 = { write: function () {} };
+
+    ayva.addOutputDevice(device);
+
+    let devices = ayva.getOutputDevices();
+
+    devices.length.should.equal(1);
+    devices[0].should.equal(device);
+
+    ayva.addOutputDevice(device2);
+
+    devices = ayva.getOutputDevices();
+
+    devices.length.should.equal(2);
+    devices[0].should.equal(device);
+    devices[1].should.equal(device2);
+
+    ayva.removeOutputDevice(device);
+
+    devices = ayva.getOutputDevices();
+
+    devices.length.should.equal(1);
+    devices[0].should.equal(device2);
+  });
 });
