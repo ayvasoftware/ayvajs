@@ -125,6 +125,7 @@ ayva.move({ to: 1, duration: 10 }).then((complete) => {
 <a href="./tutorial-examples/move-stop.html" target="_blank">Try it out!</a>  
 
 _In this example, if you open the Developer Tools in your browser while running and you click the stop button before the move finishes, you should see the message_ "The move was stopped before it finished." _print. If you do not click the stop button and instead let the move finish you should see_ "The move completed successfully."
+
 ### Default Ramp
 
 The default ramp can be changed by setting the ```defaultRamp``` property on an instance of Ayva. There are four built-in ramp types available as static properties of the Ayva class:

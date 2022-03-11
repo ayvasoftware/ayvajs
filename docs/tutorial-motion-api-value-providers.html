@@ -189,7 +189,7 @@ to capture the properties we want from the <code>parameters</code> object:</p>
 <br/></p>
 <h4>Ayva.ramp</h4>
 <p>The pattern <code>from + (to - from) * (...)</code> is common enough that Ayva provides a shorthand for it in the form of a static function: <code>Ayva.ramp</code>.
-This method takes a value provider and converts it to a ramp function using the <code>from + (to - from) * (...)</code> pattern.
+This method takes a value provider and converts it into a ramp function using the <code>from + (to - from) * (...)</code> pattern.
 The previous example could therefore be rewritten even more succinctly as:</p>
 <pre class="prettyprint source lang-javascript"><code>ayva.move({
   to: 0,
@@ -209,7 +209,7 @@ ayva.move({
   value: ({ x }) => {
     const result = Math.sin(x * Math.PI * 2 * bpm);
 
-    // Sin is in the range -1 to 1. So we must shift and scale into the range [0 - 1].
+    // Sin is in the range [-1, 1]. So we must shift and scale into the range [0, 1].
     return (result + 1) / 2;
   }
 });
@@ -225,7 +225,9 @@ ayva.move({
   }
 });
 </code></pre>
-<h3>Parameters</h3>
+<h3>Complexity</h3>
+<p>A value provider naturally may contain as much logic as you want. They may also return <em>null</em> or <em>undefined</em> to indicate no movement for a particular step.</p>
+<h3 id="parameters">Parameters</h3>
 <p>There are many more parameters available for value providers to use if needed. The full list is provided below:</p>
 <div class="table-container">
   <table class="params table">

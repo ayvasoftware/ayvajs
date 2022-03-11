@@ -89,7 +89,7 @@ _Note that the special property_ ```x``` _is a value between 0 (exclusive) and 1
 
 #### Ayva.ramp
 The pattern ```from + (to - from) * (...)``` is common enough that Ayva provides a shorthand for it in the form of a static function: ```Ayva.ramp```.
-This method takes a value provider and converts it to a ramp function using the ```from + (to - from) * (...)``` pattern.
+This method takes a value provider and converts it into a ramp function using the ```from + (to - from) * (...)``` pattern.
 The previous example could therefore be rewritten even more succinctly as:
 
 ```javascript
@@ -114,7 +114,7 @@ ayva.move({
   value: ({ x }) => {
     const result = Math.sin(x * Math.PI * 2 * bpm);
 
-    // Sin is in the range -1 to 1. So we must shift and scale into the range [0 - 1].
+    // Sin is in the range [-1, 1]. So we must shift and scale into the range [0, 1].
     return (result + 1) / 2;
   }
 });
@@ -135,7 +135,10 @@ ayva.move({
 });
 ```
 
-### Parameters
+### Complexity
+A value provider naturally may contain as much logic as you want. They may also return _null_ or _undefined_ to indicate no movement for a particular step.
+
+<h3 id="parameters">Parameters</h3>
 
 There are many more parameters available for value providers to use if needed. The full list is provided below:
 
