@@ -267,6 +267,7 @@ class Ayva {
    * @param {Number} [axisConfig.min = 0] - specifies minimum value for this axis (not applicable for boolean axes)
    */
   configureAxis (axisConfig) {
+    // TODO: Disallow 'execute' as an axis name.
     const resultConfig = this.#validateAxisConfig(axisConfig);
 
     const oldConfig = this.#axes[axisConfig.name];
@@ -997,7 +998,7 @@ class Ayva {
    * where you can adjust the parameters to see how they affect the motion.
    *
    * @example
-   * // Note: These examples use the Builder Pattern of the Motion API.
+   * // Note: These examples use Move Builders from the Motion API.
    *
    * // Simple up/down stroke for 10 seconds.
    * ayva.$.stroke(Ayva.tempestMotion(1, 0), 10).execute();

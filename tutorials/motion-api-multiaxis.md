@@ -34,7 +34,8 @@ ayva.move({
 
 <a href="./tutorial-examples/move-multiaxis-example-2.html" target="_blank">Try it out!</a>
 
-### Auto Synchronization
+<h3 id="auto-sync">Auto Synchronization</h3>
+
 If you omit the duration (or speed) for an axis in a multiaxis movement, its duration will automatically be set to the duration of the longest running (slowest) axis:
 ```javascript
 // The twist and roll axis in this example take on the duration of the stroke axis.
@@ -88,6 +89,8 @@ ayva.home();
 ```
 
 It returns a Promise that resolves when all the moves have finished.
+
+<div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-motion-api-syntactic-sugar.html">Syntactic Sugar ($)</a></div>
 
 
 

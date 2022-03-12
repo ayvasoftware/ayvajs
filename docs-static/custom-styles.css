@@ -48,3 +48,15 @@ code .tag {
   margin-bottom: 40px;
   display: block;
 }
+
+.pad {
+  padding-top: 10px;
+}
+
+.pad-20 {
+  padding-top: 20px;
+}
+
+.italic {
+  font-style: italic;
+}
