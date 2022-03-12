@@ -23,6 +23,23 @@
     }
   },
   "behavior-api": { 
-    "title": "Behavior API" 
+    "title": "Behavior API",
+    "children": {
+      "behavior-api-overview": {
+        "title": "Overview"
+      },
+      "behavior-api-classic-stroke": {
+        "title": "Classic Stroke"
+      },
+      "behavior-api-tempest-stroke": {
+        "title": "Tempest Stroke"
+      },
+      "behavior-api-custom": {
+        "title": "Custom Behaviors"
+      },
+      "behavior-api-composition": {
+        "title": "Behavior Composition"
+      }
+    }
   }
 }
