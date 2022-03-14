@@ -1072,6 +1072,24 @@ class Ayva {
       ...OSR_CONFIG,
     };
   }
+
+  /**
+   * Maps a value from one range to another. The default target range is [0, 1].
+   * Does not constrain values to within the range.
+   *
+   * This function is analagous to the map() function in the arduino's math library:
+   *
+   * {@link https://www.arduino.cc/reference/en/language/functions/math/map/}
+   *
+   * @param {Number} value
+   * @param {Number} inMin
+   * @param {Number} inMax
+   * @param {Number} [outMin=0]
+   * @param {Number} [outMax=1]
+   */
+  static map (value, inMin, inMax, outMin = 0, outMax = 1) {
+    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+  }
 }
 
 // Separate default export from the class declaration because of jsdoc shenanigans...

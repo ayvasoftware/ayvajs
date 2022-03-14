@@ -2,7 +2,7 @@
 
 All moves take a finite amount of steps. Ayva determines how many steps a given move will take based on the duration of the move and the frequency of updates (as specified in the <a href="./tutorial-configuration.html#custom-configuration" target="_blank">configuration</a>). A value provider allows you to, well, _provide the value_ for an axis at a given step. 😊
 
-It is nothing more than a function that takes parameters describing the current step—as well as the movement overall—and returns what the value should be. When paired with a target value and speed (or duration), a value provider can be used as a _ramp_ function that describes the shape of the motion towards a target. A value provider can also simply provide a value without regard to a target value. Both scenarios are covered in the following sections.
+It is nothing more than a function that takes parameters describing the current step—as well as the movement overall—and returns what the value should be. When paired with a target value and speed (or duration), a value provider can be used as a _ramp_ function that describes the shape of the motion towards a target. A value provider may also simply provide a value without regard to a target value. Both scenarios are covered in the following sections.
 
 ### Ramp
 
@@ -136,7 +136,7 @@ ayva.move({
 ```
 
 ### Complexity
-A value provider naturally may contain as much logic as you want. They may also return _null_ or _undefined_ to indicate no movement for a particular step.
+A value provider naturally may contain as much logic as you want. It may also return _null_ or _undefined_ to indicate no movement for a particular step.
 
 <h3 id="parameters">Parameters</h3>
 

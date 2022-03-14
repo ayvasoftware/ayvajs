@@ -117,7 +117,7 @@
 <article>
     <h2>What are Value Providers?</h2>
 <p>All moves take a finite amount of steps. Ayva determines how many steps a given move will take based on the duration of the move and the frequency of updates (as specified in the <a href="./tutorial-configuration.html#custom-configuration" target="_blank">configuration</a>). A value provider allows you to, well, <em>provide the value</em> for an axis at a given step. 😊</p>
-<p>It is nothing more than a function that takes parameters describing the current step—as well as the movement overall—and returns what the value should be. When paired with a target value and speed (or duration), a value provider can be used as a <em>ramp</em> function that describes the shape of the motion towards a target. A value provider can also simply provide a value without regard to a target value. Both scenarios are covered in the following sections.</p>
+<p>It is nothing more than a function that takes parameters describing the current step—as well as the movement overall—and returns what the value should be. When paired with a target value and speed (or duration), a value provider can be used as a <em>ramp</em> function that describes the shape of the motion towards a target. A value provider may also simply provide a value without regard to a target value. Both scenarios are covered in the following sections.</p>
 <h3>Ramp</h3>
 <p>Value providers are passed as the <code>value</code> property. The following example demonstrates using the built-in ramp functions covered in the previous section as value providers for individual movements:</p>
 <pre class="prettyprint source lang-javascript"><code>// Use the default ramp (cosine) to slowly move to the top (no value provider specified).
@@ -226,7 +226,7 @@ ayva.move({
 });
 </code></pre>
 <h3>Complexity</h3>
-<p>A value provider naturally may contain as much logic as you want. They may also return <em>null</em> or <em>undefined</em> to indicate no movement for a particular step.</p>
+<p>A value provider naturally may contain as much logic as you want. It may also return <em>null</em> or <em>undefined</em> to indicate no movement for a particular step.</p>
 <h3 id="parameters">Parameters</h3>
 <p>There are many more parameters available for value providers to use if needed. The full list is provided below:</p>
 <div class="table-container">
