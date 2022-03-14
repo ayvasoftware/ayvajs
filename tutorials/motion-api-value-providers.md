@@ -137,6 +137,44 @@ ayva.move({
 
 ### Complexity
 A value provider naturally may contain as much logic as you want. It may also return _null_ or _undefined_ to indicate no movement for a particular step.
+Here is an example that performs a stroke with a twist that only happens after half the stroke is finished (_multiaxis movements are covered in greater detail in the next section_):
+
+```javascript
+// Stroke to the top.
+ayva.move({ 
+  to: 1, 
+  speed: 0.25 
+});
+
+// Slowly stroke down with a twist that
+// occurs only on the last half of the move.
+ayva.move({
+  to: 0,
+  duration: 5
+},{
+  axis: 'twist',
+  value: ({ x }) => {
+    if (x >= 0.5) {
+      // Convert range [0.5, 1] to range [0, 1]
+      const y = Ayva.map(x, 0.5, 1); 
+
+      // Perform one cycle of sin. 
+      // We map it from sin's range of [-1, 1] to the axis range of [0, 1].
+      return Ayva.map(Math.sin(y * Math.PI * 2), -1, 1, 0, 1);
+    } else {
+      // No movement when x < 0.5
+      // While we explicitly return null for this example, we also  
+      // could have simply not returned a value at all (i.e. undefined)
+      return null;
+    }
+  }
+});
+```
+
+<a href="./tutorial-examples/value-providers-logic.html" target="_blank">Try it out!</a>
+
+_Note: This example makes use of the convenience method```Ayva.map()```, which maps values from one range to another—with a default target range of [0, 1]._
+
 
 <h3 id="parameters">Parameters</h3>
 
