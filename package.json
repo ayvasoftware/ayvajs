@@ -1,6 +1,6 @@
 {
   "name": "ayvajs",
-  "version": "0.9.33",
+  "version": "0.9.34",
   "description": "A lightweight, behavior-based JavaScript API for controlling Open Source Multi Axis Stroker Robots.",
   "author": "soritesparadox",
   "type": "module",
