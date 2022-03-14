@@ -526,7 +526,7 @@ class Ayva {
   forward (...args) {
     return this.$.forward(...args).execute();
   }
-  
+
   /**
    * Shorthand method for &lt;code>ayva.$.twist(...).execute()&lt;/code>.
    * Only applicable for configurations that have an axis named 'twist'.
@@ -534,14 +534,14 @@ class Ayva {
   twist (...args) {
     return this.$.twist(...args).execute();
   }
-  
+
   /**
    * Shorthand method for &lt;code>ayva.$.roll(...).execute()&lt;/code>.
    * Only applicable for configurations that have an axis named 'roll'.
    */
   roll (...args) {
     return this.$.roll(...args).execute();
-  } 
+  }
 
   /**
    * Shorthand method for &lt;code>ayva.$.pitch(...).execute()&lt;/code>.
@@ -549,7 +549,7 @@ class Ayva {
    */
   pitch (...args) {
     return this.$.pitch(...args).execute();
-  } 
+  }
 
   /**
    * Add the start of a move builder chain to $ for the specified axis.

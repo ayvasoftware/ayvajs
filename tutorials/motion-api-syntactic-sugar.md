@@ -242,7 +242,7 @@ ayva.roll(0, 1);    // Equivalent to ayva.$.roll(0, 1).execute()
 
 They accept the same arguments a move builder accepts.  
 
-Note: __These methods only work when the axes are configured (such as in the default configuration).__
+Note: __These methods only work when the corresponding axes are configured (such as in the default configuration).__
 
 ### Whew!
 
