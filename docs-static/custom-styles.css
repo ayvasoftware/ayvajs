@@ -60,3 +60,18 @@ code .tag {
 .italic {
   font-style: italic;
 }
+
+.type-separator {
+  font-family: "Segoe UI","Helvetica Neue",Helvetica,Verdana,"san-serif";
+}
+
+.type-section {
+  border-left: 3px solid #bfbfbf;
+  padding-left: 10px;
+  margin-bottom: 0.4em;
+}
+
+h4.parameter-heading, h5.parameter-heading {
+  margin-bottom: 0.4em;
+  padding-top: 0.4em;
+}

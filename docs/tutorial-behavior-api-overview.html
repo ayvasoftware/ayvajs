@@ -117,17 +117,16 @@
 <article>
     <h2>What are Behaviors?</h2>
 <p>Behaviors are classes that package movements and logic into an object that can be given to Ayva to perform. They allow for inheritance and composition to create more complex, reusable, and holistic experiences.</p>
-<p>There are some built-in behaviors, and you can create custom behaviors that utilize those. But you can also create something entirely new!</p>
+<p>There are some built-in behaviors, and you can create custom behaviors that utilize those. Or you can create something entirely new!</p>
 <h3>do()</h3>
 <p>The entry point for behaviors is Ayva's simple <code>do()</code> method. It takes a behavior and performs that behavior until commanded to stop
-(or the behavior completes). The following example uses the built-in behavior <strong>ClassicStroke</strong>, whose default configuration commands
-Ayva to perform a cosine shaped full stroke on the main axis at one stroke per second:</p>
+(or the behavior completes). The following example uses the built-in behavior <code>ClassicStroke</code>, whose default configuration commands Ayva to perform a full stroke at one stroke per second:</p>
 <pre class="prettyprint source lang-javascript"><code>ayva.do(new ClassicStroke());
 </code></pre>
-<p><em>Note: A <strong>ClassicStroke</strong> does not complete, so this will continue forever until <code>ayva.stop()</code> is called, or <code>ayva.do()</code> is called
+<p><em>Note: A <code>ClassicStroke</code> does not complete, so this will continue forever until <code>ayva.stop()</code> is called, or <code>ayva.do()</code> is called
 with another behavior to perform instead.</em></p>
 <p><a href="./tutorial-examples/behavior-api-example.html" target="_blank">Try it out!</a></p>
-<p>How to create your own behaviors will be covered in later sections. The next section details how to configure <strong>ClassicStroke</strong> for more
+<p>How to create your own behaviors will be covered in later sections. The next section details how to configure <code>ClassicStroke</code> for more
 complex (and fun 😉) experiences.</p>
 <div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-behavior-api-classic-stroke.html">Classic Stroke</a></div>
 </article>
