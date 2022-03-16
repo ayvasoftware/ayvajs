@@ -241,3 +241,6 @@ ayva.do(new ClassicStroke({
 }));
 ```
 <a href="./tutorial-examples/classic-stroke-example-all-together.html" target="_blank">Try it out!</a>
+
+<div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-behavior-api-tempest-stroke.html">Tempest Stroke</a></div>
+
