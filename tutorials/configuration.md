@@ -3,7 +3,7 @@
 ## Default Configuration
 To control a device with an instance of Ayva, the axes for the device must be configured. The default configuration consists of the axes needed to control an OSR2 or SR6 device: 
 
-<div class="table-container" style="max-width: 50%">
+<div class="table-container" style="max-width: 300px">
   <table>
     <thead>
       <tr>
