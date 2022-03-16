@@ -1039,7 +1039,7 @@ class Ayva {
    * cos(x + phase·π/2 + ecc·sin(x))
    *
    * The result is translated and scaled to fit the range and beats per minute specified.
-   * This formula was created by [TempestMAx]{@link https://www.patreon.com/tempestvr}—loosely based
+   * This formula was created by [Tempest MAx]{@link https://www.patreon.com/tempestvr}—loosely based
    * on orbital motion calculations. Hence, tempestMotion.
    *
    * See [this graph]{@link https://www.desmos.com/calculator/b83xxpxuc4} of the function
