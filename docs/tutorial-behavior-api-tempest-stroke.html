@@ -116,7 +116,7 @@
 
 <article>
     <h2>What is a Tempest Stroke?</h2>
-<p>Named for its creator, <a href="https://www.patreon.com/tempestvr" target="_blank">Tempest MAx</a>, a <code>TempestStroke</code> is a behavior that allows specifying oscillatory motion on an arbitrary number of axes with a formula loosely based on orbital motion calculations. The formula is:</p>
+<p>Named for its creator, <a href="https://www.patreon.com/tempestvr" target="_blank">Tempest MAx</a>, a <code>TempestStroke</code> is a behavior that allows specifying oscillatory motion on an arbitrary number of axes with a formula loosely based on orbital motion calculations. The base formula is:</p>
 <img style="width:250px" src="./images/tempest-motion.png">
 <p>Where <code>θ</code> is the angle in radians, <code>p</code> is the <em>phase</em>, and <code>c</code> is the <em>eccentricity</em>. Here is a simple graph that shows how these parameters effect the shape of the motion (<em>try tweaking phase and eccentricity</em>):</p>
 <p><canvas style="margin-top:20px" width=450 height=100 id="tempest-motion-graph"></canvas></p>
@@ -173,8 +173,8 @@
   }
 
   function updateGraph (event) {
-    let phase = document.querySelector('#phase').value / 200;
-    let ecc = document.querySelector('#ecc').value / 200;
+    let phase = document.querySelector('#phase').value / 250;
+    let ecc = document.querySelector('#ecc').value / 1000;
 
     if (event.target.getAttribute('id') === '#phase') {
 
@@ -185,7 +185,7 @@
     document.querySelector('#phase-value').textContent = phase.toFixed(2);
     document.querySelector('#ecc-value').textContent = ecc.toFixed(2);
 
-    const fn = (x) => -Math.cos(x + (Math.PI * phase)/2 + ecc * Math.sin(x));
+    const fn = (x) => -Math.cos(x + (Math.PI * phase)/2 + ecc * Math.sin(x + (Math.PI * phase)/2));
 
     plot('#tempest-motion-graph', fn, [0, Math.PI * 2, -1, 1]);
   }
@@ -221,18 +221,6 @@ ayva.do(myStroke);
 </code></pre>
 <p><em>Note: only the <code>from</code> and <code>to</code> properties are required for an axis. <code>phase</code> and <code>eccentricity</code> both default to <strong>0</strong>. The default for bpm is <strong>60</strong>.</em></p>
 <p><a href="./tutorial-examples/tempest-stroke-example-2.html" target="_blank">Try it out!</a></p>
-<h3>Shift</h3>
-<p>You may sometimes want to do a proper <em>phase shift</em> of the wave. Because of its position in the formula, changing the <code>phase</code> parameter may not always do this (because of the <code>eccentricity</code>). You can add a constant to the angle θ with the <code>shift</code> parameter, specified in radians:</p>
-<pre class="prettyprint source lang-java"><code>ayva.do(new TempestStroke({
-  stroke: {
-    from: 0,
-    to: 1,
-    phase: -1,
-    ecc: 2,
-    shift: Math.PI / 2 // Shift the function by 90 degrees.
-  }
-}));
-</code></pre>
 <h3>Built-in Patterns</h3>
 <p>There are some built-in patterns that can be referenced by name:</p>
 <pre class="prettyprint source lang-javascript"><code>// Execute an orbit-grind at 24 bpm

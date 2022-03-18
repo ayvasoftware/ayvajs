@@ -1630,11 +1630,11 @@ This creates the effect of &quot;falling&quot; towards the target position.</p>
     
     <div class="description">
         <p>Creates a value provider that generates oscillatory motion. The formula is:</p>
-<p>cos(x + phase·π/2 + ecc·sin(x))</p>
+<p>cos(θ + phase·π/2 + ecc·sin(θ + phase·π/2))</p>
 <p>The result is translated and scaled to fit the range and beats per minute specified.
 This formula was created by <a href="https://www.patreon.com/tempestvr">Tempest MAx</a>—loosely based
 on orbital motion calculations. Hence, tempestMotion.</p>
-<p>See <a href="https://www.desmos.com/calculator/b83xxpxuc4">this graph</a> of the function
+<p>See <a href="https://www.desmos.com/calculator/vnfke1rprt">this graph</a> of the function
 where you can adjust the parameters to see how they affect the motion.</p>
     </div>
     
@@ -1824,7 +1824,7 @@ where you can adjust the parameters to see how they affect the motion.</p>
       </td>
   
 
-  <td class="description last"><p>the eccentricity of the wave.</p></td>
+  <td class="description last"><p>the eccentricity of the wave</p></td>
 </tr>
 
 
@@ -1906,7 +1906,7 @@ where you can adjust the parameters to see how they affect the motion.</p>
       </td>
   
 
-  <td class="description last"><p>the phase shift of the wave in radians (slide wave horizontally left or right)</p></td>
+  <td class="description last"><p>additional phase shift of the wave in radians</p></td>
 </tr>
 
 

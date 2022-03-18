@@ -1,6 +1,6 @@
 ## What is a Tempest Stroke?
 
-Named for its creator, <a href="https://www.patreon.com/tempestvr" target="_blank">Tempest MAx</a>, a ```TempestStroke``` is a behavior that allows specifying oscillatory motion on an arbitrary number of axes with a formula loosely based on orbital motion calculations. The formula is:
+Named for its creator, <a href="https://www.patreon.com/tempestvr" target="_blank">Tempest MAx</a>, a ```TempestStroke``` is a behavior that allows specifying oscillatory motion on an arbitrary number of axes with a formula loosely based on orbital motion calculations. The base formula is:
 
 <img style="width:250px" src="./images/tempest-motion.png">
 
@@ -61,8 +61,8 @@ Where ```θ``` is the angle in radians, ```p``` is the _phase_, and ```c``` is t
   }
 
   function updateGraph (event) {
-    let phase = document.querySelector('#phase').value / 200;
-    let ecc = document.querySelector('#ecc').value / 200;
+    let phase = document.querySelector('#phase').value / 250;
+    let ecc = document.querySelector('#ecc').value / 1000;
 
     if (event.target.getAttribute('id') === '#phase') {
 
@@ -73,7 +73,7 @@ Where ```θ``` is the angle in radians, ```p``` is the _phase_, and ```c``` is t
     document.querySelector('#phase-value').textContent = phase.toFixed(2);
     document.querySelector('#ecc-value').textContent = ecc.toFixed(2);
 
-    const fn = (x) => -Math.cos(x + (Math.PI * phase)/2 + ecc * Math.sin(x));
+    const fn = (x) => -Math.cos(x + (Math.PI * phase)/2 + ecc * Math.sin(x + (Math.PI * phase)/2));
 
     plot('#tempest-motion-graph', fn, [0, Math.PI * 2, -1, 1]);
   }
@@ -125,21 +125,6 @@ ayva.do(new TempestStroke({
 _Note: only the ```from``` and ```to``` properties are required for an axis. ```phase``` and ```eccentricity``` both default to __0__. The default for bpm is __60__._
 
 <a href="./tutorial-examples/tempest-stroke-example-2.html" target="_blank">Try it out!</a>
-
-### Shift
-You may sometimes want to do a proper _phase shift_ of the wave. Because of its position in the formula, changing the ```phase``` parameter may not always do this (because of the ```eccentricity```). You can add a constant to the angle θ with the ```shift``` parameter, specified in radians:
-
-```java
-ayva.do(new TempestStroke({
-  stroke: {
-    from: 0,
-    to: 1,
-    phase: -1,
-    ecc: 2,
-    shift: Math.PI / 2 // Shift the function by 90 degrees.
-  }
-}));
-```
 
 ### Built-in Patterns
 
