@@ -4,6 +4,11 @@ import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
 import { createConstantProperty, has } from '../util/util.js';
 
+/**
+ * A behavior that allows specifying oscillatory motion on an arbitrary
+ * number of axes with a formula loosely based on orbital motion calculations.
+ * See the [Tempest Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs/tutorial-behavior-api-tempest-stroke.html}.
+ */
 class TempestStroke extends AyvaBehavior {
   #angle;
 
@@ -49,7 +54,7 @@ class TempestStroke extends AyvaBehavior {
    *   },
    * }));
    * @param {Object} config
-   * @param {Number} bpm
+   * @param {Number} [bpm=60]
    */
   constructor (config, bpm = 60) {
     super();

@@ -25,6 +25,8 @@ class Ayva {
 
   #timer;
 
+  #sleepResolves = new Set();
+
   defaultRamp = Ayva.RAMP_COS;
 
   static get precision () {
@@ -228,21 +230,34 @@ class Ayva {
   }
 
   /**
-   * Cancels all running or pending movements and clears the current behavior (if any).
+   * Cancels all running or pending movements, clears the current behavior (if any), and cancels any sleeps.
    */
   stop () {
     this.#currentBehaviorId = null;
     this.#movements.clear();
+    this.#sleepResolves.forEach((resolve) => resolve());
   }
 
   /**
-   * Asynchronously sleep for the specified number of seconds.
+   * Asynchronously sleep for the specified number of seconds or until stop() is called.
    *
    * @param {*} seconds
-   * @returns {Promise} a Promise that resolves when the number of seconds have passed.
+   * @returns {Promise} a Promise that resolves with the value true if the time elapses. false if the sleep is cancelled.
    */
   sleep (seconds) {
-    return this.#timer.sleep(seconds);
+    let sleepResolve;
+
+    const sleepCanceller = new Promise((resolve) => {
+      this.#sleepResolves.add(resolve);
+      sleepResolve = resolve;
+    });
+
+    return Promise.any([
+      this.#timer.sleep(seconds).then(() => true),
+      sleepCanceller.then(() => false),
+    ]).finally(() => {
+      this.#sleepResolves.delete(sleepResolve);
+    });
   }
 
   /**

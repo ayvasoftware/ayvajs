@@ -92,11 +92,19 @@ describe('Motion API Tests', function () {
     it('should fulfill promise after number of seconds specified', async function () {
       sinon.restore(); // So we can test actual sleep function.
       sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
-      await ayva.sleep(0.02).should.be.fulfilled;
+      await ayva.sleep(0.02).should.become(true);
 
       setTimeout.callCount.should.equal(1);
       setTimeout.args[0][0].should.be.a('function');
       setTimeout.args[0][1].should.equal(20);
+    });
+
+    it('should cancel sleep when calling ayva.stop()', async function () {
+      sinon.restore(); // So we can test actual sleep function.
+      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+
+      setTimeout(() => ayva.stop()); // Perform stop in timeout to ensure it happens after sleep()
+      await ayva.sleep(1).should.become(false);
     });
   });
 
