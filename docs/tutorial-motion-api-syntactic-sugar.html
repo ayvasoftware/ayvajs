@@ -102,7 +102,7 @@
             
             <nav>
                 
-                    <div class="category"><h3>Tutorials</h3><ul><li><a href="tutorial-getting-started.html">Getting Started</a></li><li><a href="tutorial-configuration.html">Configuration</a></li><li><a href="tutorial-motion-api.html">Motion API</a><ul><li><a href="tutorial-motion-api-overview.html">Overview</a></li><li><a href="tutorial-motion-api-value-providers.html">Value Providers</a></li><li><a href="tutorial-motion-api-multiaxis.html">Multiaxis Movements</a></li><li><a href="tutorial-motion-api-syntactic-sugar.html">Syntactic Sugar ($)</a></li></ul></li><li><a href="tutorial-behavior-api.html">Behavior API</a><ul><li><a href="tutorial-behavior-api-overview.html">Overview</a></li><li><a href="tutorial-behavior-api-classic-stroke.html">Classic Stroke</a></li><li><a href="tutorial-behavior-api-tempest-stroke.html">Tempest Stroke</a></li><li><a href="tutorial-behavior-api-custom.html">Custom Behaviors</a></li><li><a href="tutorial-behavior-api-composition.html">Behavior Composition</a></li></ul></li></ul></div>
+                    <div class="category"><h3>Tutorials</h3><ul><li><a href="tutorial-getting-started.html">Getting Started</a></li><li><a href="tutorial-configuration.html">Configuration</a></li><li><a href="tutorial-motion-api.html">Motion API</a><ul><li><a href="tutorial-motion-api-overview.html">Overview</a></li><li><a href="tutorial-motion-api-value-providers.html">Value Providers</a></li><li><a href="tutorial-motion-api-multiaxis.html">Multiaxis Movements</a></li><li><a href="tutorial-motion-api-syntactic-sugar.html">Syntactic Sugar ($)</a></li></ul></li><li><a href="tutorial-behavior-api.html">Behavior API</a><ul><li><a href="tutorial-behavior-api-overview.html">Overview</a></li><li><a href="tutorial-behavior-api-classic-stroke.html">Classic Stroke</a></li><li><a href="tutorial-behavior-api-tempest-stroke.html">Tempest Stroke</a></li><li><a href="tutorial-behavior-api-custom.html">Custom Behaviors</a></li></ul></li></ul></div>
                 
             </nav>
         </div>
@@ -285,8 +285,8 @@ ayva.$.suck.value = 0.8;
 <pre class="prettyprint source lang-javascript"><code>ayva.$.stroke.min = 0.25;
 ayva.$.stroke.max = 0.75;
 </code></pre>
-<h3>Convenience Methods</h3>
-<p>When you want to quickly execute a move on only one axis, even a move builder might feel verbose:</p>
+<h3 id="convenience">Convenience Methods</h3>
+When you want to quickly execute a move on only one axis, even a move builder might feel verbose:
 <pre class="prettyprint source lang-javascript"><code>ayva.$.stroke(0, 1).execute();
 </code></pre>
 <p>There are convenience methods for the default six axes configuration that are direct properties of an Ayva instance.

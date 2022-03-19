@@ -221,7 +221,7 @@ ayva.$.stroke.min = 0.25;
 ayva.$.stroke.max = 0.75;
 ```
 
-### Convenience Methods
+<h3 id="convenience">Convenience Methods</h3>
 When you want to quickly execute a move on only one axis, even a move builder might feel verbose:
 
 ```javascript
