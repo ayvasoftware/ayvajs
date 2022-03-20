@@ -92,11 +92,9 @@ class ClassicStroke extends AyvaBehavior {
    * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
    * where the device is currently located, and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
    * and applied.
-   *
-   * @param {Ayva} ayva
    */
-  generateActions (ayva) {
-    this.queueFunction((behavior) => {
+  generateActions () {
+    this.queueFunction((behavior, ayva) => {
       const { value, lastValue } = ayva.$.stroke;
       const {
         target, shape, direction, relativeSpeed,

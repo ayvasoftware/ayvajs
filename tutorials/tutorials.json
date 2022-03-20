@@ -36,6 +36,9 @@
       },
       "behavior-api-custom": {
         "title": "Custom Behaviors"
+      },
+      "behavior-api-ayva-behavior": {
+        "title": "Ayva Behaviors"
       }
     }
   }

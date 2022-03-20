@@ -1,4 +1,4 @@
-## perform()
+### perform()
 
 A behavior as far as Ayva is concerned is any object with a ```perform()``` method. An implementation of ```perform()``` should take an Ayva instance and
 return a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise" target="_blank">Promise</a> that resolves when a single iteration of the behavior is complete. Here is an example of a behavior that simply strokes up and down
@@ -34,7 +34,16 @@ const myStrokeBehavior = {
 // This will block!!
 ayva.do(myStrokeBehavior); 
 ```
+_Note: The exception is if ```perform()``` is an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function" target="_blank">async</a> function that uses <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await" target="_blank">await</a>. In that case, the Promise return is implicit. Ex:_
 
+```javascript
+const myStrokeBehavior = {
+  async perform (ayvaInstance) {
+    await ayvaInstance.stroke(0, 1); 
+    await ayvaInstance.stroke(1, 1);
+  }
+}
+```
 ### Object Oriented Programming
 
 You can package your behavior into a class to make it more reusable and/or configurable. Here is a reimplementation of the previous example
@@ -90,10 +99,6 @@ _Note: Ayva includes a convenience class for dealing with durations called ```Va
 
 <a href="./tutorial-examples/behavior-api-custom-example-3.html" target="_blank">Try it out!</a>
 
-### AyvaBehavior
+For simple behaviors that consist of only moves, creating an object or class that implements the ```perform()``` method might be enough. However, for more complex behaviors that require logic based on the current state, have pauses, or depend on the actions of sub behaviors, the asynchronous nature of the _Motion API_ requires special handling. This is discussed in the next section.
 
-For simple behaviors that consist only of moves, creating an object or class that implements the ```perform()``` method might be enough. However, for more complex behaviors that require logic based on the current state, have pauses, or depend on the actions of sub behaviors, the asynchronous nature of the Motion API requires special handling.
-
-```AyvaBehavior``` is a base class that implements ```perform()``` in such a way as to allow moves, logic, pauses, or sub behaviors to be _queued_.
-
-TBD.
+<div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-behavior-api-ayva-behavior.html">Ayva Behaviors</a></div>

@@ -19,7 +19,7 @@ ayva.move({
 
 Ayva provides some syntactic sugar to streamline such statements.
 
-### Move Builders
+<h3 id="move-builders">Move Builders</h3>
 
 A move builder provides a way to construct moves using method chaining. The example at the beginning
 of this section rewritten using a move builder would be:
