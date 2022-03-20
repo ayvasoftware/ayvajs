@@ -1000,7 +1000,7 @@ class Ayva {
    * Convert the function provided into a ramp function.
    *
    * @param {Function} fn
-   * @returns
+   * @returns the new ramp function
    */
   static ramp (fn) {
     return (parameters) => {

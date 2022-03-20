@@ -115,15 +115,15 @@
                 <section>
 
 <article>
-    <p style="margin-top:40px"><code>AyvaBehavior</code> is a base class that implements <code>perform()</code> in such a way as to allow moves, logic, pauses, or sub behaviors to be <i>queued</i>. This ensures the behavior is interruptable, that logic executes at the right time, and that the main thread is never blocked. It works by maintaining an internal <i>action queue</i>, and making each call to <code>perform()</code> execute the next action from the queue.</p>
+    <p style="margin-top:40px"><code>AyvaBehavior</code> is a base class that implements <code>perform()</code> in such a way as to allow moves, logic, pauses, or sub behaviors to be <i>queued</i>. This ensures the behavior is interruptable, that logic executes at the right time, and that the main thread is never blocked. It works by maintaining an internal <i>action queue</i>, and making each call to <code>perform()</code> execute only the next action from the queue.</p>
 <p>To use an <code>AyvaBehavior</code> as the base class of your behaviors you must import it:</p>
 <pre class="prettyprint source lang-javascript"><code>import Ayva, { AyvaBehavior } from 'https://unpkg.com/ayvajs';
 </code></pre>
 <h3>generateActions()</h3>
-<p>When you extend an <code>AyvaBehavior</code>, you must implement the <code>generateActions()</code> method. The <code>generateActions()</code> method takes an Ayva instance as the argument and is expected to populate the action queue with all of the actions that constitute a single iteration of the behavior. <code>AyvaBehavior</code> contains methods that allow you to do this. For example, here is a reimplementation of the stroke behavior from the previous section using <code>AyvaBehavior</code>:</p>
+<p>When you extend an <code>AyvaBehavior</code>, you must implement the <code>generateActions()</code> method. The <code>generateActions()</code> method takes an optional Ayva instance as the argument and is expected to populate the action queue with all of the actions that constitute a single iteration of the behavior. <code>AyvaBehavior</code> contains methods that allow you to do this. For example, here is a reimplementation of the stroke behavior from the previous section using <code>AyvaBehavior</code>:</p>
 <pre class="prettyprint source lang-javascript"><code>class MyStrokeBehavior extends AyvaBehavior {
   constructor (speed) {
-    super();
+    super(); // Must call super constructor.
     this.speed = speed;
   }
 
@@ -137,7 +137,7 @@
 
 ayva.do(new MyStrokeBehavior(2)); // 2 strokes per second.
 </code></pre>
-<p><em>Note: This particular example doesn't really benefit much from using <code>AyvaBehavior</code>, but we will expand upon this later.</em></p>
+<p><em>Note: This particular example doesn't really benefit that much from using <code>AyvaBehavior</code>, but we will expand upon this later.</em></p>
 <p><a href="./tutorial-examples/behavior-api-custom-example-4.html" target="_blank">Try it out!</a></p>
 <h3>queueMove()</h3>
 <p>As shown in the previous example, the <code>queueMove()</code> method of <code>AyvaBehavior</code> can be used to add moves to the action queue. It is overloaded to either accept a <em><a href="./tutorial-motion-api-syntactic-sugar.html#move-builders" target="_blank">move builder</a></em> or <em><a href="./tutorial-motion-api-overview.html" target="_blank">move descriptors</a></em>. i.e. The following are equivalent:</p>
@@ -147,7 +147,7 @@ ayva.do(new MyStrokeBehavior(2)); // 2 strokes per second.
   axis: 'stroke',
   to: 0,
   speed: 1
-}, {
+},{
   axis: 'twist',
   to: 0
 });
@@ -189,8 +189,8 @@ ayva.do(new MyStrokeBehavior(1.5));
     this.queueSleep(0.5);
 
     this.queueFunction((behavior) => {
-      if (Math.random() &lt; 0.5) {
-        // 50% chance of performing a slightly different stroke pattern with a twist.
+      if (Math.random() &lt; 0.25) {
+        // 25% chance of performing a slightly different stroke pattern with a twist.
         behavior.queueMove(stroke(0.25, this.speed * 2).twist(0));
         behavior.queueMove(stroke(1, this.speed / 2).twist(0.5));
         behavior.queueSleep(0.25);
@@ -201,10 +201,57 @@ ayva.do(new MyStrokeBehavior(1.5));
 
 ayva.do(new MyStrokeBehavior(1));
 </code></pre>
-<p><em>Note: the function action takes a</em> <code>behavior</code> <em>parameter and we use that instead of</em> <code>this</code> <em>to edit the action queue. This is to ensure that the &quot;correct&quot; behavior's queue is updated. This becomes important if this behavior were being queued by another <code>AyvaBehavior</code>—which is explored in the next section.</em></p>
+<p><em>Note: When called, the queued function is passed the</em> <code>behavior</code> <em>that is actually executing the function. This becomes important if the behavior were being queued by another <code>AyvaBehavior</code> (i.e. being used as a sub behavior). This is why we use <code>behavior.queueMove()</code> inside of the function instead of <code>this.queueMove()</code>. Sub behaviors will be explored in the next section.</em></p>
 <p><a href="./tutorial-examples/behavior-api-custom-example-6.html" target="_blank">Try it out!</a></p>
 <h3>queueBehavior()</h3>
-<p>TBD</p>
+<p><code>AyvaBehavior</code>'s can incorporate other <code>AyvaBehavior</code>'s as sub behaviors using the <code>queueBehavior()</code> method. This method takes three parameters: the <code>AyvaBehavior</code>, the number of iterations to generate, and the instance of Ayva (the Ayva instance parameter is optional and only needed if the sub behavior's <code>generateActions()</code> method relies on an Ayva instance).</p>
+<p>The following example demonstrates using <code>ClassicStroke</code> as a sub behavior. It performs a basic <code>ClassicStroke</code> at a given speed, and then another at half speed:</p>
+<pre class="prettyprint source lang-javascript"><code>class MyCompositeBehavior extends AyvaBehavior {
+  constructor (speed) {
+    super();
+    this.speed = speed;
+  }
+
+  generateActions () {
+    const fullSpeedStroke = new ClassicStroke(0, 1, this.speed);
+    const halfSpeedStroke = new ClassicStroke(0, 1, this.speed / 2);
+
+    this.queueBehavior(fullSpeedStroke, 4); // 4 full speed strokes.
+    this.queueBehavior(halfSpeedStroke, 4); // 4 half speed strokes.
+  }
+}
+
+ayva.do(new MyCompositeBehavior(1));
+</code></pre>
+<p><em>Note: <code>ClassicStroke</code> does not need an Ayva instance to generate its actions, so the third parameter to <code>queueBehavior()</code> is omitted.</em></p>
+<p><a href="./tutorial-examples/behavior-api-custom-example-7.html" target="_blank">Try it out!</a></p>
+<h3>insert*()</h3>
+<p>Every <code>queue*()</code> method has a corresponding <code>insert*()</code> method that instead adds an action to the <em>front</em> of the action queue. Ex:</p>
+<pre class="prettyprint source lang-javascript"><code>class MyStrokeBehavior extends AyvaBehavior {
+  generateActions (ayva) {
+    const { stroke } = ayva.$;
+
+    this.queueMove(stroke(0, 1));
+    this.queueMove(stroke(1, 1));
+
+    this.queueFunction((behavior) => {
+      if (Math.random() &lt; 0.5) {
+        // If we used queueSleep here this would end up occurring *after the subsequent strokes in the queue
+        // Instead, because we used &quot;insert&quot; the sleep will occur immediately after this function runs.
+        behavior.insertSleep(0.5);
+      }
+    });
+
+    this.queueMove(stroke(0.5, 1));
+    this.queueMove(stroke(1, 1));
+  }
+}
+
+ayva.do(new MyStrokeBehavior());
+</code></pre>
+<p><a href="./tutorial-examples/behavior-api-custom-example-8.html" target="_blank">Try it out!</a></p>
+<h3>Whew!</h3>
+<p>That's all for the Behavior API! Feel free to explore the <a href="./index.html" target="_blank">API Documentation</a> to discovered anything not covered here. 😊</p>
 </article>
 
 </section>

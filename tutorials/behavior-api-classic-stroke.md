@@ -242,5 +242,9 @@ ayva.do(new ClassicStroke({
 ```
 <a href="./tutorial-examples/classic-stroke-example-all-together.html" target="_blank">Try it out!</a>
 
+### Shorthand
+
+For simple strokes, instead of a configuration, the constructor of ```ClassicStroke``` is overloaded to accept the ```bottom```, ```top```, ```speed```, and ```shape``` properties; with each being set to appropriate default values. See the <a href="./ClassicStroke.html#ClassicStroke" target="_blank">API Documentation</a>. 
+
 <div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-behavior-api-tempest-stroke.html">Tempest Stroke</a></div>
 
