@@ -290,9 +290,6 @@ class Ayva {
    *   axis: 'twist',
    *   to: 0.5,
    *   duration: 1,
-   * },{
-   *   axis: 'roll',
-   *   value: ({ x }) => Math.sin(x * Math.PI),
    * });
    *
    * @param  {...Object} movements
@@ -362,7 +359,7 @@ class Ayva {
   }
 
   /**
-   * Asynchronously sleep for the specified number of seconds or until stop() is called.
+   * Asynchronously sleep for the specified number of seconds (or until stop() is called).
    *
    * @param {*} seconds
    * @returns {Promise} a Promise that resolves with the value true if the time elapses. false if the sleep is cancelled.
@@ -399,10 +396,10 @@ class Ayva {
    *
    * @param {Object} axisConfig - axis configuration object
    * @param {String} axisConfig.name - the machine name of this axis (such as L0, R0, etc...)
-   * @param {String} axisConfig.type - linear, rotation, auxiliary, or boolean
+   * @param {String} axisConfig.type - linear, rotation, or auxiliary
    * @param {String} [axisConfig.alias] - an alias used to refer to this axis
-   * @param {Number} [axisConfig.max = 1] - specifies maximum value for this axis (not applicable for boolean axes)
-   * @param {Number} [axisConfig.min = 0] - specifies minimum value for this axis (not applicable for boolean axes)
+   * @param {Number} [axisConfig.max = 1] - specifies maximum value for this axis
+   * @param {Number} [axisConfig.min = 0] - specifies minimum value for this axis
    */
   configureAxis (axisConfig) {
     // TODO: Disallow 'execute' as an axis name.
@@ -509,6 +506,8 @@ class Ayva {
 
   /**
    * Remove the specified device.
+   * 
+   * @param {Object} device - the device to remove.
    */
   removeOutputDevice (device) {
     const index = this.#devices.indexOf(device);

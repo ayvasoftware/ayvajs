@@ -7,6 +7,11 @@ import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 /**
  * So named for its timelessness. The OG stroke. Simple up and down movement with some (optional) variation on a few parameters
  * such as speed, positions, shape, and twist.
+ * 
+ * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
+ * where the device is currently located, and what the most recent movement along the stroke axis was. 
+ * 
+ * See the [Classic Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs/tutorial-behavior-api-classic-stroke.html}.
  */
 class ClassicStroke extends AyvaBehavior {
   #top;
@@ -54,9 +59,9 @@ class ClassicStroke extends AyvaBehavior {
    * // Bounce stroke.
    * ayva.do(new ClassicStroke(0, 1, 1, [ Ayva.RAMP_NEGATIVE_PARABOLIC, Ayva.RAMP_PARABOLIC ]));
    *
-   * @param {Number} bottom - bottom of the stroke or a function that computes the bottom for each down stroke
-   * @param {Number} top - top of the stroke or a function that computes the top for each up stroke
-   * @param {Number} speed - speed of the stroke or a function that computes the speed for each stroke
+   * @param {Number|Array|Function} bottom - bottom of the stroke, array of bottoms, or a function that computes the bottom for each down stroke
+   * @param {Number|Array|Function} top - top of the stroke, array of tops, or a function that computes the top for each up stroke
+   * @param {Number|Array|Function} speed - speed of the stroke, array of speeds, or a function that computes the speed for each stroke
    * @param {Function|Array} shape - a value provider for the shape or an even-lengthed array of value providers
    *//**
    * Create a new ClassicStroke.
@@ -88,11 +93,6 @@ class ClassicStroke extends AyvaBehavior {
     this.#init(config);
   }
 
-  /**
-   * A classic stroke consists of a single function action that computes and inserts a move to either the top or the bottom of the stroke based on
-   * where the device is currently located, and what the most recent movement along the stroke axis was. Any variation on parameters is also computed
-   * and applied.
-   */
   generateActions () {
     this.queueFunction((behavior, ayva) => {
       const { value, lastValue } = ayva.$.stroke;
