@@ -14,7 +14,7 @@ class WorkerTimer {
 
   constructor () {
     /* c8 ignore start */
-    /* Web Worker Script - Ignored from coverage as this only ever runs as a worker in a Browser. */
+    /* Web Worker Script - Ignored from test coverage as this only ever runs as a worker in a Browser. */
     const workerScript = function () {
       onmessage = function (message) {
         const { id, delay } = message.data;

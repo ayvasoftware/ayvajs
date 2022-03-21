@@ -238,7 +238,7 @@ class Ayva {
   /**
    * Asynchronously sleep for the specified number of seconds (or until stop() is called).
    *
-   * @param {*} seconds
+   * @param {Number} seconds
    * @returns {Promise} a Promise that resolves with the value true if the time elapses. false if the sleep is cancelled.
    */
   sleep (seconds) {
@@ -383,7 +383,7 @@ class Ayva {
 
   /**
    * Remove the specified device.
-   * 
+   *
    * @param {Object} device - the device to remove.
    */
   removeOutputDevice (device) {
