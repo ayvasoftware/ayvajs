@@ -115,7 +115,7 @@ _Note: When called, the queued function is passed the_ ```behavior``` _that is a
 
 ### queueBehavior()
 
-```AyvaBehavior```'s can incorporate other ```AyvaBehavior```'s as sub behaviors using the ```queueBehavior()``` method. This method takes three parameters: the ```AyvaBehavior```, the number of iterations to generate, and the instance of Ayva (the Ayva instance parameter is optional and only needed if the sub behavior's ```generateActions()``` method relies on an Ayva instance).
+```AyvaBehavior```'s can incorporate other ```AyvaBehavior```'s as sub behaviors using the ```queueBehavior()``` method. This method takes three parameters: the ```AyvaBehavior```, the number of iterations to generate, and the instance of Ayva (_the Ayva instance parameter is optional and only needed if the sub behavior's ```generateActions()``` method relies on an Ayva instance_).
 
 The following example demonstrates using ```ClassicStroke``` as a sub behavior. It performs a basic ```ClassicStroke``` at a given speed, and then another at half speed:
 

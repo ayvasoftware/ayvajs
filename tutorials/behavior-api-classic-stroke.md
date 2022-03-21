@@ -67,14 +67,14 @@ ayva.do(new ClassicStroke({
 ```javascript
 // Specify as absolute value.
 ayva.do(new ClassicStroke({
-  top: 0.5,
+  top: 0.75,
 }));
 ```
 
 ```javascript
 // Specify as array of values (this pattern will repeat).
 ayva.do(new ClassicStroke({
-  top: [0, 0.25, 0.5, 0.25]
+  top: [1, 0.75, 0.5, 0.75]
 }));
 ```
 
@@ -242,9 +242,29 @@ ayva.do(new ClassicStroke({
 ```
 <a href="./tutorial-examples/classic-stroke-example-all-together.html" target="_blank">Try it out!</a>
 
+> <p style="color: #AA0000"><b>Warning:</b><code style="color: #AA0000">ClassicStroke</code> does not manipulate the values of any axis but the <b>stroke</b> and <b>twist</b> axis (<i>if configured</i>). You must therefore take care to orient other axes to the values you would like them to be for the duration of the stroke. The following example demonstrates the effect of <b>not</b> doing this. 😅
+
+```javascript
+// Move the roll and pitch axis way off.
+ayva.$.roll(0, 1).pitch(0, 1).execute().then(() => {
+  // This stroke will occur without changing the pitch or roll back!
+  // Probably not what you want...
+  ayva.do(new ClassicStroke());
+});
+```
+
+<a href="./tutorial-examples/classic-stroke-example-bad.html" target="_blank">Try it out!</a>
+
 ### Shorthand
 
-For simple strokes, instead of a configuration, the constructor of ```ClassicStroke``` is overloaded to accept the ```bottom```, ```top```, ```speed```, and ```shape``` properties; with each being set to appropriate default values. See the <a href="./ClassicStroke.html#ClassicStroke" target="_blank">API Documentation</a>. 
+For simple strokes, you do not have to pass a configuration object. The constructor of ```ClassicStroke``` accepts the ```bottom```, ```top```, ```speed```, and ```shape``` properties directly; with each being optional and set to appropriate default values. Ex:
+
+```javascript
+// A parabolic stroke with bottom = 0, top = 1, and speed = 2.
+new ClassicStroke(0, 1, 2, Ayva.RAMP_PARABOLIC);
+```
+
+See the <a href="./ClassicStroke.html#ClassicStroke" target="_blank">API Documentation</a> for additional details. 
 
 <div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-behavior-api-tempest-stroke.html">Tempest Stroke</a></div>
 
