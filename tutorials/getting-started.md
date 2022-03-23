@@ -101,4 +101,10 @@ ayva.move({ to: 0, speed: 1 });
 ```
 _Note: This example is the syntax from __version 10__ of SerialPort_.
 
+When running in Node.js, your app will need to be configured with type _module_ (in the <a href="https://nodejs.org/api/packages.html#type" target="_blank">package.json</a>), __or__ you will need to suffix your file with the ```.mjs``` extension and include that extension explicitly when running it. i.e.
+
+```javascript
+node my-app.mjs
+```
+
 <div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-configuration.html">Configuration</a></div>

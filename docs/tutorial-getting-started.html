@@ -201,6 +201,9 @@ ayva.addOutputDevice(device);
 ayva.move({ to: 0, speed: 1 });
 </code></pre>
 <p><em>Note: This example is the syntax from <strong>version 10</strong> of SerialPort</em>.</p>
+<p>When running in Node.js, your app will need to be configured with type <em>module</em> (in the <a href="https://nodejs.org/api/packages.html#type" target="_blank">package.json</a>), <strong>or</strong> you will need to suffix your file with the <code>.mjs</code> extension and include that extension explicitly when running it. i.e.</p>
+<pre class="prettyprint source lang-javascript"><code>node my-app.mjs
+</code></pre>
 <div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-configuration.html">Configuration</a></div>
 </article>
 
