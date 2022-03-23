@@ -1,9 +1,13 @@
 <p style="margin-top:40px"><code>AyvaBehavior</code> is a base class that implements <code>perform()</code> in such a way as to allow moves, logic, pauses, or sub behaviors to be <i>queued</i>. This ensures the behavior is interruptable, that logic executes at the right time, and that the main thread is never blocked. It works by maintaining an internal <i>action queue</i>, and making each call to <code>perform()</code> execute only the next action from the queue.</p>
 
-To use an ```AyvaBehavior``` as the base class of your behaviors you must import it:
+To use an ```AyvaBehavior``` as the base class of your behaviors you must import it. For example, _in a browser_:
 
 ```javascript
 import Ayva, { AyvaBehavior } from 'https://unpkg.com/ayvajs';
+```
+or _from within a Node.js app_:
+```javascript
+import Ayva, { AyvaBehavior } from 'ayvajs';
 ```
 
 ### generateActions()

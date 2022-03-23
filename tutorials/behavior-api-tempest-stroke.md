@@ -83,10 +83,14 @@ Where ```θ``` is the angle in radians, ```p``` is the _phase_, and ```c``` is t
 
 ### Setup
 
-To use ```TempestStroke```, you must import it. This can be done at the same time that you import the Ayva class. For example:
+To use ```TempestStroke```, you must import it. This can be done at the same time that you import the Ayva class. For example, _in a browser_:
 
 ```javascript
 import Ayva, { TempestStroke } from 'https://unpkg.com/ayvajs';
+```
+or _from within a Node.js app_:
+```javascript
+import Ayva, { TempestStroke } from 'ayvajs';
 ```
 
 _Note: Ayva is the_ __<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import" target="_blank">default export</a>__ _of ayvajs, while ```TempestStroke``` is a_ __<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import" target="_blank">named export</a>__. _This is the reason ```TempestStroke``` is enclosed in curly brackets._

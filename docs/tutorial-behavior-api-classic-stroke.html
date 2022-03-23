@@ -120,8 +120,11 @@
 (optional) variation on a few parameters such as speed, positions, shape, and twist. Its been often stated that many people are satisfied
 with just the stroke and twist axis. If you're one of those people, <code>ClassicStroke</code> has got you covered!</p>
 <h3>Setup</h3>
-<p>To use <code>ClassicStroke</code>, you must import it. This can be done at the same time that you import the Ayva class. For example:</p>
+<p>To use <code>ClassicStroke</code>, you must import it. This can be done at the same time that you import the Ayva class. For example, <em>in a browser</em>:</p>
 <pre class="prettyprint source lang-javascript"><code>import Ayva, { ClassicStroke } from 'https://unpkg.com/ayvajs';
+</code></pre>
+<p>or <em>from within a Node.js app</em>:</p>
+<pre class="prettyprint source lang-javascript"><code>import Ayva, { ClassicStroke } from 'ayvajs';
 </code></pre>
 <p><em>Note: Ayva is the</em> <strong><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import" target="_blank">default export</a></strong> <em>of ayvajs, while <code>ClassicStroke</code> is a</em> <strong><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import" target="_blank">named export</a></strong>. <em>This is the reason <code>ClassicStroke</code> is enclosed in curly brackets.</em></p>
 <p>Once <code>ClassicStroke</code> is imported, you can create new strokes using <code>ClassicStroke</code>'s constructor:</p>

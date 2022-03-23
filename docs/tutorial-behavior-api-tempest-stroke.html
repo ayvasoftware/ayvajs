@@ -193,8 +193,11 @@
   plot('#tempest-motion-graph', (x) => -Math.cos(x), [0, Math.PI * 2, -1, 1]);
 </script>
 <h3>Setup</h3>
-<p>To use <code>TempestStroke</code>, you must import it. This can be done at the same time that you import the Ayva class. For example:</p>
+<p>To use <code>TempestStroke</code>, you must import it. This can be done at the same time that you import the Ayva class. For example, <em>in a browser</em>:</p>
 <pre class="prettyprint source lang-javascript"><code>import Ayva, { TempestStroke } from 'https://unpkg.com/ayvajs';
+</code></pre>
+<p>or <em>from within a Node.js app</em>:</p>
+<pre class="prettyprint source lang-javascript"><code>import Ayva, { TempestStroke } from 'ayvajs';
 </code></pre>
 <p><em>Note: Ayva is the</em> <strong><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import" target="_blank">default export</a></strong> <em>of ayvajs, while <code>TempestStroke</code> is a</em> <strong><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import" target="_blank">named export</a></strong>. <em>This is the reason <code>TempestStroke</code> is enclosed in curly brackets.</em></p>
 <p>Once <code>TempestStroke</code> is imported, you can create new strokes using <code>TempestStroke</code>'s constructor, which takes a configuration object and bpm (beats per minute).</p>

@@ -116,8 +116,11 @@
 
 <article>
     <p style="margin-top:40px"><code>AyvaBehavior</code> is a base class that implements <code>perform()</code> in such a way as to allow moves, logic, pauses, or sub behaviors to be <i>queued</i>. This ensures the behavior is interruptable, that logic executes at the right time, and that the main thread is never blocked. It works by maintaining an internal <i>action queue</i>, and making each call to <code>perform()</code> execute only the next action from the queue.</p>
-<p>To use an <code>AyvaBehavior</code> as the base class of your behaviors you must import it:</p>
+<p>To use an <code>AyvaBehavior</code> as the base class of your behaviors you must import it. For example, <em>in a browser</em>:</p>
 <pre class="prettyprint source lang-javascript"><code>import Ayva, { AyvaBehavior } from 'https://unpkg.com/ayvajs';
+</code></pre>
+<p>or <em>from within a Node.js app</em>:</p>
+<pre class="prettyprint source lang-javascript"><code>import Ayva, { AyvaBehavior } from 'ayvajs';
 </code></pre>
 <h3>generateActions()</h3>
 <p>When you extend an <code>AyvaBehavior</code>, you must implement the <code>generateActions()</code> method. The <code>generateActions()</code> method takes an optional Ayva instance as the argument and is expected to populate the action queue with all of the actions that constitute a single iteration of the behavior. <code>AyvaBehavior</code> contains methods that allow you to do this. For example, here is a reimplementation of the stroke behavior from the previous section using <code>AyvaBehavior</code>:</p>
