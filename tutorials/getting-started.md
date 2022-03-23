@@ -88,16 +88,17 @@ Then:
 
 ```js
 import Ayva from 'ayvajs';
-import SerialPort from 'serialport';
+import { SerialPort } from 'serialport';
 
 // Create a new device on the specified port. 
 // Note: /dev/cu.usbserial-0001 is just an example. Your port will likely be different.
-const device = new SerialPort('/dev/cu.usbserial-0001');
+const device = new SerialPort({ path: '/dev/cu.usbserial-0001', baudRate: 115200 });
 
 const ayva = new Ayva().defaultConfiguration();
 ayva.addOutputDevice(device);
 
 ayva.move({ to: 0, speed: 1 });
 ```
+_Note: This example is the syntax from __version 10__ of SerialPort_.
 
 <div style="text-align: center; font-size: 18px">Next: <a href="./tutorial-configuration.html">Configuration</a></div>
