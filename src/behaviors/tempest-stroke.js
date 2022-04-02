@@ -7,7 +7,7 @@ import { createConstantProperty, has } from '../util/util.js';
 /**
  * A behavior that allows specifying oscillatory motion on an arbitrary
  * number of axes with a formula loosely based on orbital motion calculations.
- * See the [Tempest Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs/tutorial-behavior-api-tempest-stroke.html}.
+ * See the [Tempest Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs-docs/tutorial-behavior-api-tempest-stroke.html}.
  */
 class TempestStroke extends AyvaBehavior {
   #angle;

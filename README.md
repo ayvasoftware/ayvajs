@@ -4,10 +4,10 @@ Ayva is a lightweight, behavior-based JavaScript library for controlling <a href
 
 The following codepen examples demonstrate some of the capabilities of Ayva (as well as usage of the <a href="https://github.com/ayvajs/osr-emu" target="_blank">OSR Emulator</a>—a useful component for visualizing and testing movements without an actual hardware device):
 
-<a href="https://ayvajs.github.io/ayvajs/orbit-grind-example.html" target="_blank">Orbit Grind</a>  
-<a href="https://ayvajs.github.io/ayvajs/classic-stroke-example.html" target="_blank">Classic Stroke</a>  
-<a href="https://ayvajs.github.io/ayvajs/custom-behavior-example.html" target="_blank">Custom Behavior</a>  
-<a href="https://ayvajs.github.io/ayvajs/random-stroker-example.html" target="_blank">Random Stroker</a>     
+<a href="https://ayvajs.github.io/ayvajs-docs/orbit-grind-example.html" target="_blank">Orbit Grind</a>  
+<a href="https://ayvajs.github.io/ayvajs-docs/classic-stroke-example.html" target="_blank">Classic Stroke</a>  
+<a href="https://ayvajs.github.io/ayvajs-docs/custom-behavior-example.html" target="_blank">Custom Behavior</a>  
+<a href="https://ayvajs.github.io/ayvajs-docs/random-stroker-example.html" target="_blank">Random Stroker</a>     
 
 Features:
 - Perform arbitrarily complex movements across multiple axes using an expressive Motion API.
@@ -22,16 +22,16 @@ Features:
 - Cross platform with zero dependencies.
 - Runs in a browser, as part of a Node.js app, or theoretically anywhere with a JavaScript runtime.
 - Extensively tested (100% coverage).
-- Thoroughly <a href="https://ayvajs.github.io/ayvajs/index.html" target="_blank">documented</a>.
+- Thoroughly <a href="https://ayvajs.github.io/ayvajs-docs/index.html" target="_blank">documented</a>.
 - Quick and easy setup.
 
 ## Tutorials
-For detailed information on how to use Ayva, see the following tutorials provided in the <a href="https://ayvajs.github.io/ayvajs/index.html" target="_blank">Documentation</a>:
+For detailed information on how to use Ayva, see the following tutorials provided in the <a href="https://ayvajs.github.io/ayvajs-docs/index.html" target="_blank">Documentation</a>:
 
-<a href="https://ayvajs.github.io/ayvajs/tutorial-getting-started.html" target="_blank">Getting Started</a>  
-<a href="https://ayvajs.github.io/ayvajs/tutorial-configuration.html" target="_blank">Configuration</a>  
-<a href="https://ayvajs.github.io/ayvajs/tutorial-motion-api.html" target="_blank">Motion API</a>  
-<a href="https://ayvajs.github.io/ayvajs/tutorial-behavior-api.html" target="_blank">Behavior API</a>   
+<a href="https://ayvajs.github.io/ayvajs-docs/tutorial-getting-started.html" target="_blank">Getting Started</a>  
+<a href="https://ayvajs.github.io/ayvajs-docs/tutorial-configuration.html" target="_blank">Configuration</a>  
+<a href="https://ayvajs.github.io/ayvajs-docs/tutorial-motion-api.html" target="_blank">Motion API</a>  
+<a href="https://ayvajs.github.io/ayvajs-docs/tutorial-behavior-api.html" target="_blank">Behavior API</a>   
 
 
 

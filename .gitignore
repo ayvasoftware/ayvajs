@@ -2,4 +2,5 @@ node_modules
 test-output
 .ignored
 .vscode
+.DS_Store
 index.html
