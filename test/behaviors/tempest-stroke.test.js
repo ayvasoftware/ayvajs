@@ -1,6 +1,7 @@
 /* eslint-disable no-new, no-await-in-loop */
 import '../setup-chai.js';
 import sinon from 'sinon';
+import { expect } from 'chai';
 import Ayva from '../../src/ayva.js';
 import TempestStroke from '../../src/behaviors/tempest-stroke.js';
 import { createTestConfig } from '../test-helpers.js';
@@ -217,6 +218,69 @@ describe('Tempest Stroke Tests', function () {
 
       await ayva.move(...moves);
       verifyEnd();
+    });
+  });
+
+  describe('transition behavior', function () {
+    it('should create a transition that ends at the start of the next stroke', async function () {
+      const sourceParams = TempestStroke.library['orbit-grind'];
+      const targetParams = TempestStroke.library['thrust-forward'];
+
+      const stroke = new TempestStroke(sourceParams);
+
+      const transition = stroke.createTransition(10, targetParams);
+
+      Object.keys(sourceParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(0.5);
+      });
+
+      await ayva.do(transition.transitionStroke);
+
+      Object.keys(targetParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      });
+    });
+
+    it('should handle a missing axis in source behavior', async function () {
+      const sourceParams = TempestStroke.library['orbit-grind'];
+      delete sourceParams.L0;
+      const targetParams = TempestStroke.library['thrust-forward'];
+
+      const stroke = new TempestStroke(sourceParams);
+
+      const transition = stroke.createTransition(10, targetParams);
+
+      Object.keys(sourceParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(0.5);
+      });
+
+      await ayva.do(transition.transitionStroke);
+
+      Object.keys(targetParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      });
+    });
+
+    it('should handle a missing axis in target behavior', async function () {
+      const sourceParams = TempestStroke.library['orbit-grind'];
+      const targetParams = TempestStroke.library['thrust-forward'];
+      delete targetParams.L0;
+
+      const stroke = new TempestStroke(sourceParams);
+
+      const transition = stroke.createTransition(10, targetParams);
+
+      Object.keys(sourceParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(0.5);
+      });
+
+      await ayva.do(transition.transitionStroke);
+
+      Object.keys(targetParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      });
+
+      expect(ayva.$.L0.value).to.equal(0.5);
     });
   });
 });

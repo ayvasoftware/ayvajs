@@ -185,12 +185,12 @@ class ClassicStroke extends AyvaBehavior {
     const distance = Math.abs(value - target);
     const bpm = (speed * 60) / (2 * distance);
     const twistMotion = Ayva.tempestMotion(this.#config.twist.from, this.#config.twist.to, phase, 0, bpm);
-    const expectedTwistValue = twistMotion({ index: 0, frequency });
+    const expectedTwistValue = twistMotion({ index: -1, frequency });
 
     if (Math.abs(expectedTwistValue - ayva.$.twist.value) > 0.05) {
       // I'm starting off axis. Just do a smooth twist to the next position rather than jerking back.
       const nextTwistMotion = Ayva.tempestMotion(this.#config.twist.from, this.#config.twist.to, phase + 2, 0, bpm);
-      const targetTwistValue = nextTwistMotion({ index: 0, frequency });
+      const targetTwistValue = nextTwistMotion({ index: -1, frequency });
 
       return {
         axis: 'twist',
