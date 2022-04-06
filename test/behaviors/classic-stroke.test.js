@@ -301,11 +301,11 @@ describe('Classic Stroke Tests', function () {
       await testStrokes(stroke, expectedStrokes);
     });
 
-    describe('with twist', async function () {
-      const testTwist = async function (config) {
+    describe('with twist and pitch', async function () {
+      const testAxis = async function (axis, config) {
         const stroke = new ClassicStroke({
           ...config,
-          twist: {
+          [axis]: {
             from: 0.25,
             to: 1,
           },
@@ -318,10 +318,10 @@ describe('Classic Stroke Tests', function () {
         let move = ayva.move.args[0][1];
 
         // When starting off axis, should just do a move towards the on-axis position.
-        move.axis.should.equal('twist');
+        move.axis.should.equal(axis);
         move.to.should.equal(0.25);
         move.value.should.equal(Ayva.RAMP_COS);
-        ayva.$.twist.value.should.equal(0.25);
+        ayva.$[axis].value.should.equal(0.25);
 
         await stroke.perform(ayva);
         await stroke.perform(ayva);
@@ -329,7 +329,7 @@ describe('Classic Stroke Tests', function () {
         ayva.move.callCount.should.equal(2);
         move = ayva.move.args[1][1]; // eslint-disable-line prefer-destructuring
 
-        move.axis.should.equal('twist');
+        move.axis.should.equal(axis);
         move.value.should.be.a('function');
         move.value.from.should.equal(0.25);
         move.value.to.should.equal(1);
@@ -337,15 +337,23 @@ describe('Classic Stroke Tests', function () {
         move.value.ecc.should.equal(0);
         move.value.bpm.should.equal(30);
 
-        round(ayva.$.twist.value, 2).should.equal(1);
+        round(ayva.$[axis].value, 2).should.equal(1);
       };
 
-      it('should work with speed', async function () {
-        await testTwist({});
+      it('should work with speed (twist)', async function () {
+        await testAxis('twist', {});
       });
 
-      it('should work with duration', async function () {
-        await testTwist({ duration: 1 });
+      it('should work with duration (twist)', async function () {
+        await testAxis('twist', { duration: 1 });
+      });
+
+      it('should work with speed (pitch)', async function () {
+        await testAxis('pitch', {});
+      });
+
+      it('should work with duration (pitch)', async function () {
+        await testAxis('pitch', { duration: 1 });
       });
     });
 
@@ -437,31 +445,34 @@ describe('Classic Stroke Tests', function () {
         testCreateStroke(0, value).should.throw(`Invalid stroke top: ${value}`);
         testCreateStroke(0, 1, value).should.throw(`Invalid stroke speed: ${value}`);
         testCreateStroke(0, 1, 1, value).should.throw(`Invalid stroke shape: ${value}`);
-        testCreateStroke({
-          twist: value,
-        }).should.throw(`Invalid stroke twist: ${value}`);
 
-        testCreateStroke({
-          twist: {
-            from: value,
-            to: 1,
-          },
-        }).should.throw(`Invalid stroke twist from: ${value}`);
+        ['twist', 'pitch'].forEach((axis) => {
+          testCreateStroke({
+            [axis]: value,
+          }).should.throw(`Invalid stroke ${axis}: ${value}`);
 
-        testCreateStroke({
-          twist: {
-            from: 1,
-            to: value,
-          },
-        }).should.throw(`Invalid stroke twist to: ${value}`);
+          testCreateStroke({
+            [axis]: {
+              from: value,
+              to: 1,
+            },
+          }).should.throw(`Invalid stroke ${axis} from: ${value}`);
 
-        testCreateStroke({
-          twist: {
-            from: 1,
-            to: 0,
-            phase: value,
-          },
-        }).should.throw(`Invalid stroke twist phase: ${value}`);
+          testCreateStroke({
+            [axis]: {
+              from: 1,
+              to: value,
+            },
+          }).should.throw(`Invalid stroke ${axis} to: ${value}`);
+
+          testCreateStroke({
+            [axis]: {
+              from: 1,
+              to: 0,
+              phase: value,
+            },
+          }).should.throw(`Invalid stroke ${axis} phase: ${value}`);
+        });
 
         testCreateStroke({
           suck: value,
