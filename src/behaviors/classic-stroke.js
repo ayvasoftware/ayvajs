@@ -193,14 +193,15 @@ class ClassicStroke extends AyvaBehavior {
   #computeAxisMove (axis, { direction, value, target, speed, ayva }) { // eslint-disable-line object-curly-newline
     const { frequency } = ayva;
     const phase = (direction === 'up' ? 0 : 2) + (this.#config[axis].phase || 0);
+    const ecc = this.#config[axis].ecc || 0;
     const distance = Math.abs(value - target);
     const bpm = (speed * 60) / (2 * distance);
-    const motion = Ayva.tempestMotion(this.#config[axis].from, this.#config[axis].to, phase, 0, bpm);
+    const motion = Ayva.tempestMotion(this.#config[axis].from, this.#config[axis].to, phase, ecc, bpm);
     const expectedValue = motion({ index: -1, frequency });
 
     if (Math.abs(expectedValue - ayva.$[axis].value) > 0.05) {
       // I'm starting off axis. Just do a smooth move to the next position rather than jerking back.
-      const nextMotion = Ayva.tempestMotion(this.#config[axis].from, this.#config[axis].to, phase + 2, 0, bpm);
+      const nextMotion = Ayva.tempestMotion(this.#config[axis].from, this.#config[axis].to, phase + 2, ecc, bpm);
       const targetValue = nextMotion({ index: -1, frequency });
 
       return {
