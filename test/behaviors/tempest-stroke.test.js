@@ -10,15 +10,30 @@ import { round } from '../../src/util/util.js';
 describe('Tempest Stroke Tests', function () {
   let ayva;
 
+  const performTempestStroke = async function (stroke) {
+    await stroke.perform(ayva); // Generate
+
+    for (let i = 0; i < TempestStroke.granularity; i++) {
+      await stroke.perform(ayva); // Perform
+    }
+  };
+
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
     ayva.addOutputDevice({ write: sinon.fake() });
     sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
     sinon.replace(ayva, 'move', sinon.fake(ayva.move));
+    TempestStroke.granularity = 6;
   });
 
   afterEach(function () {
     sinon.restore();
+  });
+
+  it('should throw error if granularity is invalid number', function () {
+    (function () {
+      TempestStroke.granularity = -1;
+    }).should.throw('Invalid granularity: -1');
   });
 
   it('should make stroke parameters available on axes property', function () {
@@ -75,15 +90,13 @@ describe('Tempest Stroke Tests', function () {
       },
     });
 
-    await motion.perform(ayva); // Generate
-    await motion.perform(ayva); // Perform
+    await performTempestStroke(motion);
 
     round(ayva.$.stroke.value, 2).should.equal(1);
     round(ayva.$.twist.value, 2).should.equal(0);
     motion.angle.should.equal(Math.PI);
 
-    await motion.perform(ayva); // Generate
-    await motion.perform(ayva); // Perform
+    await performTempestStroke(motion);
 
     round(ayva.$.stroke.value, 2).should.equal(0.5);
     round(ayva.$.twist.value, 2).should.equal(0.5);
@@ -91,7 +104,7 @@ describe('Tempest Stroke Tests', function () {
   });
 
   it('should allow specifying bpm as a function', async function () {
-    const bpms = [30, 60, 90, 120];
+    const bpms = [30, 60, 90, 120, 90, 60, 42];
     ayva.$.stroke.value.should.equal(0.5);
 
     const motion = new TempestStroke({
@@ -103,18 +116,15 @@ describe('Tempest Stroke Tests', function () {
 
     motion.bpm.should.equal(bpms[0]);
 
-    for (let i = 0; i <= bpms.length; i++) {
-      await motion.perform(ayva); // Generate
-      await motion.perform(ayva); // Perform
+    await performTempestStroke(motion);
 
-      motion.angle.should.equal(Math.PI * (i + 1));
-      motion.bpm.should.equal(bpms[(i + 1) % bpms.length]);
-    }
+    motion.angle.should.equal(Math.PI);
+    motion.bpm.should.equal(42);
   });
 
   it('should allow specifying bpm as an array', async function () {
     // Thou shalt not repeat thyself.
-    const bpms = [30, 60, 90, 120];
+    const bpms = [30, 60, 90, 120, 90, 60, 42];
     ayva.$.stroke.value.should.equal(0.5);
 
     const motion = new TempestStroke({
@@ -126,13 +136,10 @@ describe('Tempest Stroke Tests', function () {
 
     motion.bpm.should.equal(bpms[0]);
 
-    for (let i = 0; i <= bpms.length; i++) {
-      await motion.perform(ayva); // Generate
-      await motion.perform(ayva); // Perform
+    await performTempestStroke(motion);
 
-      motion.angle.should.equal(Math.PI * (i + 1));
-      motion.bpm.should.equal(bpms[(i + 1) % bpms.length]);
-    }
+    motion.angle.should.equal(Math.PI);
+    motion.bpm.should.equal(42);
   });
 
   it('should allow performing library strokes by name', async function () {

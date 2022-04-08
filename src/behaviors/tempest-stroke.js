@@ -4,7 +4,7 @@ import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
-import { createConstantProperty, has } from '../util/util.js';
+import { createConstantProperty, has, validNumber } from '../util/util.js';
 
 /**
  * A behavior that allows specifying oscillatory motion on an arbitrary
@@ -28,6 +28,24 @@ class TempestStroke extends AyvaBehavior {
 
   get bpm () {
     return this.#bpm;
+  }
+
+  static #granularity = 12;
+
+  /**
+   * How many slices to divide a stroke (180 degrees) into.
+   * This controls how often a bpm provider is called per stroke.
+   */
+  static set granularity (value) {
+    if (!validNumber(value, 1)) {
+      throw new Error(`Invalid granularity: ${value}`);
+    }
+
+    TempestStroke.#granularity = value;
+  }
+
+  static get granularity () {
+    return TempestStroke.#granularity;
   }
 
   static get DEFAULT_PARAMETERS () {
@@ -97,27 +115,13 @@ class TempestStroke extends AyvaBehavior {
 
   generateActions () {
     this.queueFunction((behavior) => {
-      const moves = Object.keys(this.axes).map((axis) => {
-        const params = this.axes[axis];
+      const { granularity } = TempestStroke;
 
-        return {
-          axis,
-          value: Ayva.tempestMotion(
-            params.from,
-            params.to,
-            params.phase,
-            params.ecc,
-            this.#bpm,
-            params.shift + this.#angle
-          ),
-          duration: 30 / this.#bpm,
-        };
-      });
-
-      behavior.insertMove(...moves);
+      for (let i = granularity - 1; i >= 0; i--) {
+        this.#createMoves(behavior, i);
+      }
 
       this.#angle += Math.PI;
-      this.#bpm = this.#bpmProvider.next();
     });
   }
 
@@ -195,6 +199,31 @@ class TempestStroke extends AyvaBehavior {
       nextStroke,
       transitionStroke: this.#createBlendBehavior(nextStroke, duration),
     };
+  }
+
+  #createMoves (behavior, index) {
+    const { granularity } = TempestStroke;
+    const moves = Object.keys(this.axes).map((axis) => {
+      const params = this.axes[axis];
+      const seconds = 30 / granularity;
+      const angleSlice = Math.PI / granularity;
+
+      return {
+        axis,
+        value: Ayva.tempestMotion(
+          params.from,
+          params.to,
+          params.phase,
+          params.ecc,
+          this.#bpm,
+          params.shift + this.#angle + (index * angleSlice)
+        ),
+        duration: seconds / this.#bpm,
+      };
+    });
+
+    behavior.insertMove(...moves);
+    this.#bpm = this.#bpmProvider.next();
   }
 
   #createBlendBehavior (targetTempestStroke, duration) {
