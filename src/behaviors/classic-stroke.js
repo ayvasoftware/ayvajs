@@ -49,6 +49,7 @@ class ClassicStroke extends AyvaBehavior {
       relativeSpeeds: [1, 1],
       suck: null,
       twist: null,
+      pitch: null,
     };
   }
 
@@ -117,7 +118,17 @@ class ClassicStroke extends AyvaBehavior {
       const moves = [strokeMove];
 
       if (this.#config.twist) {
-        moves.push(this.#computeTwistMove({
+        moves.push(this.#computeAxisMove('twist', {
+          direction,
+          value,
+          target,
+          ayva,
+          speed: this.#config.speed !== undefined ? speed : Math.abs(target - value) / strokeMove.duration,
+        }));
+      }
+
+      if (this.#config.pitch) {
+        moves.push(this.#computeAxisMove('pitch', {
           direction,
           value,
           target,
@@ -179,29 +190,30 @@ class ClassicStroke extends AyvaBehavior {
     }
   }
 
-  #computeTwistMove ({ direction, value, target, speed, ayva }) { // eslint-disable-line object-curly-newline
+  #computeAxisMove (axis, { direction, value, target, speed, ayva }) { // eslint-disable-line object-curly-newline
     const { frequency } = ayva;
-    const phase = (direction === 'up' ? 0 : 2) + (this.#config.twist.phase || 0);
+    const phase = (direction === 'up' ? 0 : 2) + (this.#config[axis].phase || 0);
+    const ecc = this.#config[axis].ecc || 0;
     const distance = Math.abs(value - target);
     const bpm = (speed * 60) / (2 * distance);
-    const twistMotion = Ayva.tempestMotion(this.#config.twist.from, this.#config.twist.to, phase, 0, bpm);
-    const expectedTwistValue = twistMotion({ index: 0, frequency });
+    const motion = Ayva.tempestMotion(this.#config[axis].from, this.#config[axis].to, phase, ecc, bpm);
+    const expectedValue = motion({ index: -1, frequency });
 
-    if (Math.abs(expectedTwistValue - ayva.$.twist.value) > 0.05) {
-      // I'm starting off axis. Just do a smooth twist to the next position rather than jerking back.
-      const nextTwistMotion = Ayva.tempestMotion(this.#config.twist.from, this.#config.twist.to, phase + 2, 0, bpm);
-      const targetTwistValue = nextTwistMotion({ index: 0, frequency });
+    if (Math.abs(expectedValue - ayva.$[axis].value) > 0.05) {
+      // I'm starting off axis. Just do a smooth move to the next position rather than jerking back.
+      const nextMotion = Ayva.tempestMotion(this.#config[axis].from, this.#config[axis].to, phase + 2, ecc, bpm);
+      const targetValue = nextMotion({ index: -1, frequency });
 
       return {
-        axis: 'twist',
-        to: targetTwistValue,
+        axis,
+        to: targetValue,
         value: Ayva.RAMP_COS,
       };
     }
 
     return {
-      axis: 'twist',
-      value: twistMotion,
+      axis,
+      value: motion,
     };
   }
 
@@ -290,23 +302,27 @@ class ClassicStroke extends AyvaBehavior {
       fail('relative speeds', config.relativeSpeeds);
     }
 
-    if (typeof config.twist !== 'object') {
-      fail('twist', config.twist);
-    }
+    const otherAxes = ['twist', 'pitch'];
 
-    if (config.twist) {
-      if (!validNumber(config.twist.from, 0, 1)) {
-        fail('twist from', config.twist.from);
+    otherAxes.forEach((axis) => {
+      if (typeof config[axis] !== 'object') {
+        fail(axis, config[axis]);
       }
 
-      if (!validNumber(config.twist.to, 0, 1)) {
-        fail('twist to', config.twist.to);
-      }
+      if (config[axis]) {
+        if (!validNumber(config[axis].from, 0, 1)) {
+          fail(`${axis} from`, config[axis].from);
+        }
 
-      if (has(config.twist, 'phase') && !validNumber(config.twist.phase)) {
-        fail('twist phase', config.twist.phase);
+        if (!validNumber(config[axis].to, 0, 1)) {
+          fail(`${axis} to`, config[axis].to);
+        }
+
+        if (has(config[axis], 'phase') && !validNumber(config[axis].phase)) {
+          fail(`${axis} phase`, config[axis].phase);
+        }
       }
-    }
+    });
 
     if (config.shape instanceof Array) {
       if (!config.shape.length) {

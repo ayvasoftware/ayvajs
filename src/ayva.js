@@ -146,11 +146,15 @@ class Ayva {
       }
     }
 
-    if (this.#currentBehaviorId === behaviorId) {
-      this.#currentBehaviorId = null;
+    this.#performing = false;
+
+    if (this.#currentBehaviorId !== behaviorId) {
+      // Behavior was stopped before it completed.
+      return false;
     }
 
-    this.#performing = false;
+    this.#currentBehaviorId = null;
+    return true;
   }
 
   /**
@@ -1087,7 +1091,7 @@ class Ayva {
     const midpoint = 0.5 * (to + from);
 
     const provider = ({ index, frequency }) => {
-      const angle = ((index * angularVelocity) / frequency) + (0.5 * Math.PI * phase) + shift;
+      const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * Math.PI * phase) + shift;
       return midpoint - scale * Math.cos(angle + (ecc * Math.sin(angle)));
     };
 

@@ -1,8 +1,10 @@
+/* eslint-disable max-classes-per-file */
+/* eslint-disable no-use-before-define */
 import AyvaBehavior from './ayva-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
-import { createConstantProperty, has } from '../util/util.js';
+import { createConstantProperty, has, validNumber } from '../util/util.js';
 
 /**
  * A behavior that allows specifying oscillatory motion on an arbitrary
@@ -20,8 +22,30 @@ class TempestStroke extends AyvaBehavior {
     return this.#angle;
   }
 
+  set angle (rad) {
+    this.#angle = rad;
+  }
+
   get bpm () {
     return this.#bpm;
+  }
+
+  static #granularity = 12;
+
+  /**
+   * How many slices to divide a stroke (180 degrees) into.
+   * This controls how often a bpm provider is called per stroke.
+   */
+  static set granularity (value) {
+    if (!validNumber(value, 1)) {
+      throw new Error(`Invalid granularity: ${value}`);
+    }
+
+    TempestStroke.#granularity = value;
+  }
+
+  static get granularity () {
+    return TempestStroke.#granularity;
   }
 
   static get DEFAULT_PARAMETERS () {
@@ -55,8 +79,9 @@ class TempestStroke extends AyvaBehavior {
    * }));
    * @param {Object} config
    * @param {Number} [bpm=60]
+   * @param {Number} [angle=0]
    */
-  constructor (config, bpm = 60) {
+  constructor (config, bpm = 60, angle = 0) {
     super();
 
     if (typeof config === 'string') {
@@ -83,35 +108,28 @@ class TempestStroke extends AyvaBehavior {
       });
     });
 
-    this.#angle = 0;
+    this.#angle = angle;
     this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
   }
 
   generateActions () {
     this.queueFunction((behavior) => {
-      const moves = Object.keys(this.axes).map((axis) => {
-        const params = this.axes[axis];
+      const { granularity } = TempestStroke;
 
-        return {
-          axis,
-          value: Ayva.tempestMotion(
-            params.from,
-            params.to,
-            params.phase,
-            params.ecc,
-            this.#bpm,
-            params.shift + this.#angle
-          ),
-          duration: 30 / this.#bpm,
-        };
-      });
-
-      behavior.insertMove(...moves);
+      for (let i = granularity - 1; i >= 0; i--) {
+        this.#createMoves(behavior, i);
+      }
 
       this.#angle += Math.PI;
-      this.#bpm = this.#bpmProvider.next();
     });
+  }
+
+  /**
+   * @deprecated Since version 0.11.0 use getStartMoves() instead.
+   */
+  getTransitionMoves (ayva, mixinConfig) {
+    return this.getStartMoves(ayva, mixinConfig);
   }
 
   /**
@@ -122,7 +140,7 @@ class TempestStroke extends AyvaBehavior {
    * @param {Object} [mixinConfig] - configuration options to add or override for each move.
    * @returns array of moves
    */
-  getTransitionMoves (ayva, mixinConfig) {
+  getStartMoves (ayva, mixinConfig) {
     const speedConfig = {};
 
     if (!mixinConfig || !(has(mixinConfig, 'speed') || has(mixinConfig, 'duration'))) {
@@ -139,7 +157,7 @@ class TempestStroke extends AyvaBehavior {
         params.ecc,
         this.#bpm,
         params.shift + this.#angle
-      )({ index: 0, frequency: ayva.frequency });
+      )({ index: -1, frequency: ayva.frequency });
 
       return {
         axis,
@@ -148,6 +166,157 @@ class TempestStroke extends AyvaBehavior {
         ...mixinConfig,
       };
     });
+  }
+
+  /**
+   * Creates a transition to a new TempestStroke. The result is an object with the properties
+   * <code>transitionStroke</code> and <code>nextStroke</code>. <code>transitionStroke</code> is a behavior that blends this stroke
+   * into <code>nextStroke</code>. <code>nextStroke</code> is the target stroke with a start angle that makes the transition
+   * seamless.
+   *
+   * @example
+   * const stroke = new TempestStroke('orbit-grind');
+   *
+   * // Create a transition from an orbit-grind to a vortex-tease that takes 5 seconds.
+   * const { transitionStroke, nextStroke } = stroke.createTransition(5, 'vortex-tease');
+   *
+   * ayva.do(transitionStroke).then((complete) => {
+   *   if (complete) {
+   *     ayva.do(nextStroke);
+   *   }
+   * });
+   *
+   * @param {Number} duration - duration of the transition in seconds
+   * @param {Object|String} nextStrokeConfig - stroke config or name of library config
+   * @param {Number|Function} [bpm=60] - beats per minute of next stroke (or function that provides bpm)
+   * @returns object containing transitionStroke behavior and nextStroke behavior.
+   */
+  createTransition (duration, nextStrokeConfig, bpm = 60) {
+    const nextStroke = new TempestStroke(nextStrokeConfig, bpm);
+    nextStroke.angle = this.#computeTransitionStartAngle(duration, this, nextStroke.bpm);
+
+    return {
+      nextStroke,
+      transitionStroke: this.#createBlendBehavior(nextStroke, duration),
+    };
+  }
+
+  #createMoves (behavior, index) {
+    const { granularity } = TempestStroke;
+    const moves = Object.keys(this.axes).map((axis) => {
+      const params = this.axes[axis];
+      const seconds = 30 / granularity;
+      const angleSlice = Math.PI / granularity;
+
+      return {
+        axis,
+        value: Ayva.tempestMotion(
+          params.from,
+          params.to,
+          params.phase,
+          params.ecc,
+          this.#bpm,
+          params.shift + this.#angle + (index * angleSlice)
+        ),
+        duration: seconds / this.#bpm,
+      };
+    });
+
+    behavior.insertMove(...moves);
+    this.#bpm = this.#bpmProvider.next();
+  }
+
+  #createBlendBehavior (targetTempestStroke, duration) {
+    return new TempestStrokeTransition(this, targetTempestStroke, duration);
+  }
+
+  #computeTransitionStartAngle (duration, sourceTempestStroke, targetBpm) {
+    const averageBpm = (sourceTempestStroke.bpm + targetBpm) / 2;
+    return sourceTempestStroke.angle + (Math.PI * 2 * (averageBpm / 60) * duration);
+  }
+}
+
+class TempestStrokeTransition extends AyvaBehavior {
+  #source;
+
+  #target;
+
+  #duration;
+
+  constructor (sourceBehavior, targetBehavior, duration) {
+    super();
+    this.#source = sourceBehavior;
+    this.#target = targetBehavior;
+    this.#duration = duration;
+  }
+
+  generateActions (ayva) {
+    const defaultParams = {
+      from: 0.5, to: 0.5, phase: 0, ecc: 0,
+    };
+
+    const sourceAxes = this.#getAxisMapByName(this.#source.axes, ayva);
+    const targetAxes = this.#getAxisMapByName(this.#target.axes, ayva);
+
+    const transitionAxisMoves = {};
+
+    Object.keys(targetAxes).forEach((axis) => {
+      const sourceAxis = sourceAxes[axis] ?? { ...defaultParams };
+      const targetAxis = targetAxes[axis];
+
+      transitionAxisMoves[axis] = this.#createTransitionAxisMove(sourceAxis, targetAxis);
+    });
+
+    // Catch any dangling axes that were part of source but not part of target.
+    Object.keys(sourceAxes).forEach((axis) => {
+      if (!transitionAxisMoves[axis]) {
+        const sourceAxis = sourceAxes[axis];
+        const targetAxis = { ...defaultParams };
+
+        transitionAxisMoves[axis] = this.#createTransitionAxisMove(sourceAxis, targetAxis);
+      }
+    });
+
+    const moves = [];
+    Object.keys(transitionAxisMoves).forEach((axis) => {
+      moves.push({
+        axis,
+        ...transitionAxisMoves[axis],
+      });
+    });
+
+    this.queueMove(...moves);
+    this.queueComplete();
+  }
+
+  #createTransitionAxisMove (sourceAxis, targetAxis) {
+    const sourceBpm = this.#source.bpm;
+    const averageBpm = (this.#source.bpm + this.#target.bpm) / 2;
+
+    return {
+      value: (params) => {
+        const { x } = params;
+
+        const from = Ayva.map(x, 0, 1, sourceAxis.from, targetAxis.from);
+        const to = Ayva.map(x, 0, 1, sourceAxis.to, targetAxis.to);
+        const phase = Ayva.map(x, 0, 1, sourceAxis.phase, targetAxis.phase);
+        const ecc = Ayva.map(x, 0, 1, sourceAxis.ecc, targetAxis.ecc);
+        const bpm = Ayva.map(x, 0, 1, sourceBpm, averageBpm);
+
+        const provider = Ayva.tempestMotion(from, to, phase, ecc, bpm, this.#source.angle);
+        return provider(params);
+      },
+      duration: this.#duration,
+    };
+  }
+
+  #getAxisMapByName (axes, ayva) {
+    // Convert axes config to be by name instead of alias so it is easier to reason about.
+    return Object.keys(axes).reduce((map, axis) => {
+      const axisConfig = ayva.getAxis(axis);
+      map[axisConfig.name] = axes[axis];
+      return map;
+    }, {});
   }
 }
 
