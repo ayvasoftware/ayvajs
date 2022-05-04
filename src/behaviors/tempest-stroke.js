@@ -30,7 +30,7 @@ class TempestStroke extends AyvaBehavior {
     return this.#bpm;
   }
 
-  static #granularity = 12;
+  static #granularity = 36;
 
   /**
    * How many slices to divide a stroke (180 degrees) into.
@@ -114,13 +114,15 @@ class TempestStroke extends AyvaBehavior {
   }
 
   generateActions () {
-    this.queueFunction((behavior) => {
-      const { granularity } = TempestStroke;
+    const { granularity } = TempestStroke;
 
-      for (let i = granularity - 1; i >= 0; i--) {
+    for (let i = 0; i < granularity; i++) {
+      this.queueFunction((behavior) => {
         this.#createMoves(behavior, i);
-      }
+      });
+    }
 
+    this.queueFunction(() => {
       this.#angle += Math.PI;
     });
   }
