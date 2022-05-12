@@ -515,7 +515,7 @@ class Ayva {
 
   async #performMovements (movementId, movements) {
     const allProviders = this.#createValueProviders(movements);
-    const { stepCount, duration } = this.#computeStepParameters(allProviders);
+    const { duration, stepCount } = this.#computeMaxDurationAndStepCount(allProviders);
     const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
     const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
 
@@ -650,13 +650,45 @@ class Ayva {
    * @returns {Object[]} - array of value providers with parameters.
    */
   #createValueProviders (movements) {
+    const { parameterObjects, maxDuration } = this.#createParameterObjects(movements);
+
+    this.#populateDurationAndStepCount(parameterObjects, maxDuration);
+
+    // Create the actual value providers.
+    return parameterObjects.map((parameters) => {
+      const provider = {};
+
+      if (!has(parameters, 'value')) {
+        // Create a value provider from parameters.
+        if (this.#axes[parameters.axis].type === 'boolean') {
+          provider.valueProvider = () => parameters.to;
+        } else if (parameters.to !== parameters.from) {
+          provider.valueProvider = this.defaultRamp;
+        } else {
+          // No movement.
+          provider.valueProvider = () => {};
+        }
+      } else {
+        // User provided value provider.
+        provider.valueProvider = parameters.value;
+      }
+
+      delete parameters.sync;
+      delete parameters.value;
+      provider.parameters = parameters;
+
+      return provider;
+    });
+  }
+
+  #createParameterObjects (movements) {
     let maxDuration = 0;
 
-    const computedMovements = movements.map((movement) => {
+    const parameterObjects = movements.map((movement) => {
       // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
 
-      const result = {
+      const parameters = {
         ...movement,
         axis,
         from: this.#axes[axis].value,
@@ -664,31 +696,35 @@ class Ayva {
       };
 
       if (has(movement, 'to')) {
-        const distance = movement.to - result.from;
+        const distance = movement.to - parameters.from;
         const absoluteDistance = Math.abs(distance);
 
         if (has(movement, 'duration')) {
           // { to: <number>, duration: <number> }
-          result.speed = round(absoluteDistance / movement.duration, Ayva.precision);
+          parameters.speed = round(absoluteDistance / movement.duration, Ayva.precision);
         } else if (has(movement, 'speed')) {
           // { to: <number>, speed: <number> }
           // Uncomment the below to re-enable speed scaling.
           // const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
           // result.speed = movement.speed * axisScale;
-          result.duration = round(absoluteDistance / result.speed, Ayva.precision);
+          parameters.duration = round(absoluteDistance / parameters.speed, Ayva.precision);
         }
 
-        result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
+        parameters.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
       }
 
-      if (has(result, 'duration')) {
-        maxDuration = Math.max(result.duration, maxDuration);
+      if (has(parameters, 'duration')) {
+        maxDuration = Math.max(parameters.duration, maxDuration);
       }
 
-      return result;
+      return parameters;
     });
 
-    const movementsByAxis = computedMovements.reduce((map, p) => {
+    return { maxDuration, parameterObjects };
+  }
+
+  #populateDurationAndStepCount (parameterObjects, maxDuration) {
+    const movementsByAxis = parameterObjects.reduce((map, p) => {
       map[p.axis] = p;
 
       if (this.#axes[p.axis].alias) {
@@ -698,71 +734,39 @@ class Ayva {
       return map;
     }, {});
 
-    computedMovements.forEach((movement) => {
+    parameterObjects.forEach((parameters) => {
       // We need to compute the duration for any movements we couldn't in the first pass.
       // This will be either implicit or explicit sync movements.
-      if (has(movement, 'sync')) {
+      if (has(parameters, 'sync')) {
         // Excplicit sync.
-        let syncMovement = movement;
+        let syncMovement = parameters;
 
         while (has(syncMovement, 'sync')) {
           syncMovement = movementsByAxis[syncMovement.sync];
         }
 
-        movement.duration = syncMovement.duration || maxDuration;
+        parameters.duration = syncMovement.duration || maxDuration;
 
-        if (has(movement, 'to')) {
+        if (has(parameters, 'to')) {
           // Now we can compute a speed.
-          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, Ayva.precision);
+          parameters.speed = round(Math.abs(parameters.to - parameters.from) / parameters.duration, Ayva.precision);
         }
-      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
+      } else if (!has(parameters, 'duration') && this.#axes[parameters.axis].type !== 'boolean') {
         // Implicit sync to max duration.
-        movement.duration = maxDuration;
+        parameters.duration = maxDuration;
       }
 
-      if (has(movement, 'duration')) {
-        movement.stepCount = Math.ceil(movement.duration * this.#frequency);
+      if (has(parameters, 'duration')) {
+        parameters.stepCount = Math.ceil(parameters.duration * this.#frequency);
       } // else if (this.#axes[movement.axis].type !== 'boolean') {
       // By this point, the only movements without a duration should be boolean.
       // This should literally never happen because of validation. But including here for debugging and clarity.
       // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
       // }
     });
-
-    // Create the actual value providers.
-    return computedMovements.map((movement) => {
-      const provider = {};
-
-      if (!has(movement, 'value')) {
-        // Create a value provider from parameters.
-        if (this.#axes[movement.axis].type === 'boolean') {
-          provider.valueProvider = () => movement.to;
-        } else if (movement.to !== movement.from) {
-          provider.valueProvider = this.defaultRamp;
-        } else {
-          // No movement.
-          provider.valueProvider = () => {};
-        }
-      } else {
-        // User provided value provider.
-        provider.valueProvider = movement.value;
-      }
-
-      delete movement.sync;
-      delete movement.value;
-      provider.parameters = movement;
-
-      return provider;
-    });
   }
 
-  /**
-   * Compute the total steps and duration of the move given a list of value providers.
-   * i.e. The maximum number of steps and maximum duration.
-   *
-   * @param {Object[]} valueProviders
-   */
-  #computeStepParameters (valueProviders) {
+  #computeMaxDurationAndStepCount (valueProviders) {
     let stepCount = 0;
     let duration = 0;
 
@@ -779,7 +783,7 @@ class Ayva {
       }
     });
 
-    return { stepCount, duration };
+    return { duration, stepCount };
   }
 
   /**
