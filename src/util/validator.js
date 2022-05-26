@@ -189,7 +189,16 @@ export default {
       fail(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
     }
 
-    const defaultValue = axisConfig.type === 'boolean' ? false : 0.5; // 0.5 is home position for linear, rotation, and auxiliary.
+    let defaultValue;
+
+    if (axisConfig.type === 'boolean') {
+      defaultValue = false;
+    } else if (axisConfig.type === 'auxiliary') {
+      defaultValue = 0;
+    } else {
+      // 0.5 is home position for linear and rotation axes.
+      defaultValue = 0.5;
+    }
 
     const resultConfig = {
       ...axisConfig,
