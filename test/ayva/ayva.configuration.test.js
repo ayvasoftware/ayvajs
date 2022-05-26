@@ -42,6 +42,8 @@ describe('Configuration Tests', function () {
 
         if (storedAxis.type === 'boolean') {
           expect($axis.value).to.equal(false);
+        } else if (storedAxis.type === 'auxiliary') {
+          expect($axis.value).to.equal(0);
         } else {
           expect($axis.value).to.equal(0.5);
         }

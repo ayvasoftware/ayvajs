@@ -365,7 +365,7 @@ describe('Classic Stroke Tests', function () {
         suck: 0.3,
       });
 
-      ayva.$.suck.value.should.equal(0.5);
+      ayva.$.suck.value.should.equal(0.0);
 
       await stroke.perform(ayva);
 

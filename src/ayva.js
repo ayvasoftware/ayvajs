@@ -2,8 +2,9 @@
 import MoveBuilder from './util/move-builder.js';
 import WorkerTimer from './util/worker-timer.js';
 import {
-  clamp, round, has, fail, createConstantProperty, validNumber
+  clamp, round, has, createConstantProperty, validNumber
 } from './util/util.js';
+import validator from './util/validator.js';
 import OSR_CONFIG from './util/osr-config.js';
 
 class Ayva {
@@ -181,7 +182,7 @@ class Ayva {
       throw new Error('No output devices have been added.');
     }
 
-    this.#validateMovements(movements);
+    validator.validateMovements(movements, this.#axes, this.defaultAxis);
 
     const movementId = this.#nextMovementId++;
     this.#movements.add(movementId);
@@ -284,7 +285,7 @@ class Ayva {
    */
   configureAxis (axisConfig) {
     // TODO: Disallow 'execute' as an axis name.
-    const resultConfig = this.#validateAxisConfig(axisConfig);
+    const resultConfig = validator.validateAxisConfig(axisConfig);
 
     const oldConfig = this.#axes[axisConfig.name];
 
@@ -515,7 +516,7 @@ class Ayva {
 
   async #performMovements (movementId, movements) {
     const allProviders = this.#createValueProviders(movements);
-    const { stepCount, duration } = this.#computeStepParameters(allProviders);
+    const { duration, stepCount } = this.#computeMaxDurationAndStepCount(allProviders);
     const immediateProviders = allProviders.filter((provider) => !provider.parameters.stepCount);
     const stepProviders = allProviders.filter((provider) => !!provider.parameters.stepCount);
 
@@ -650,13 +651,45 @@ class Ayva {
    * @returns {Object[]} - array of value providers with parameters.
    */
   #createValueProviders (movements) {
+    const { parameterObjects, maxDuration } = this.#createParameterObjects(movements);
+
+    this.#populateDurationAndStepCount(parameterObjects, maxDuration);
+
+    // Create the actual value providers.
+    return parameterObjects.map((parameters) => {
+      const provider = {};
+
+      if (!has(parameters, 'value')) {
+        // Create a value provider from parameters.
+        if (this.#axes[parameters.axis].type === 'boolean') {
+          provider.valueProvider = () => parameters.to;
+        } else if (parameters.to !== parameters.from) {
+          provider.valueProvider = this.defaultRamp;
+        } else {
+          // No movement.
+          provider.valueProvider = () => {};
+        }
+      } else {
+        // User provided value provider.
+        provider.valueProvider = parameters.value;
+      }
+
+      delete parameters.sync;
+      delete parameters.value;
+      provider.parameters = parameters;
+
+      return provider;
+    });
+  }
+
+  #createParameterObjects (movements) {
     let maxDuration = 0;
 
-    const computedMovements = movements.map((movement) => {
+    const parameterObjects = movements.map((movement) => {
       // Initialize all parameters that we can deduce.
       const axis = movement.axis || this.defaultAxis;
 
-      const result = {
+      const parameters = {
         ...movement,
         axis,
         from: this.#axes[axis].value,
@@ -664,31 +697,35 @@ class Ayva {
       };
 
       if (has(movement, 'to')) {
-        const distance = movement.to - result.from;
+        const distance = movement.to - parameters.from;
         const absoluteDistance = Math.abs(distance);
 
         if (has(movement, 'duration')) {
           // { to: <number>, duration: <number> }
-          result.speed = round(absoluteDistance / movement.duration, Ayva.precision);
+          parameters.speed = round(absoluteDistance / movement.duration, Ayva.precision);
         } else if (has(movement, 'speed')) {
           // { to: <number>, speed: <number> }
           // Uncomment the below to re-enable speed scaling.
           // const axisScale = 1 / Math.abs(this.#axes[axis].max - this.#axes[axis].min);
           // result.speed = movement.speed * axisScale;
-          result.duration = round(absoluteDistance / result.speed, Ayva.precision);
+          parameters.duration = round(absoluteDistance / parameters.speed, Ayva.precision);
         }
 
-        result.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
+        parameters.direction = distance > 0 ? 1 : distance < 0 ? -1 : 0; // eslint-disable-line no-nested-ternary
       }
 
-      if (has(result, 'duration')) {
-        maxDuration = Math.max(result.duration, maxDuration);
+      if (has(parameters, 'duration')) {
+        maxDuration = Math.max(parameters.duration, maxDuration);
       }
 
-      return result;
+      return parameters;
     });
 
-    const movementsByAxis = computedMovements.reduce((map, p) => {
+    return { maxDuration, parameterObjects };
+  }
+
+  #populateDurationAndStepCount (parameterObjects, maxDuration) {
+    const movementsByAxis = parameterObjects.reduce((map, p) => {
       map[p.axis] = p;
 
       if (this.#axes[p.axis].alias) {
@@ -698,71 +735,39 @@ class Ayva {
       return map;
     }, {});
 
-    computedMovements.forEach((movement) => {
+    parameterObjects.forEach((parameters) => {
       // We need to compute the duration for any movements we couldn't in the first pass.
       // This will be either implicit or explicit sync movements.
-      if (has(movement, 'sync')) {
+      if (has(parameters, 'sync')) {
         // Excplicit sync.
-        let syncMovement = movement;
+        let syncMovement = parameters;
 
         while (has(syncMovement, 'sync')) {
           syncMovement = movementsByAxis[syncMovement.sync];
         }
 
-        movement.duration = syncMovement.duration || maxDuration;
+        parameters.duration = syncMovement.duration || maxDuration;
 
-        if (has(movement, 'to')) {
+        if (has(parameters, 'to')) {
           // Now we can compute a speed.
-          movement.speed = round(Math.abs(movement.to - movement.from) / movement.duration, Ayva.precision);
+          parameters.speed = round(Math.abs(parameters.to - parameters.from) / parameters.duration, Ayva.precision);
         }
-      } else if (!has(movement, 'duration') && this.#axes[movement.axis].type !== 'boolean') {
+      } else if (!has(parameters, 'duration') && this.#axes[parameters.axis].type !== 'boolean') {
         // Implicit sync to max duration.
-        movement.duration = maxDuration;
+        parameters.duration = maxDuration;
       }
 
-      if (has(movement, 'duration')) {
-        movement.stepCount = Math.ceil(movement.duration * this.#frequency);
+      if (has(parameters, 'duration')) {
+        parameters.stepCount = Math.ceil(parameters.duration * this.#frequency);
       } // else if (this.#axes[movement.axis].type !== 'boolean') {
       // By this point, the only movements without a duration should be boolean.
       // This should literally never happen because of validation. But including here for debugging and clarity.
       // fail(`Unable to compute duration for movement along axis: ${movement.axis}`);
       // }
     });
-
-    // Create the actual value providers.
-    return computedMovements.map((movement) => {
-      const provider = {};
-
-      if (!has(movement, 'value')) {
-        // Create a value provider from parameters.
-        if (this.#axes[movement.axis].type === 'boolean') {
-          provider.valueProvider = () => movement.to;
-        } else if (movement.to !== movement.from) {
-          provider.valueProvider = this.defaultRamp;
-        } else {
-          // No movement.
-          provider.valueProvider = () => {};
-        }
-      } else {
-        // User provided value provider.
-        provider.valueProvider = movement.value;
-      }
-
-      delete movement.sync;
-      delete movement.value;
-      provider.parameters = movement;
-
-      return provider;
-    });
   }
 
-  /**
-   * Compute the total steps and duration of the move given a list of value providers.
-   * i.e. The maximum number of steps and maximum duration.
-   *
-   * @param {Object[]} valueProviders
-   */
-  #computeStepParameters (valueProviders) {
+  #computeMaxDurationAndStepCount (valueProviders) {
     let stepCount = 0;
     let duration = 0;
 
@@ -779,210 +784,7 @@ class Ayva {
       }
     });
 
-    return { stepCount, duration };
-  }
-
-  /**
-   * All the validation on movement descriptors :O
-   *
-   * @param {Array} movements
-   */
-  #validateMovements (movements) {
-    const movementMap = {};
-    let atLeastOneDuration = false;
-    let atLeastOneNonBoolean = false;
-
-    if (!movements || !movements.length) {
-      fail('Must supply at least one movement.');
-    }
-
-    movements.forEach((movement) => {
-      if (!movement || typeof movement !== 'object') {
-        fail(`Invalid movement: ${movement}`);
-      }
-
-      const invalidValue = (name) => fail(`Invalid value for parameter '${name}': ${movement[name]}`);
-      const hasTo = has(movement, 'to');
-      const hasSpeed = has(movement, 'speed');
-      const hasDuration = has(movement, 'duration');
-      const hasValue = has(movement, 'value');
-      const axis = movement.axis || this.defaultAxis;
-
-      if (!axis) {
-        fail('No default axis configured. Must specify an axis for each movement.');
-      }
-
-      if (has(movement, 'axis')) {
-        if (typeof movement.axis !== 'string' || !movement.axis.trim() || !this.#axes[movement.axis]) {
-          invalidValue('axis');
-        }
-      }
-
-      if (hasTo) {
-        let invalidTo = false;
-
-        if (this.#axes[axis].type === 'boolean') {
-          invalidTo = typeof movement.to !== 'boolean';
-        } else {
-          invalidTo = !Number.isFinite(movement.to) || (movement.to < 0 || movement.to > 1);
-        }
-
-        if (invalidTo) {
-          invalidValue('to');
-        }
-      } else if (!hasValue) {
-        fail('Must provide a \'to\' property or \'value\' function.');
-      }
-
-      if (hasSpeed && hasDuration) {
-        fail('Cannot supply both speed and duration.');
-      }
-
-      if (hasSpeed || hasDuration) {
-        atLeastOneDuration = true;
-
-        if (hasSpeed && (!Number.isFinite(movement.speed) || movement.speed <= 0)) {
-          invalidValue('speed');
-        } else if (hasDuration && (!Number.isFinite(movement.duration) || movement.duration <= 0)) {
-          invalidValue('duration');
-        }
-      }
-
-      if (hasSpeed && !hasTo) {
-        fail('Must provide a target position when specifying speed.');
-      }
-
-      if (hasValue && typeof movement.value !== 'function') {
-        fail('\'value\' must be a function.');
-      }
-
-      if (has(movement, 'sync')) {
-        if (typeof movement.sync !== 'string' || !movement.sync.trim()) {
-          invalidValue('sync');
-        }
-
-        if (has(movement, 'speed') || has(movement, 'duration')) {
-          fail(`Cannot specify a speed or duration when sync property is present: ${movement.axis}`);
-        }
-      }
-
-      if (this.#axes[axis].type !== 'boolean') {
-        atLeastOneNonBoolean = true;
-      } else {
-        if (has(movement, 'speed')) {
-          fail(`Cannot specify speed for boolean axes: ${axis}`);
-        }
-
-        if (has(movement, 'duration') && hasTo && !hasValue) {
-          // { to: <boolean>, duration: <number> } is invalid (for now).
-          fail('Cannot specify a duration for a boolean axis movement with constant value.');
-        }
-      }
-
-      if (movementMap[axis]) {
-        fail(`Duplicate axis movement: ${axis}`);
-      }
-
-      movementMap[axis] = movement;
-
-      if (this.#axes[axis].alias) {
-        movementMap[this.#axes[axis].alias] = movement;
-      }
-    });
-
-    movements.forEach((movement) => {
-      let syncMovement = movement;
-      const originalMovementAxis = movement.axis;
-
-      while (has(syncMovement, 'sync')) {
-        if (!movementMap[syncMovement.sync]) {
-          fail(`Cannot sync with axis not specified in movement: ${syncMovement.axis} -> ${syncMovement.sync}`);
-        }
-
-        syncMovement = movementMap[syncMovement.sync];
-
-        if (syncMovement.sync === originalMovementAxis) {
-          fail('Sync axes cannot form a cycle.');
-        }
-      }
-    });
-
-    if (!atLeastOneDuration && atLeastOneNonBoolean) {
-      fail('At least one movement must have a speed or duration.');
-    }
-  }
-
-  /**
-   * Ensure all required fields are present in the configuration and that all are of valid types.
-   *
-   * @param {Object} axisConfig
-   */
-  #validateAxisConfig (axisConfig) {
-    if (!axisConfig || typeof axisConfig !== 'object') {
-      fail(`Invalid configuration object: ${axisConfig}`);
-    }
-
-    const required = ['name', 'type'];
-
-    const types = {
-      name: 'string',
-      type: 'string',
-      alias: 'string',
-      max: 'number',
-      min: 'number',
-    };
-
-    const missing = required.filter(
-      (property) => axisConfig[property] === undefined || axisConfig[property] === null
-    ).sort();
-
-    if (missing.length) {
-      fail(`Configuration is missing properties: ${missing.join(', ')}`);
-    }
-
-    const invalid = [];
-
-    Object.keys(types).forEach((property) => {
-      const value = axisConfig[property];
-
-      // Since we've already caught missing required fields by this point,
-      // we only need to check types of optional fields if they are actually present.
-      if (value !== undefined && value !== null) {
-        // eslint-disable-next-line valid-typeof
-        if (typeof value !== types[property]) {
-          invalid.push(property);
-        } else if (property === 'min' || property === 'max') {
-          if (!Number.isFinite(value) || value < 0 || value > 1) {
-            invalid.push(property);
-          }
-        }
-      }
-    });
-
-    if (invalid.length) {
-      const message = invalid.sort().map((property) => `${property} = ${axisConfig[property]}`).join(', ');
-      fail(`Invalid configuration parameter(s): ${message}`);
-    }
-
-    if (['linear', 'rotation', 'auxiliary', 'boolean'].indexOf(axisConfig.type) === -1) {
-      fail(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
-    }
-
-    const defaultValue = axisConfig.type === 'boolean' ? false : 0.5; // 0.5 is home position for linear, rotation, and auxiliary.
-
-    const resultConfig = {
-      ...axisConfig,
-      max: axisConfig.max || 1,
-      min: axisConfig.min || 0,
-      value: defaultValue,
-      lastValue: defaultValue,
-    };
-
-    if (resultConfig.max === resultConfig.min || resultConfig.min > resultConfig.max) {
-      fail(`Invalid configuration parameter(s): max = ${resultConfig.max}, min = ${resultConfig.min}`);
-    }
-
-    return resultConfig;
+    return { duration, stepCount };
   }
 
   #getAxesArray () {
@@ -1084,7 +886,7 @@ class Ayva {
    * @returns the value provider.
    */
   static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
-    this.#validateTempestParameters(from, to, phase, ecc, bpm, shift);
+    validator.validateTempestParameters(from, to, phase, ecc, bpm, shift);
 
     const angularVelocity = (2 * Math.PI * bpm) / 60;
     const scale = 0.5 * (to - from);
@@ -1102,19 +904,6 @@ class Ayva {
     createConstantProperty(provider, 'bpm', bpm);
 
     return provider;
-  }
-
-  static #validateTempestParameters (from, to, phase, ecc, bpm, shift) {
-    const valid = validNumber(from, 0, 1)
-      && validNumber(to, 0, 1)
-      && validNumber(phase)
-      && validNumber(ecc)
-      && validNumber(bpm) && bpm > 0
-      && validNumber(shift);
-
-    if (!valid) {
-      throw new Error(`One or more stroke parameters are invalid (${from}, ${to}, ${phase}, ${ecc}, ${bpm}, ${shift})`);
-    }
   }
 
   /**

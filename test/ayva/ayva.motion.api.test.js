@@ -900,12 +900,12 @@ describe('Motion API Tests', function () {
     it('should send valid movements in correct order for multiple calls to move()', async function () {
       ayva.getAxis('L0').value.should.equal(0.5);
       ayva.getAxis('R0').value.should.equal(0.5);
-      ayva.getAxis('A0').value.should.equal(0.5);
+      ayva.getAxis('A0').value.should.equal(0);
 
       const result = await Promise.all([
         ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
         ayva.move({ axis: 'R0', to: 0, duration: 0.1 }),
-        ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'A0', to: 0.5, duration: 0.1 }),
       ]);
 
       expect(result).to.deep.equal([true, true, true]);
@@ -921,16 +921,16 @@ describe('Motion API Tests', function () {
         'R02000',
         'R01000',
         'R00000',
-        'A04000',
-        'A03000',
-        'A02000',
         'A01000',
-        'A00000'
+        'A02000',
+        'A03000',
+        'A04000',
+        'A05000'
       );
 
       ayva.getAxis('L0').value.should.equal(0.0);
       ayva.getAxis('R0').value.should.equal(0.0);
-      ayva.getAxis('A0').value.should.equal(0.0);
+      ayva.getAxis('A0').value.should.equal(0.5);
     });
   });
 
@@ -938,12 +938,12 @@ describe('Motion API Tests', function () {
     it('should cancel all movements', async function () {
       ayva.getAxis('L0').value.should.equal(0.5);
       ayva.getAxis('R0').value.should.equal(0.5);
-      ayva.getAxis('A0').value.should.equal(0.5);
+      ayva.getAxis('A0').value.should.equal(0);
 
       const promise = Promise.all([
         ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
         ayva.move({ axis: 'R0', to: 0, duration: 0.1 }),
-        ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'A0', to: 0.5, duration: 0.1 }),
       ]);
 
       ayva.stop();
@@ -958,7 +958,7 @@ describe('Motion API Tests', function () {
 
       ayva.getAxis('L0').value.should.equal(0.400);
       ayva.getAxis('R0').value.should.equal(0.500);
-      ayva.getAxis('A0').value.should.equal(0.500);
+      ayva.getAxis('A0').value.should.equal(0.000);
 
       // Make sure a call to stop() does not prevent additional moves.
       const retry = await ayva.move({ axis: 'L0', to: 0, duration: 0.1 });
@@ -969,7 +969,7 @@ describe('Motion API Tests', function () {
     it('should cancel pending movements', async function () {
       ayva.getAxis('L0').value.should.equal(0.5);
       ayva.getAxis('R0').value.should.equal(0.5);
-      ayva.getAxis('A0').value.should.equal(0.5);
+      ayva.getAxis('A0').value.should.equal(0);
 
       const promise = Promise.all([
         ayva.move({ axis: 'L0', to: 0, duration: 0.1 }),
@@ -980,7 +980,7 @@ describe('Motion API Tests', function () {
           },
           duration: 0.1,
         }),
-        ayva.move({ axis: 'A0', to: 0, duration: 0.1 }),
+        ayva.move({ axis: 'A0', to: 0.5, duration: 0.1 }),
       ]);
 
       const result = await promise;
@@ -992,7 +992,7 @@ describe('Motion API Tests', function () {
 
       ayva.getAxis('L0').value.should.equal(0.0);
       ayva.getAxis('R0').value.should.equal(0.500);
-      ayva.getAxis('A0').value.should.equal(0.500);
+      ayva.getAxis('A0').value.should.equal(0.000);
     });
   });
 });
