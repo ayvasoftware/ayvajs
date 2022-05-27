@@ -253,8 +253,12 @@ class TempestStrokeTransition extends AyvaBehavior {
   }
 
   generateActions (ayva) {
-    const defaultParams = {
+    const defaultParamsLinearRotation = {
       from: 0.5, to: 0.5, phase: 0, ecc: 0,
+    };
+
+    const defaultParamsAux = {
+      from: 0, to: 0, phase: 0, ecc: 0,
     };
 
     const sourceAxes = this.#getAxisMapByName(this.#source.axes, ayva);
@@ -263,6 +267,8 @@ class TempestStrokeTransition extends AyvaBehavior {
     const transitionAxisMoves = {};
 
     Object.keys(targetAxes).forEach((axis) => {
+      const defaultParams = ayva.getAxis(axis).type === 'auxiliary' ? defaultParamsAux : defaultParamsLinearRotation;
+
       const sourceAxis = sourceAxes[axis] ?? { ...defaultParams };
       const targetAxis = targetAxes[axis];
 
@@ -272,6 +278,8 @@ class TempestStrokeTransition extends AyvaBehavior {
     // Catch any dangling axes that were part of source but not part of target.
     Object.keys(sourceAxes).forEach((axis) => {
       if (!transitionAxisMoves[axis]) {
+        const defaultParams = ayva.getAxis(axis).type === 'auxiliary' ? defaultParamsAux : defaultParamsLinearRotation;
+
         const sourceAxis = sourceAxes[axis];
         const targetAxis = { ...defaultParams };
 
