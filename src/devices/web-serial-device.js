@@ -3,22 +3,15 @@
  * using the [Web Serial API]{@link https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API}.
  */
 class WebSerialDevice {
-  #baudRate;
+  connected = false;
 
-  #connected = false;
+  _baudRate;
 
-  #output = null;
+  _output = null;
 
-  #input = null;
+  _input = null;
 
-  #serial = null;
-
-  /**
-   * Whether the device is currently connected.
-   */
-  get connected () {
-    return this.#connected;
-  }
+  _serial = null;
 
   /**
    * Create a new WebSerialDevice.
@@ -30,8 +23,8 @@ class WebSerialDevice {
    * @param {Serial} [serial=navigator.serial] - Web Serial API interface.
    */
   constructor (baudRate = 115200, serial = null) {
-    this.#baudRate = baudRate;
-    this.#serial = serial || (globalThis.navigator ? globalThis.navigator.serial : null);
+    this._baudRate = baudRate;
+    this._serial = serial || (globalThis.navigator ? globalThis.navigator.serial : null);
   }
 
   /**
@@ -46,9 +39,9 @@ class WebSerialDevice {
    * @returns {Promise} a promise that resolves when the device is connected, and rejects if the device failed to connect.
    */
   async requestConnection () {
-    const port = await this.#serial.requestPort();
+    const port = await this._serial.requestPort();
 
-    await port.open({ baudRate: this.#baudRate });
+    await port.open({ baudRate: this._baudRate });
 
     const encoder = new TextEncoderStream();
     encoder.readable.pipeTo(port.writable);
@@ -56,19 +49,19 @@ class WebSerialDevice {
     const decoder = new TextDecoderStream();
     port.readable.pipeTo(decoder.writable);
 
-    this.#output = encoder.writable.getWriter();
-    this.#input = decoder.readable.getReader();
-    this.#connected = true;
+    this._output = encoder.writable.getWriter();
+    this._input = decoder.readable.getReader();
+    this.connected = true;
 
     const disconnectListener = (event) => {
       if (event.target === port) {
-        this.#connected = false;
+        this.connected = false;
 
-        this.#serial.removeEventListener('disconnect', disconnectListener);
+        this._serial.removeEventListener('disconnect', disconnectListener);
       }
     };
 
-    this.#serial.addEventListener('disconnect', disconnectListener);
+    this._serial.addEventListener('disconnect', disconnectListener);
 
     // Add a small delay so that the OSR has time to "boot" or w/e...
     return new Promise((resolve) => {
@@ -82,8 +75,8 @@ class WebSerialDevice {
    * @param {String} output - string to send to the device.
    */
   write (output) {
-    if (this.#connected) {
-      this.#output.write(output);
+    if (this.connected) {
+      this._output.write(output);
     } else {
       throw new Error('No device connected.');
     }
