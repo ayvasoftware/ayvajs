@@ -488,6 +488,13 @@ class Ayva {
     Object.defineProperty(this.$[axis], 'max', {
       get: () => this.#axes[axis].max,
     });
+
+    Object.defineProperty(this.$[axis], 'invert', {
+      get: () => this.#axes[axis].invert,
+      set: (target) => {
+        this.#axes[axis].invert = !!target;
+      },
+    });
   }
 
   /**
@@ -628,13 +635,18 @@ class Ayva {
    * @returns {String} the TCode string
    */
   #tcode (axis, value) {
+    const inverted = this.#axes[axis].invert;
     let valueText;
 
     if (typeof value === 'boolean') {
-      valueText = value ? '9999' : '0000';
+      const trueValue = inverted ? '0000' : '9999';
+      const falseValue = inverted ? '9999' : '0000';
+
+      valueText = value ? trueValue : falseValue;
     } else {
+      const invertedValue = inverted ? (1 - value) : value;
       const { min, max } = this.#axes[axis];
-      const normalizedValue = round(value * 0.9999, 4); // Convert values from range (0, 1) to (0, 0.9999)
+      const normalizedValue = round(invertedValue * 0.9999, 4); // Convert values from range (0, 1) to (0, 0.9999)
       const scaledValue = (max - min) * normalizedValue + min;
 
       valueText = `${clamp(round(scaledValue * 10000), 0, 9999)}`.padStart(4, '0');

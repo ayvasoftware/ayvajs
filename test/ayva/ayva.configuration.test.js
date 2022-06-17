@@ -2,6 +2,7 @@
 import { Blob } from 'buffer';
 import '../setup-chai.js';
 import sinon from 'sinon';
+import { expect } from 'chai';
 import Ayva from '../../src/ayva.js';
 import WorkerTimer from '../../src/util/worker-timer.js';
 import OSR_CONFIG from '../../src/util/osr-config.js';
@@ -32,6 +33,7 @@ describe('Configuration Tests', function () {
         expect(storedAxis.type).to.equal(axis.type);
         expect(storedAxis.max).to.equal(1);
         expect(storedAxis.min).to.equal(0);
+        expect(storedAxis.invert).to.equal(false);
 
         expect(ayva.$[axis.name]).to.not.be.undefined;
 
@@ -68,6 +70,7 @@ describe('Configuration Tests', function () {
         alias: 'stroke',
         max: 1,
         min: 0,
+        invert: false,
       };
 
       expectedConfig = { ...config, value: DEFAULT_VALUE, lastValue: DEFAULT_VALUE };
@@ -111,6 +114,12 @@ describe('Configuration Tests', function () {
       testConfigureAxis(config).should.throw(
         Error,
         `${invalidParametersMessage}: alias = [object Object], max = NaN, min = [object Object], name = 42, type = false`
+      );
+
+      config.invert = {};
+      testConfigureAxis(config).should.throw(
+        Error,
+        `${invalidParametersMessage}: alias = [object Object], invert = [object Object], max = NaN, min = [object Object], name = 42, type = false`
       );
     });
 

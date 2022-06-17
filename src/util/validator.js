@@ -151,6 +151,7 @@ export default {
       alias: 'string',
       max: 'number',
       min: 'number',
+      invert: 'boolean',
     };
 
     const missing = required.filter(
@@ -206,6 +207,7 @@ export default {
       min: axisConfig.min || 0,
       value: defaultValue,
       lastValue: defaultValue,
+      invert: axisConfig.invert || false,
     };
 
     if (resultConfig.max === resultConfig.min || resultConfig.min > resultConfig.max) {

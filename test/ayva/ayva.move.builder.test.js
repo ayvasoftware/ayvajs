@@ -211,6 +211,27 @@ describe('Move Builder Tests', function () {
       ayva.$.stroke.min.should.equal(0.1);
     });
 
+    it('should allow invert property through builder', async function () {
+      sinon.restore();
+      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+
+      expect(ayva.$.stroke).to.have.property('invert');
+
+      ayva.getAxis('stroke').invert.should.equal(false);
+      ayva.$.stroke.invert.should.equal(false);
+      ayva.$.stroke.invert = true;
+
+      ayva.getAxis('stroke').invert.should.equal(true);
+      ayva.$.stroke.invert.should.equal(true);
+
+      await ayva.$.stroke(0, 1).execute();
+
+      ayva.$.stroke.value.should.equal(0);
+      ayva.$.stroke.lastValue.should.equal(0.02);
+      write.callCount.should.equal(25);
+      write.args[24][0].should.equal('L09999\n');
+    });
+
     it('should allow updating value directly', function () {
       ayva.$.stroke.value.should.equal(0.5);
 
