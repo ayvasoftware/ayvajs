@@ -180,6 +180,26 @@ export default {
       }
     });
 
+    let { defaultValue } = axisConfig;
+
+    if (defaultValue !== undefined && defaultValue !== null) {
+      // Validate user supplied default value.
+      if (axisConfig.type === 'boolean') {
+        if (typeof defaultValue !== 'boolean') {
+          invalid.push('defaultValue');
+        }
+      } else if (!Number.isFinite(defaultValue) || defaultValue < 0 || defaultValue > 1) {
+        invalid.push('defaultValue');
+      }
+    } else if (axisConfig.type === 'boolean') {
+      defaultValue = false;
+    } else if (axisConfig.type === 'auxiliary') {
+      defaultValue = 0;
+    } else {
+      // 0.5 is home position for linear and rotation axes.
+      defaultValue = 0.5;
+    }
+
     if (invalid.length) {
       const message = invalid.sort().map((property) => `${property} = ${axisConfig[property]}`).join(', ');
       fail(`Invalid configuration parameter(s): ${message}`);
@@ -189,19 +209,9 @@ export default {
       fail(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
     }
 
-    let defaultValue;
-
-    if (axisConfig.type === 'boolean') {
-      defaultValue = false;
-    } else if (axisConfig.type === 'auxiliary') {
-      defaultValue = 0;
-    } else {
-      // 0.5 is home position for linear and rotation axes.
-      defaultValue = 0.5;
-    }
-
     const resultConfig = {
       ...axisConfig,
+      defaultValue,
       max: axisConfig.max || 1,
       min: axisConfig.min || 0,
       value: defaultValue,

@@ -481,6 +481,10 @@ class Ayva {
       get: () => this.#axes[axis].lastValue,
     });
 
+    Object.defineProperty(this.$[axis], 'defaultValue', {
+      get: () => this.#axes[axis].defaultValue,
+    });
+
     Object.defineProperty(this.$[axis], 'min', {
       get: () => this.#axes[axis].min,
     });
