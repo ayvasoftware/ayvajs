@@ -1,4 +1,4 @@
-/* eslint-disable no-new, no-await-in-loop */
+/* eslint-disable no-new, no-await-in-loop, no-unused-expressions */
 import '../setup-chai.js';
 import sinon from 'sinon';
 import { expect } from 'chai';
@@ -193,10 +193,14 @@ describe('Tempest Stroke Tests', function () {
 
     it('with default speed', async function () {
       verifyStart();
-      const moves = stroke.getTransitionMoves(ayva);
+      const moves = stroke.getStartMoves(ayva);
 
       moves.forEach((move) => {
-        move.speed.should.equal(1);
+        if (move.axis === 'B1' || move.axis === 'B2') {
+          expect(move.speed).to.be.undefined;
+        } else {
+          move.speed.should.equal(1);
+        }
       });
 
       await ayva.move(...moves);
@@ -205,10 +209,14 @@ describe('Tempest Stroke Tests', function () {
 
     it('with speed specified', async function () {
       verifyStart();
-      const moves = stroke.getTransitionMoves(ayva, { speed: 2 });
+      const moves = stroke.getStartMoves(ayva, { speed: 2 });
 
       moves.forEach((move) => {
-        move.speed.should.equal(2);
+        if (move.axis === 'B1' || move.axis === 'B2') {
+          expect(move.speed).to.be.undefined;
+        } else {
+          move.speed.should.equal(2);
+        }
       });
 
       await ayva.move(...moves);
@@ -217,10 +225,14 @@ describe('Tempest Stroke Tests', function () {
 
     it('with duration specified', async function () {
       verifyStart();
-      const moves = stroke.getTransitionMoves(ayva, { duration: 2 });
+      const moves = stroke.getStartMoves(ayva, { duration: 2 });
 
       moves.forEach((move) => {
-        move.duration.should.equal(2);
+        if (move.axis === 'B1' || move.axis === 'B2') {
+          expect(move.duration).to.be.undefined;
+        } else {
+          move.duration.should.equal(2);
+        }
       });
 
       await ayva.move(...moves);
@@ -336,6 +348,40 @@ describe('Tempest Stroke Tests', function () {
       });
 
       expect(ayva.$.A0.value).to.equal(0);
+    });
+
+    it('should create start moves that reset unused axes to default', function () {
+      const stroke = new TempestStroke({
+        L0: { from: 0, to: 1 },
+      });
+
+      const startMoves = stroke.getStartMoves(ayva);
+
+      const unusedMoves = ['A0', 'A1'].map((axis) => ({
+        // Auxiliary axes default to 0.
+        axis,
+        to: 0,
+        speed: 1,
+      }));
+
+      unusedMoves.push(...['B1', 'B2'].map((axis) => ({
+        // Boolean axes default to false.
+        axis,
+        to: false,
+      })));
+
+      unusedMoves.push(...['L1', 'L2', 'R0', 'R1', 'R2'].map((axis) => ({
+        // Linear and Rotation axes default to 0.5.
+        axis,
+        to: 0.5,
+        speed: 1,
+      })));
+
+      expect(startMoves).to.deep.equal([{
+        axis: 'L0',
+        to: 0,
+        speed: 1,
+      }, ...unusedMoves]);
     });
   });
 });

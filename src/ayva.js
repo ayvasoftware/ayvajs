@@ -347,6 +347,24 @@ class Ayva {
   }
 
   /**
+   * Fetch an array of the axes.
+   */
+  getAxes () {
+    return this.#getAxesArray().map((axis) => ({
+      // Ghetto deep copy, but its the most optimal.
+      name: axis.name,
+      alias: axis.alias,
+      type: axis.type,
+      defaultValue: axis.defaultValue,
+      max: axis.max,
+      min: axis.min,
+      value: axis.value,
+      lastValue: axis.lastValue,
+      resetOnStop: axis.resetOnStop,
+    }));
+  }
+
+  /**
    * Update the limits for the specified axis.
    *
    * @param {String} axis
