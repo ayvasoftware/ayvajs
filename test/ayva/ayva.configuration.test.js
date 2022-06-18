@@ -11,7 +11,6 @@ import { createTestConfig, createFunctionBinder } from '../test-helpers.js';
  * Contains all tests for Ayva's Axis Configuration.
  */
 describe('Configuration Tests', function () {
-  const DEFAULT_VALUE = 0.5; // The default value for linear, auxiliary, and rotation axes.
   const TEST_CONFIG = createTestConfig();
 
   describe('#constructor', function () {
@@ -42,10 +41,16 @@ describe('Configuration Tests', function () {
 
         if (storedAxis.type === 'boolean') {
           expect($axis.value).to.equal(false);
+          expect($axis.defaultValue).to.equal(false);
+          expect(storedAxis.defaultValue).to.equal(false);
         } else if (storedAxis.type === 'auxiliary') {
           expect($axis.value).to.equal(0);
+          expect($axis.defaultValue).to.equal(0);
+          expect(storedAxis.defaultValue).to.equal(0);
         } else {
           expect($axis.value).to.equal(0.5);
+          expect($axis.defaultValue).to.equal(0.5);
+          expect(storedAxis.defaultValue).to.equal(0.5);
         }
       }
     });
@@ -70,7 +75,9 @@ describe('Configuration Tests', function () {
         min: 0,
       };
 
-      expectedConfig = { ...config, value: DEFAULT_VALUE, lastValue: DEFAULT_VALUE };
+      expectedConfig = {
+        ...config, value: 0.5, lastValue: 0.5, defaultValue: 0.5,
+      };
 
       ayva = new Ayva();
 
@@ -112,6 +119,24 @@ describe('Configuration Tests', function () {
         Error,
         `${invalidParametersMessage}: alias = [object Object], max = NaN, min = [object Object], name = 42, type = false`
       );
+    });
+
+    it('should throw an error when default value is of an invalid type', function () {
+      config.defaultValue = 42;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = 42`);
+
+      config.defaultValue = false;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = false`);
+
+      // Boolean axis allows boolean default values, but not numerical.
+      config.type = 'boolean';
+      testConfigureAxis(config).should.not.throw(Error);
+      config.defaultValue = 0.5;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = 0.5`);
+
+      config.type = 'linear';
+      config.defaultValue = {};
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = [object Object]`);
     });
 
     it('should throw an error when min and max are the same', function () {
@@ -169,6 +194,22 @@ describe('Configuration Tests', function () {
 
       expect(result.min).to.equal(0);
       expect(result.max).to.equal(1);
+    });
+
+    it('should allow configuring default value', function () {
+      const configWithDefault = {
+        name: 'Z0',
+        type: 'linear',
+        defaultValue: 0.25,
+      };
+
+      ayva.configureAxis(configWithDefault);
+
+      const result = ayva.getAxis('Z0');
+
+      expect(result.defaultValue).to.equal(0.25);
+      expect(result.value).to.equal(0.25);
+      expect(result.lastValue).to.equal(0.25);
     });
 
     it('should only allow linear, rotation, auxiliary, or boolean for axis type', function () {
@@ -238,7 +279,7 @@ describe('Configuration Tests', function () {
         type: 'linear',
       });
 
-      ayva.getAxis('L0').value.should.equal(DEFAULT_VALUE);
+      ayva.getAxis('L0').value.should.equal(0.5);
       await ayva.move({ axis: 'L0', to: 0, speed: 1 });
       ayva.getAxis('L0').value.should.equal(0);
 

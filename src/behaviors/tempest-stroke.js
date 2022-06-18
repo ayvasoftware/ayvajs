@@ -59,6 +59,7 @@ class TempestStroke extends AyvaBehavior {
   }
 
   static get library () {
+    // TODO: Deep clone some other way.
     return JSON.parse(JSON.stringify(tempestStrokeLibrary));
   }
 
@@ -128,13 +129,6 @@ class TempestStroke extends AyvaBehavior {
   }
 
   /**
-   * @deprecated Since version 0.11.0 use getStartMoves() instead.
-   */
-  getTransitionMoves (ayva, mixinConfig) {
-    return this.getStartMoves(ayva, mixinConfig);
-  }
-
-  /**
    * Returns an array of moves that will move to the start position of this Tempest Stroke.
    * The speed of the moves default to 1 unit per second.
    *
@@ -149,8 +143,11 @@ class TempestStroke extends AyvaBehavior {
       speedConfig.speed = 1;
     }
 
-    return Object.keys(this.axes).map((axis) => {
-      const params = this.axes[axis];
+    const usedAxesMapByName = {};
+
+    const axesMoves = Object.keys(this.axes).map((axisNameOrAlias) => {
+      usedAxesMapByName[ayva.getAxis(axisNameOrAlias).name] = true;
+      const params = this.axes[axisNameOrAlias];
 
       const to = Ayva.tempestMotion(
         params.from,
@@ -162,12 +159,32 @@ class TempestStroke extends AyvaBehavior {
       )({ index: -1, frequency: ayva.frequency });
 
       return {
-        axis,
+        axis: axisNameOrAlias,
         to,
         ...speedConfig,
         ...mixinConfig,
       };
     });
+
+    const unusedAxesMoves = ayva.getAxes()
+      .filter((axis) => !usedAxesMapByName[axis.name])
+      .map((axis) => {
+        const movement = {
+          axis: axis.name,
+          to: axis.defaultValue,
+          ...speedConfig,
+          ...mixinConfig,
+        };
+
+        if (axis.type === 'boolean') {
+          delete movement.speed;
+          delete movement.duration;
+        }
+
+        return movement;
+      });
+
+    return [...axesMoves, ...unusedAxesMoves];
   }
 
   /**

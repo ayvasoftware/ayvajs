@@ -212,16 +212,25 @@ class Ayva {
   }
 
   /**
-   * Moves all linear and rotation axes to their neutral positions.
+   * Moves all axes to their default positions.
    *
-   * @param {Number} [to = 0.5] - optional target position to home to.
    * @param {Number} [speed = 0.5] - optional speed of the movement.
    * @return {Promise} A promise that resolves when the movements are finished.
    */
-  async home (to = 0.5, speed = 0.5) {
+  async home (speed = 0.5) {
     const movements = this.#getAxesArray()
-      .filter((axis) => axis.type === 'linear' || axis.type === 'rotation')
-      .map((axis) => ({ to, speed, axis: axis.name }));
+      .map((axis) => {
+        const movement = {
+          axis: axis.name,
+          to: axis.defaultValue,
+        };
+
+        if (axis.type !== 'boolean') {
+          movement.speed = speed;
+        }
+
+        return movement;
+      });
 
     if (movements.length) {
       return this.move(...movements);
@@ -238,6 +247,12 @@ class Ayva {
     this.#currentBehaviorId = null;
     this.#movements.clear();
     this.#sleepResolves.forEach((resolve) => resolve());
+
+    this.#getAxesArray().forEach((axis) => {
+      if (axis.resetOnStop) {
+        this.$[axis.name].value = axis.defaultValue;
+      }
+    });
   }
 
   /**
@@ -329,6 +344,24 @@ class Ayva {
     }
 
     return undefined;
+  }
+
+  /**
+   * Fetch an array of the axes.
+   */
+  getAxes () {
+    return this.#getAxesArray().map((axis) => ({
+      // Ghetto deep copy, but its the most optimal.
+      name: axis.name,
+      alias: axis.alias,
+      type: axis.type,
+      defaultValue: axis.defaultValue,
+      max: axis.max,
+      min: axis.min,
+      value: axis.value,
+      lastValue: axis.lastValue,
+      resetOnStop: axis.resetOnStop,
+    }));
   }
 
   /**
@@ -479,6 +512,10 @@ class Ayva {
 
     Object.defineProperty(this.$[axis], 'lastValue', {
       get: () => this.#axes[axis].lastValue,
+    });
+
+    Object.defineProperty(this.$[axis], 'defaultValue', {
+      get: () => this.#axes[axis].defaultValue,
     });
 
     Object.defineProperty(this.$[axis], 'min', {
