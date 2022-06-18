@@ -70,13 +70,27 @@ describe('Motion API Tests', function () {
       move.callCount.should.equal(1);
 
       const { args } = move.getCall(0);
-      const expectedParams = { to: 0.5, speed: 0.5 };
-      const expectedAxes = ['L0', 'L1', 'L2', 'R0', 'R1', 'R2'];
+      const expectedArgs = ['L0', 'L1', 'L2', 'R0', 'R1', 'R2'].map((axis) => ({
+        // Linear and Rotation axes default to 0.5.
+        axis,
+        to: 0.5,
+        speed: 0.5,
+      }));
 
-      args.length.should.equal(expectedAxes.length);
-      expectedAxes.forEach((axis, index) => {
-        args[index].should.deep.equal({ axis, ...expectedParams });
-      });
+      expectedArgs.unshift(...['B1', 'B2'].map((axis) => ({
+        // Boolean axes default to false.
+        axis,
+        to: false,
+      })));
+
+      expectedArgs.unshift(...['A0', 'A1'].map((axis) => ({
+        // Auxiliary axes default to 0.
+        axis,
+        to: 0,
+        speed: 0.5,
+      })));
+
+      args.should.deep.equal(expectedArgs);
     });
 
     it('should emit a warning when no linear or rotation axes are configured', function () {
