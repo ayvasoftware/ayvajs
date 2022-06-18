@@ -48,16 +48,19 @@ export default {
       name: 'A2',
       alias: 'lube',
       type: 'auxiliary',
+      resetOnStop: true,
     },
     {
       name: 'V0',
       alias: 'vibe0',
       type: 'auxiliary',
+      resetOnStop: true,
     },
     {
       name: 'V1',
       alias: 'vibe1',
       type: 'auxiliary',
+      resetOnStop: true,
     },
   ],
 };

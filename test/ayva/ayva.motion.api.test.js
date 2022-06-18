@@ -994,5 +994,33 @@ describe('Motion API Tests', function () {
       ayva.getAxis('R0').value.should.equal(0.500);
       ayva.getAxis('A0').value.should.equal(0.000);
     });
+
+    it('should reset axes configured with resetOnStop = true', async function () {
+      ayva.configureAxis({
+        name: 'V0',
+        type: 'auxiliary',
+        alias: 'vibe0',
+        resetOnStop: true,
+      });
+
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('V0').value.should.equal(0);
+
+      const promise = ayva.move(
+        { axis: 'L0', to: 0, duration: 0.1 },
+        { axis: 'V0', to: 0.5 }
+      );
+
+      ayva.stop();
+
+      const result = await promise;
+
+      expect(result).to.equal(false);
+
+      validateWriteOutput('L04000 V01000', 'V00000');
+
+      ayva.getAxis('L0').value.should.equal(0.4);
+      ayva.getAxis('V0').value.should.equal(0);
+    });
   });
 });

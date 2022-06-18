@@ -238,6 +238,12 @@ class Ayva {
     this.#currentBehaviorId = null;
     this.#movements.clear();
     this.#sleepResolves.forEach((resolve) => resolve());
+
+    this.#getAxesArray().forEach((axis) => {
+      if (axis.resetOnStop) {
+        this.$[axis.name].value = axis.defaultValue;
+      }
+    });
   }
 
   /**
