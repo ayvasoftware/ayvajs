@@ -272,93 +272,92 @@ describe('Behavior API Tests', function () {
   });
 
   describe('#ayva.do()', function () {
-    it('should run behavior until stopped', async function () {
-      const currentBehavior = {
-        perform: sinon.fake.returns(Promise.resolve()),
-      };
+    const behaviorTests = function (tag, generateFakeBehavior) {
+      it(`should run behavior until stopped (${tag})`, async function () {
+        const currentBehavior = generateFakeBehavior();
+        const perform = currentBehavior.perform ?? currentBehavior;
 
-      ayva.do(currentBehavior);
+        ayva.do(currentBehavior);
 
-      for (let i = 1; i < 10; i++) {
-        currentBehavior.perform.callCount.should.equal(i);
+        for (let i = 1; i < 10; i++) {
+          perform.callCount.should.equal(i);
+          await ayva.sleep();
+        }
+
+        perform.callCount.should.equal(10);
+        ayva.stop();
+
         await ayva.sleep();
-      }
 
-      currentBehavior.perform.callCount.should.equal(10);
-      ayva.stop();
+        perform.callCount.should.equal(10);
+      });
 
-      await ayva.sleep();
+      it(`should stop current behavior when starting a new one (${tag})`, async function () {
+        const currentBehavior = generateFakeBehavior();
+        const currentPerform = currentBehavior.perform ?? currentBehavior;
+        const nextBehavior = generateFakeBehavior();
+        const nextPerform = nextBehavior.perform ?? nextBehavior;
 
-      currentBehavior.perform.callCount.should.equal(10);
-    });
+        ayva.do(currentBehavior);
 
-    it('should stop current behavior when starting a new one', async function () {
-      const currentBehavior = {
-        perform: sinon.fake.returns(Promise.resolve()),
-      };
+        for (let i = 1; i < 10; i++) {
+          currentPerform.callCount.should.equal(i);
+          await ayva.sleep();
+        }
 
-      const nextBehavior = {
-        perform: sinon.fake.returns(Promise.resolve()),
-      };
+        currentPerform.callCount.should.equal(10);
 
-      ayva.do(currentBehavior);
+        ayva.do(nextBehavior);
+        await ayva.sleep(); // Give current behavior time to stop.
 
-      for (let i = 1; i < 10; i++) {
-        currentBehavior.perform.callCount.should.equal(i);
+        for (let i = 1; i < 10; i++) {
+          nextPerform.callCount.should.equal(i);
+          await ayva.sleep();
+        }
+
+        ayva.stop();
         await ayva.sleep();
-      }
 
-      currentBehavior.perform.callCount.should.equal(10);
+        currentPerform.callCount.should.equal(10);
+        nextPerform.callCount.should.equal(10);
+      });
 
-      ayva.do(nextBehavior);
-      await ayva.sleep(); // Give current behavior time to stop.
+      it(`should stop all previous behaviors before starting a new one (${tag})`, async function () {
+        const firstBehavior = generateFakeBehavior();
+        const firstPerform = firstBehavior.perform ?? firstBehavior;
+        const secondBehavior = generateFakeBehavior();
+        const secondPerform = secondBehavior.perform ?? secondBehavior;
+        const thirdBehavior = generateFakeBehavior();
+        const thirdPerform = thirdBehavior.perform ?? thirdBehavior;
 
-      for (let i = 1; i < 10; i++) {
-        nextBehavior.perform.callCount.should.equal(i);
+        ayva.do(firstBehavior);
+        ayva.do(secondBehavior);
+        ayva.do(thirdBehavior);
+
         await ayva.sleep();
-      }
 
-      ayva.stop();
-      await ayva.sleep();
+        firstPerform.callCount.should.equal(1);
+        secondPerform.callCount.should.equal(0);
 
-      currentBehavior.perform.callCount.should.equal(10);
-      nextBehavior.perform.callCount.should.equal(10);
-    });
+        for (let i = 1; i < 10; i++) {
+          thirdPerform.callCount.should.equal(i);
+          await ayva.sleep();
+        }
 
-    it('should stop all previous behaviors before starting a new one', async function () {
-      const firstBehavior = {
-        perform: sinon.fake.returns(Promise.resolve()),
-      };
-
-      const secondBehavior = {
-        perform: sinon.fake.returns(Promise.resolve()),
-      };
-
-      const thirdBehavior = {
-        perform: sinon.fake.returns(Promise.resolve()),
-      };
-
-      ayva.do(firstBehavior);
-      ayva.do(secondBehavior);
-      ayva.do(thirdBehavior);
-
-      await ayva.sleep();
-
-      firstBehavior.perform.callCount.should.equal(1);
-      secondBehavior.perform.callCount.should.equal(0);
-
-      for (let i = 1; i < 10; i++) {
-        thirdBehavior.perform.callCount.should.equal(i);
+        ayva.stop();
         await ayva.sleep();
-      }
 
-      ayva.stop();
-      await ayva.sleep();
+        firstPerform.callCount.should.equal(1);
+        secondPerform.callCount.should.equal(0);
+        thirdPerform.callCount.should.equal(10);
+      });
+    };
 
-      firstBehavior.perform.callCount.should.equal(1);
-      secondBehavior.perform.callCount.should.equal(0);
-      thirdBehavior.perform.callCount.should.equal(10);
-    });
+    behaviorTests('object', () => ({
+      perform: sinon.fake.returns(Promise.resolve()),
+    }));
+
+    behaviorTests('function', () => sinon.fake.returns(Promise.resolve()));
 
     it('should stop on a complete signal', async function () {
       behavior.generateActions = () => {

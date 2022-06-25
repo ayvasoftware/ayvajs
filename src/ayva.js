@@ -138,9 +138,11 @@ class Ayva {
 
     this.#performing = true;
 
+    const perform = typeof behavior === 'function' ? behavior : behavior.perform.bind(behavior);
+
     while (this.#currentBehaviorId === behaviorId && !behavior.complete) {
       try {
-        await behavior.perform(this);
+        await perform(this);
       } catch (error) {
         console.error(`Error performing behavior: ${error}`); // eslint-disable-line no-console
         break;
