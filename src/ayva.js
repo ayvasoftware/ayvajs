@@ -28,6 +28,8 @@ class Ayva {
 
   #sleepResolves = new Set();
 
+  #readyResolves = new Set();
+
   defaultRamp = Ayva.RAMP_COS;
 
   static get precision () {
@@ -201,7 +203,23 @@ class Ayva {
 
     return this.#performMovements(movementId, movements).finally(() => {
       this.#movements.delete(movementId);
+      this.#checkNotifyReady();
     });
+  }
+
+  /**
+   * Wait until ayva is not doing anything (neither moving nor sleeping).
+   *
+   * @return {Promise} a promise that resolves when there are no more moves or sleeps queued.
+   */
+  ready () {
+    if (this.#sleepResolves.size || this.#movements.size) {
+      return new Promise((resolve) => {
+        this.#readyResolves.add(resolve);
+      });
+    }
+
+    return Promise.resolve();
   }
 
   /**
@@ -276,6 +294,7 @@ class Ayva {
       sleepCanceller.then(() => false),
     ]).finally(() => {
       this.#sleepResolves.delete(sleepResolve);
+      this.#checkNotifyReady();
     });
   }
 
@@ -838,6 +857,16 @@ class Ayva {
     }
 
     return Object.values(uniqueAxes).sort(sortByName);
+  }
+
+  #checkNotifyReady () {
+    if (this.#sleepResolves.size === 0 && this.#movements.size === 0 && this.#readyResolves.size) {
+      for (const resolve of this.#readyResolves) {
+        resolve();
+      }
+
+      this.#readyResolves.clear();
+    }
   }
 
   /**

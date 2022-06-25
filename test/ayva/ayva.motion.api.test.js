@@ -122,6 +122,41 @@ describe('Motion API Tests', function () {
     });
   });
 
+  describe('#ready', function () {
+    it('should resolve when there are no actions queued', async function () {
+      await ayva.ready().should.be.fulfilled;
+    });
+
+    it('should resolve when move is finished', async function () {
+      ayva.move({ to: 0, speed: 1 });
+
+      await ayva.ready().should.be.fulfilled;
+
+      expect(ayva.$.stroke.value).to.equal(0);
+    });
+
+    it('should resolve when multiple moves are finished', async function () {
+      ayva.move({ to: 0, speed: 1 });
+      ayva.move({ to: 0.75, speed: 1 });
+
+      await ayva.ready().should.be.fulfilled;
+
+      expect(ayva.$.stroke.value).to.equal(0.75);
+    });
+
+    it('should resolve only when queued actions are finished', async function () {
+      // TODO: Checking that the time has elapsed might not be the best way to do this...
+      sinon.restore(); // So we can test actual sleep function.
+      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+
+      const startTime = performance.now();
+      ayva.sleep(0.02);
+      await ayva.ready().should.be.fulfilled;
+
+      expect(performance.now() - startTime).to.be.above(20); // Should have waited at least 20ms.
+    });
+  });
+
   /**
    * Invalid movements.
    */
