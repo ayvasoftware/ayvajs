@@ -145,6 +145,9 @@ class Ayva {
     while (this.#currentBehaviorId === behaviorId && !behavior.complete) {
       try {
         await perform(this);
+
+        // Allow any moves or sleeps that were queued to complete.
+        await this.ready();
       } catch (error) {
         console.error(`Error performing behavior: ${error}`); // eslint-disable-line no-console
         break;
