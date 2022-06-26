@@ -74,3 +74,10 @@ export function createFunctionBinder (object, method) {
     return object[method].bind(object, ...args);
   };
 }
+
+/**
+ * @returns Promise that resolves when enough ticks for a behavior cycle to complete have elapsed.
+ */
+export async function tickBehavior () {
+  await Promise.resolve();
+}

@@ -3,7 +3,7 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import AyvaBehavior from '../../src/behaviors/ayva-behavior.js';
-import { createTestConfig } from '../test-helpers.js';
+import { createTestConfig, tickBehavior } from '../test-helpers.js';
 
 describe('Behavior API Tests', function () {
   let ayva;
@@ -273,8 +273,6 @@ describe('Behavior API Tests', function () {
 
   describe('#ayva.do()', function () {
     const behaviorTests = function (tag, generateFakeBehavior) {
-      // TODO: These tests are too brittle. They rely on the details
-      // of Ayva's internal behavior loop. Refactor.
       it(`should run behavior until stopped (${tag})`, async function () {
         const currentBehavior = generateFakeBehavior();
         const perform = currentBehavior.perform ?? currentBehavior;
@@ -283,15 +281,13 @@ describe('Behavior API Tests', function () {
 
         for (let i = 1; i < 10; i++) {
           perform.callCount.should.equal(i);
-          await ayva.sleep(); // perform()
-          await ayva.sleep(); // ready()
+          await tickBehavior();
         }
 
         perform.callCount.should.equal(10);
         ayva.stop();
 
-        await ayva.sleep(); // perform()
-        await ayva.sleep(); // ready()
+        await tickBehavior();
 
         perform.callCount.should.equal(10);
       });
@@ -306,26 +302,22 @@ describe('Behavior API Tests', function () {
 
         for (let i = 1; i < 10; i++) {
           currentPerform.callCount.should.equal(i);
-          await ayva.sleep(); // perform()
-          await ayva.sleep(); // ready()
+          await tickBehavior();
         }
 
         currentPerform.callCount.should.equal(10);
 
         ayva.do(nextBehavior);
         // Give current behavior time to stop.
-        await ayva.sleep(); // perform()
-        await ayva.sleep(); // ready()
+        await tickBehavior();
 
         for (let i = 1; i < 10; i++) {
           nextPerform.callCount.should.equal(i);
-          await ayva.sleep(); // perform()
-          await ayva.sleep(); // ready()
+          await tickBehavior();
         }
 
         ayva.stop();
-        await ayva.sleep(); // perform()
-        await ayva.sleep(); // ready()
+        await tickBehavior();
 
         currentPerform.callCount.should.equal(10);
         nextPerform.callCount.should.equal(10);
@@ -339,25 +331,24 @@ describe('Behavior API Tests', function () {
         const thirdBehavior = generateFakeBehavior();
         const thirdPerform = thirdBehavior.perform ?? thirdBehavior;
 
+        console.error('start-test-why');
         ayva.do(firstBehavior);
         ayva.do(secondBehavior);
         ayva.do(thirdBehavior);
 
-        await ayva.sleep(); // perform()
-        await ayva.sleep(); // ready()
+        await tickBehavior();
+        console.error('huh?');
 
         firstPerform.callCount.should.equal(1);
         secondPerform.callCount.should.equal(0);
 
         for (let i = 1; i < 10; i++) {
           thirdPerform.callCount.should.equal(i);
-          await ayva.sleep(); // perform()
-          await ayva.sleep(); // ready()
+          await tickBehavior();
         }
 
         ayva.stop();
-        await ayva.sleep(); // perform()
-        await ayva.sleep(); // ready()
+        await tickBehavior();
 
         firstPerform.callCount.should.equal(1);
         secondPerform.callCount.should.equal(0);
