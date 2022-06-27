@@ -25,8 +25,8 @@ describe('Classic Stroke Tests', function () {
    * Performs the specified stroke and checks that ayva.move() was called with the expected move.
    */
   const testStroke = async function (stroke, expectedMove, index = 0) {
-    await stroke.perform(ayva); // Generate stroke.
     await stroke.perform(ayva); // Perform stroke.
+    await stroke.perform(ayva); // Restart
 
     ayva.move.args[index][0].should.deep.equal(expectedMove);
     ayva.$.stroke.value.should.equal(expectedMove.to);
@@ -311,8 +311,8 @@ describe('Classic Stroke Tests', function () {
           },
         });
 
-        await stroke.perform(ayva); // Generate stroke.
-        await stroke.perform(ayva); // Perform stroke.
+        await stroke.perform(ayva); // Perform.
+        await stroke.perform(ayva); // Restart.
 
         ayva.move.callCount.should.equal(1);
         let move = ayva.move.args[0][1];
@@ -358,6 +358,10 @@ describe('Classic Stroke Tests', function () {
     });
 
     it('should allow suck algorithm', async function () {
+      sinon.restore();
+      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+      sinon.replace(ayva, 'move', sinon.fake()); // Suppress output from move();
+
       const write = sinon.fake();
       ayva.addOutputDevice({ write });
 

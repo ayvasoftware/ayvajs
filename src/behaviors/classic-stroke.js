@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import Ayva from '../ayva.js';
-import AyvaBehavior from './ayva-behavior.js';
+import GeneratorBehavior from './generator-behavior.js';
 import { has, validNumber } from '../util/util.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 
@@ -13,7 +13,7 @@ import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
  *
  * See the [Classic Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs-docs/tutorial-behavior-api-classic-stroke.html}.
  */
-class ClassicStroke extends AyvaBehavior {
+class ClassicStroke extends GeneratorBehavior {
   #top;
 
   #bottom;
@@ -94,55 +94,53 @@ class ClassicStroke extends AyvaBehavior {
     this.#init(config);
   }
 
-  generateActions () {
-    this.queueFunction((behavior, ayva) => {
-      const { value, lastValue } = ayva.$.stroke;
-      const {
-        target, shape, direction, relativeSpeed,
-      } = this.#getTargetShape(value, lastValue);
-      const speed = this.#speed * relativeSpeed;
+  * generate (ayva) {
+    const { value, lastValue } = ayva.$.stroke;
+    const {
+      target, shape, direction, relativeSpeed,
+    } = this.#getTargetShape(value, lastValue);
+    const speed = this.#speed * relativeSpeed;
 
-      const strokeMove = {
-        to: target,
-        value: shape,
-      };
+    const strokeMove = {
+      to: target,
+      value: shape,
+    };
 
-      if (this.#config.speed !== undefined) {
-        strokeMove.speed = speed;
-        this.#speed = this.#config.speed.next();
-      } else {
-        strokeMove.duration = this.#duration / relativeSpeed;
-        this.#duration = this.#config.duration.next();
-      }
+    if (this.#config.speed !== undefined) {
+      strokeMove.speed = speed;
+      this.#speed = this.#config.speed.next();
+    } else {
+      strokeMove.duration = this.#duration / relativeSpeed;
+      this.#duration = this.#config.duration.next();
+    }
 
-      const moves = [strokeMove];
+    const moves = [strokeMove];
 
-      if (this.#config.twist) {
-        moves.push(this.#computeAxisMove('twist', {
-          direction,
-          value,
-          target,
-          ayva,
-          speed: this.#config.speed !== undefined ? speed : Math.abs(target - value) / strokeMove.duration,
-        }));
-      }
+    if (this.#config.twist) {
+      moves.push(this.#computeAxisMove('twist', {
+        direction,
+        value,
+        target,
+        ayva,
+        speed: this.#config.speed !== undefined ? speed : Math.abs(target - value) / strokeMove.duration,
+      }));
+    }
 
-      if (this.#config.pitch) {
-        moves.push(this.#computeAxisMove('pitch', {
-          direction,
-          value,
-          target,
-          ayva,
-          speed: this.#config.speed !== undefined ? speed : Math.abs(target - value) / strokeMove.duration,
-        }));
-      }
+    if (this.#config.pitch) {
+      moves.push(this.#computeAxisMove('pitch', {
+        direction,
+        value,
+        target,
+        ayva,
+        speed: this.#config.speed !== undefined ? speed : Math.abs(target - value) / strokeMove.duration,
+      }));
+    }
 
-      behavior.insertMove(...moves);
+    if (validNumber(this.#config.suck, 0, 1)) {
+      ayva.$.suck.value = this.#config.suck;
+    }
 
-      if (validNumber(this.#config.suck, 0, 1)) {
-        ayva.$.suck.value = this.#config.suck;
-      }
-    });
+    yield moves;
   }
 
   #init (config) {
