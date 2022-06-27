@@ -126,7 +126,7 @@ class Ayva {
    *
    * For full details on how to use this method, see the {@tutorial behavior-api} tutorial.
    *
-   * @param {AyvaBehavior} behavior - the behavior to perform.
+   * @param {GeneratorBehavior|Function|Object} behavior - the behavior to perform.
    */
   async do (behavior) {
     this.stop();

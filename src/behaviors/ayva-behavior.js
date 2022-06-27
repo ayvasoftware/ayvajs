@@ -2,6 +2,7 @@ import MoveBuilder from '../util/move-builder.js';
 
 /**
  * Base class for Ayva Behaviors.
+ * @deprecated since v0.13.0. Use GeneratorBehavior instead.
  */
 class AyvaBehavior {
   #actions = [];
