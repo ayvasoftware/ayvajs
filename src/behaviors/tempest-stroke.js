@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable no-use-before-define */
-import AyvaBehavior from './ayva-behavior.js';
+import GeneratorBehavior from './generator-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
@@ -11,7 +11,7 @@ import { createConstantProperty, has, validNumber } from '../util/util.js';
  * number of axes with a formula loosely based on orbital motion calculations.
  * See the [Tempest Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs-docs/tutorial-behavior-api-tempest-stroke.html}.
  */
-class TempestStroke extends AyvaBehavior {
+class TempestStroke extends GeneratorBehavior {
   #angle;
 
   #bpm;
@@ -114,18 +114,14 @@ class TempestStroke extends AyvaBehavior {
     this.#bpm = this.#bpmProvider.next();
   }
 
-  generateActions () {
+  * generate () {
     const { granularity } = TempestStroke;
 
     for (let i = 0; i < granularity; i++) {
-      this.queueFunction((behavior) => {
-        this.#createMoves(behavior, i);
-      });
+      yield this.#createMoves(i);
     }
 
-    this.queueFunction(() => {
-      this.#angle += Math.PI;
-    });
+    this.#angle += Math.PI;
   }
 
   /**
@@ -220,7 +216,7 @@ class TempestStroke extends AyvaBehavior {
     };
   }
 
-  #createMoves (behavior, index) {
+  #createMoves (index) {
     const { granularity } = TempestStroke;
     const moves = Object.keys(this.axes).map((axis) => {
       const params = this.axes[axis];
@@ -241,8 +237,8 @@ class TempestStroke extends AyvaBehavior {
       };
     });
 
-    behavior.insertMove(...moves);
     this.#bpm = this.#bpmProvider.next();
+    return moves;
   }
 
   #createBlendBehavior (targetTempestStroke, duration) {
@@ -255,7 +251,7 @@ class TempestStroke extends AyvaBehavior {
   }
 }
 
-class TempestStrokeTransition extends AyvaBehavior {
+class TempestStrokeTransition extends GeneratorBehavior {
   #source;
 
   #target;
@@ -269,7 +265,7 @@ class TempestStrokeTransition extends AyvaBehavior {
     this.#duration = duration;
   }
 
-  generateActions (ayva) {
+  * generate (ayva) {
     const defaultParamsLinearRotation = {
       from: 0.5, to: 0.5, phase: 0, ecc: 0,
     };
@@ -312,8 +308,8 @@ class TempestStrokeTransition extends AyvaBehavior {
       });
     });
 
-    this.queueMove(...moves);
-    this.queueComplete();
+    yield moves;
+    this.complete = true;
   }
 
   #createTransitionAxisMove (sourceAxis, targetAxis) {

@@ -12,11 +12,10 @@ describe('Tempest Stroke Tests', function () {
 
   const performTempestStroke = async function (stroke) {
     for (let i = 0; i < TempestStroke.granularity; i++) {
-      await stroke.perform(ayva); // Generate Slice
-      await stroke.perform(ayva); // Perform Slice
+      await stroke.perform(ayva); // Perform Slice.
     }
 
-    await stroke.perform(ayva); // Update Angle
+    await stroke.perform(ayva); // Restart.
   };
 
   beforeEach(function () {
