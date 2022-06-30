@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import Ayva from '../../src/ayva.js';
 import TempestStroke from '../../src/behaviors/tempest-stroke.js';
-import { createTestConfig } from '../test-helpers.js';
+import { createTestConfig, mockSleep, spyMove } from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 describe('Tempest Stroke Tests', function () {
@@ -21,8 +21,8 @@ describe('Tempest Stroke Tests', function () {
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
     ayva.addOutputDevice({ write: sinon.fake() });
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-    sinon.replace(ayva, 'move', sinon.fake(ayva.move));
+    mockSleep(ayva);
+    spyMove(ayva);
     TempestStroke.granularity = 6;
   });
 

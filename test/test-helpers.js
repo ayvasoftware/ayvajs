@@ -1,3 +1,5 @@
+import sinon from 'sinon';
+
 /**
  * Return a simple OSR2 test configuration.
  */
@@ -81,3 +83,61 @@ export function createFunctionBinder (object, method) {
 export async function tickBehavior () {
   await Promise.resolve();
 }
+
+/**
+ * Shorthand for replacing function with mock version that returns a result.
+ */
+export function mock (obj, property, result) {
+  const replacement = sinon.fake.returns(result);
+  sinon.replace(obj, property, replacement);
+  return replacement;
+}
+
+/**
+ * Shorthand for replacing function with spied version.
+ */
+export function spy (obj, property) {
+  const replacement = sinon.fake(obj[property]);
+  sinon.replace(obj, property, replacement);
+  return replacement;
+}
+
+/**
+ * Mock ayva.move()
+ */
+export function mockMove (ayva) {
+  return mock(ayva, 'move', Promise.resolve(true));
+}
+
+/**
+ * Spy ayva.move()
+ */
+export function spyMove (ayva) {
+  return spy(ayva, 'move');
+}
+
+/**
+ * Mock ayva.sleep()
+ */
+export function mockSleep (ayva) {
+  return mock(ayva, 'sleep', Promise.resolve(true));
+}
+
+/**
+ * Spy ayva.sleep()
+ */
+export function spySleep (ayva) {
+  return spy(ayva, 'sleep');
+}
+
+/**
+ * Mock output device.
+ */
+export function mockOutput (ayva) {
+  const write = sinon.fake();
+  ayva.addOutputDevice({ write });
+
+  return write;
+}
+
+export { restore } from 'sinon';

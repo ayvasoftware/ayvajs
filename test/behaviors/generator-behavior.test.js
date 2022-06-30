@@ -1,78 +1,86 @@
 /* eslint-disable no-await-in-loop, no-console, no-unused-expressions */
 import '../setup-chai.js';
-import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import GeneratorBehavior from '../../src/behaviors/generator-behavior.js';
-import { createTestConfig, tickBehavior } from '../test-helpers.js';
+import {
+  createTestConfig, tickBehavior, spy, mockMove, mockSleep, mockOutput, restore
+} from '../test-helpers.js';
+
+/**
+ * Test helper to create a GeneratorBehavior with the specified implementation of generate().
+ */
+function createGeneratorBehavior (generate) {
+  const result = new GeneratorBehavior();
+  result.generate = generate;
+  return result;
+}
+
+/**
+ * Test helper to create a GeneratorBehavior with an implementation of generate() that yields the specified results.
+ */
+function createGeneratorBehaviorThatYields (...yieldResults) {
+  const resultBehavior = new GeneratorBehavior();
+  resultBehavior.generate = function* () {
+    for (const yieldResult of yieldResults) {
+      yield yieldResult;
+    }
+  };
+
+  return resultBehavior;
+}
 
 describe('Generator Behavior Tests', function () {
   let ayva;
-  let behavior;
 
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
-    sinon.replace(ayva, 'move', sinon.fake(ayva.move));
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve(true)));
 
-    ayva.addOutputDevice({
-      write: sinon.fake(),
-    });
-
-    behavior = new GeneratorBehavior();
+    mockSleep(ayva);
+    mockMove(ayva);
+    mockOutput(ayva);
   });
 
   afterEach(function () {
-    ayva.stop();
+    restore();
   });
 
   describe('#generate', function () {
     it('can yield a single axis move', async function () {
-      const action = {
-        to: 0,
-        speed: 1,
-      };
-
-      behavior.generate = function* () {
-        yield action;
-      };
+      const action = { to: 0, speed: 1 };
+      const behavior = createGeneratorBehaviorThatYields(action);
 
       const result = await behavior.perform(ayva);
 
       expect(result).to.be.true;
       ayva.move.callCount.should.equal(1);
-      ayva.move.args[0][0].should.deep.equal(action);
+      expect(ayva.move.firstArg).to.deep.equal(action);
     });
 
     it('can yield a multi axis move', async function () {
-      const moves = [{
+      const action = [{
         to: 0,
         speed: 1,
       }, {
         axis: 'twist',
         to: 0,
       }];
-
-      behavior.generate = function* () {
-        yield moves;
-      };
+      const behavior = createGeneratorBehaviorThatYields(action);
 
       const result = await behavior.perform(ayva);
 
       expect(result).to.be.true;
       ayva.move.callCount.should.equal(1);
-      ayva.move.args[0].should.deep.equal(moves);
+      ayva.move.args[0].should.deep.equal(action);
     });
 
     it('can yield a move builder', async function () {
-      behavior.generate = function* () {
-        yield ayva.$.stroke(0, 1);
-      };
+      const behavior = createGeneratorBehaviorThatYields(ayva.$.stroke(0, 1));
 
       const result = await behavior.perform(ayva);
 
       expect(result).to.be.true;
       ayva.move.callCount.should.equal(1);
-      ayva.move.args[0][0].should.deep.equal({
+      expect(ayva.move.firstArg).to.deep.equal({
         axis: 'stroke',
         to: 0,
         speed: 1,
@@ -80,9 +88,7 @@ describe('Generator Behavior Tests', function () {
     });
 
     it('can yield a promise', async function () {
-      behavior.generate = function* () {
-        yield Promise.resolve('result');
-      };
+      const behavior = createGeneratorBehaviorThatYields(Promise.resolve('result'));
 
       const result = await behavior.perform(ayva);
 
@@ -90,26 +96,24 @@ describe('Generator Behavior Tests', function () {
     });
 
     it('can yield a sleep', async function () {
-      behavior.generate = function* () {
-        yield 1;
-      };
+      const behavior = createGeneratorBehaviorThatYields(1);
 
       const result = await behavior.perform(ayva);
 
       expect(result).to.be.true;
       ayva.sleep.callCount.should.equal(1);
-      ayva.sleep.args[0][0].should.equal(1);
+      expect(ayva.sleep.firstArg).to.equal(1);
     });
 
     it('handles multiple actions', async function () {
-      behavior.generate = function* () {
-        yield { to: 0, speed: 1 };
-        yield { to: 1, speed: 1 };
-      };
+      const behavior = createGeneratorBehaviorThatYields(
+        { to: 0, speed: 1 },
+        { to: 1, speed: 1 }
+      );
 
       expect(await behavior.perform(ayva)).to.equal(true);
       expect(await behavior.perform(ayva)).to.equal(true);
-      expect(await behavior.perform(ayva)).to.equal(undefined); // Restarting generation...
+      expect(await behavior.perform(ayva)).to.equal(undefined); // Restarting generation... TODO: Figure out how to remove this step.
       expect(await behavior.perform(ayva)).to.equal(true);
 
       ayva.move.callCount.should.equal(3);
@@ -118,15 +122,37 @@ describe('Generator Behavior Tests', function () {
       ayva.move.args[2][0].should.deep.equal({ to: 0, speed: 1 });
     });
 
-    it('integrates with ayva.do()', async function () {
-      sinon.restore();
-      sinon.replace(ayva, 'move', sinon.fake());
-      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve(true)));
-
-      behavior.generate = function* () {
+    it('can complete behavior by setting complete property to true', async function () {
+      // Arrange
+      const behavior = createGeneratorBehavior(function* () {
         yield { to: 0, speed: 1 };
         yield { to: 1, speed: 1 };
-      };
+
+        this.complete = true;
+      });
+
+      // Act
+      const behaviorPromise = ayva.do(behavior);
+
+      // Assert state while behavior is running.
+      expect(ayva.performing).to.be.true;
+      expect(behavior.complete).to.be.false;
+      ayva.move.callCount.should.equal(1);
+      ayva.move.args[0][0].should.deep.equal({ to: 0, speed: 1 });
+
+      // Assert state after behavior completes.
+      expect(await behaviorPromise).to.equal(true);
+      expect(ayva.performing).to.be.false;
+      expect(behavior.complete).to.be.true;
+      ayva.move.callCount.should.equal(2);
+      ayva.move.args[1][0].should.deep.equal({ to: 1, speed: 1 });
+    });
+
+    it('integrates with ayva.do() and ayva.stop()', async function () {
+      const behavior = createGeneratorBehaviorThatYields(
+        { to: 0, speed: 1 },
+        { to: 1, speed: 1 }
+      );
 
       ayva.do(behavior); // TODO: Fix test so that if it fails it doesn't hang forever.
 
@@ -149,78 +175,41 @@ describe('Generator Behavior Tests', function () {
       expect(ayva.performing).to.be.false;
     });
 
-    it('can complete behavior by setting complete property to true', async function () {
-      sinon.restore();
-      sinon.replace(ayva, 'move', sinon.fake());
-      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve(true)));
-
-      behavior.generate = function* () {
-        yield { to: 0, speed: 1 };
-
-        this.complete = true;
-      };
-
-      ayva.do(behavior);
-
-      expect(ayva.performing).to.be.true;
-      ayva.move.callCount.should.equal(1);
-      ayva.move.args[0][0].should.deep.equal({ to: 0, speed: 1 });
-      await tickBehavior();
-
-      ayva.move.callCount.should.equal(1);
-
-      await tickBehavior();
-      ayva.move.callCount.should.equal(1);
-      expect(ayva.performing).to.be.false;
-    });
-
     it('throws an error when yielding an invalid value', async function () {
-      behavior.generate = function* () {
+      restore();
+
+      const behavior = createGeneratorBehavior(function* () {
         yield -1;
-      };
+      });
 
       return behavior.perform(ayva).should.be.rejectedWith(Error, 'Invalid movement: -1');
     });
 
     it('throws an error when generate() is not implemented', async function () {
-      const generator = behavior.generate();
+      const generator = new GeneratorBehavior().generate();
       (() => generator.next()).should.throw(Error, 'generate() not implemented.');
     });
   });
 
-  describe('#iterate', function () {
-    it('should repeat generator the specified number of times', function () {
-      behavior.generate = sinon.fake(function* () {
-        yield;
-      });
-
-      const generator = behavior.iterate(2, ayva);
-
-      generator.next();
-      generator.next();
-
-      behavior.generate.callCount.should.equal(2);
-    });
-
+  describe('#iterated', function () {
     it('should allow yielding child behaviors', async function () {
-      const childBehavior = new GeneratorBehavior();
-      childBehavior.generate = function* () {
+      const childBehavior = createGeneratorBehavior(function* () {
         yield { to: 0, speed: 1 };
         yield { to: 1, speed: 1 };
-      };
+      });
 
-      const compositeBehavior = new GeneratorBehavior();
-      compositeBehavior.generate = function* () {
+      const compositeBehavior = createGeneratorBehavior(function* () {
         yield { to: 1, speed: 2 };
-        yield* childBehavior.iterate(2, ayva);
+        yield* childBehavior.iterated(ayva, 2);
         yield { to: 0, speed: 0.5 };
+
         this.complete = true;
-      };
+      });
 
       await ayva.do(compositeBehavior);
 
       expect(ayva.performing).to.equal(false);
-
+      expect(compositeBehavior.complete).to.equal(true);
       ayva.move.callCount.should.equal(6);
       ayva.move.args[0][0].should.deep.equal({ to: 1, speed: 2 });
       ayva.move.args[1][0].should.deep.equal({ to: 0, speed: 1 });
@@ -228,6 +217,114 @@ describe('Generator Behavior Tests', function () {
       ayva.move.args[3][0].should.deep.equal({ to: 0, speed: 1 });
       ayva.move.args[4][0].should.deep.equal({ to: 1, speed: 1 });
       ayva.move.args[5][0].should.deep.equal({ to: 0, speed: 0.5 });
+    });
+  });
+
+  describe('#callable', function () {
+    let behavior;
+    const expectedResult = 42;
+
+    beforeEach(function () {
+      behavior = createGeneratorBehaviorThatYields(expectedResult);
+
+      spy(behavior, 'iterated');
+      spy(behavior, 'generate');
+    });
+
+    it('calls generate when invoking callable', function () {
+      const generator = behavior();
+
+      expect(generator.next().value).to.equal(expectedResult);
+      behavior.generate.callCount.should.equal(1);
+      expect(behavior.generate.firstArg).to.be.undefined;
+    });
+
+    it('calls generate when invoking callable with ayva instance', function () {
+      const generator = behavior(ayva);
+
+      expect(generator.next().value).to.equal(expectedResult);
+      behavior.generate.callCount.should.equal(1);
+      expect(behavior.generate.firstArg).to.deep.equal(ayva);
+    });
+
+    it('calls iterated when invoking callable with ayva instance and count', function () {
+      const count = 2;
+
+      const generator = behavior(ayva, count);
+
+      expect(generator.next().value).to.equal(expectedResult);
+      behavior.iterated.callCount.should.equal(1);
+      behavior.iterated.args[0][0].should.equal(ayva);
+      behavior.iterated.args[0][1].should.equal(count);
+    });
+
+    describe('#bind()', function () {
+      beforeEach(function () {
+        behavior = createGeneratorBehavior(function* (ayvaInstance) {
+          yield ayvaInstance.stroke(0, 1);
+        });
+      });
+
+      it('auto-binds ayva instance to generate', function () {
+        const result = behavior.bind(ayva);
+
+        behavior.generate().next();
+
+        expect(result).to.deep.equal(behavior);
+        ayva.move.callCount.should.equal(1);
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+      });
+
+      it('auto-binds ayva instance to iterated', function () {
+        const result = behavior.bind(ayva);
+
+        behavior.iterated().next();
+
+        expect(result).to.deep.equal(behavior);
+        ayva.move.callCount.should.equal(1);
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+      });
+
+      it('auto-binds ayva instance to callable', function () {
+        const result = behavior.bind(ayva);
+
+        behavior().next();
+
+        expect(result).to.deep.equal(behavior);
+        ayva.move.callCount.should.equal(1);
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+      });
+
+      it('auto-binds ayva instance to callable for iterated', function () {
+        const count = 2;
+        const result = behavior.bind(ayva);
+        const iteratedSpy = spy(behavior, 'iterated');
+
+        behavior(count).next();
+
+        expect(result).to.deep.equal(behavior);
+        ayva.move.callCount.should.equal(1);
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+        iteratedSpy.callCount.should.equal(1);
+        iteratedSpy.args[0][0].should.equal(count);
+      });
+
+      it('allows changing the binding', function () {
+        behavior.bind(ayva);
+        behavior.unbind();
+
+        (function () { behavior.generate().next(); }).should.throw(TypeError);
+        (function () { behavior.iterated().next(); }).should.throw(TypeError);
+      });
+
+      it('binding more than once has no adverse effects', function () {
+        behavior.bind(ayva);
+        behavior.bind(ayva);
+        behavior.unbind();
+
+        (function () { behavior.generate().next(); }).should.throw(TypeError);
+        (function () { behavior.iterated().next(); }).should.throw(TypeError);
+      });
     });
   });
 });

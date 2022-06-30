@@ -3,7 +3,7 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import MoveBuilder from '../../src/util/move-builder.js';
-import { createTestConfig } from '../test-helpers.js';
+import { createTestConfig, mockMove, mockSleep } from '../test-helpers.js';
 
 describe('Move Builder Tests', function () {
   let ayva;
@@ -15,7 +15,7 @@ describe('Move Builder Tests', function () {
     ayva = new Ayva(createTestConfig());
     ayva.defaultRamp = Ayva.RAMP_LINEAR;
     ayva.addOutputDevice({ write });
-    sinon.replace(ayva, 'move', sinon.fake());
+    mockMove(ayva);
 
     moveBuilder = ayva.moveBuilder();
   });
@@ -190,7 +190,7 @@ describe('Move Builder Tests', function () {
 
     it('should allow accessing value, min, and max through builder', async function () {
       sinon.restore();
-      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+      mockSleep(ayva);
 
       expect(ayva.$.stroke).to.have.property('value');
       expect(ayva.$.stroke).to.have.property('max');

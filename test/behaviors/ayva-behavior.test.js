@@ -3,7 +3,9 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import AyvaBehavior from '../../src/behaviors/ayva-behavior.js';
-import { createTestConfig, tickBehavior } from '../test-helpers.js';
+import {
+  createTestConfig, tickBehavior, mock, mockMove, mockSleep
+} from '../test-helpers.js';
 
 describe('Behavior API Tests', function () {
   let ayva;
@@ -11,8 +13,8 @@ describe('Behavior API Tests', function () {
 
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
-    sinon.replace(ayva, 'move', sinon.fake());
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
+    mockMove(ayva);
+    mockSleep(ayva);
 
     behavior = new AyvaBehavior();
   });
@@ -129,7 +131,7 @@ describe('Behavior API Tests', function () {
 
     it('should accept a move builder', async function () {
       const builder = ayva.$.stroke(0, 1);
-      sinon.replace(builder, 'execute', sinon.fake());
+      mock(builder, 'execute');
 
       behavior.generateActions = () => {
         behavior.queueMove(builder);
@@ -376,7 +378,7 @@ describe('Behavior API Tests', function () {
     });
 
     it('should throw error if behavior throws error', async function () {
-      sinon.replace(console, 'error', sinon.fake());
+      mock(console, 'error');
 
       await ayva.do({
         perform () {

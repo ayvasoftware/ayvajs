@@ -3,7 +3,9 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import ClassicStroke from '../../src/behaviors/classic-stroke.js';
-import { createTestConfig } from '../test-helpers.js';
+import {
+  createTestConfig, mockSleep, mockMove, spyMove
+} from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 describe('Classic Stroke Tests', function () {
@@ -63,8 +65,8 @@ describe('Classic Stroke Tests', function () {
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
     ayva.addOutputDevice({ write: sinon.fake() });
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-    sinon.replace(ayva, 'move', sinon.fake(ayva.move));
+    mockSleep(ayva);
+    spyMove(ayva);
   });
 
   afterEach(function () {
@@ -359,8 +361,8 @@ describe('Classic Stroke Tests', function () {
 
     it('should allow suck algorithm', async function () {
       sinon.restore();
-      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-      sinon.replace(ayva, 'move', sinon.fake()); // Suppress output from move();
+      mockSleep(ayva);
+      mockMove(ayva); // Suppress output from move();
 
       const write = sinon.fake();
       ayva.addOutputDevice({ write });

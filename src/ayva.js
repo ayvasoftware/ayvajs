@@ -6,6 +6,7 @@ import {
 } from './util/util.js';
 import validator from './util/validator.js';
 import OSR_CONFIG from './util/osr-config.js';
+import GeneratorBehavior from './behaviors/generator-behavior.js';
 
 class Ayva {
   #devices = [];
@@ -140,7 +141,7 @@ class Ayva {
 
     this.#performing = true;
 
-    const perform = typeof behavior === 'function' ? behavior : behavior.perform.bind(behavior);
+    const perform = typeof behavior === 'function' && !(behavior instanceof GeneratorBehavior) ? behavior : behavior.perform.bind(behavior);
 
     while (this.#currentBehaviorId === behaviorId && !behavior.complete) {
       try {

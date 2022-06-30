@@ -2,7 +2,9 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { createTestConfig } from '../test-helpers.js';
+import {
+  createTestConfig, mock, spy, mockMove, mockSleep
+} from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 /**
@@ -47,8 +49,8 @@ describe('Motion API Tests', function () {
     ayva = new Ayva(createTestConfig());
     ayva.defaultRamp = Ayva.RAMP_LINEAR;
 
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-    warn = sinon.replace(console, 'warn', sinon.fake());
+    mockSleep(ayva);
+    warn = mock(console, 'warn');
 
     device = {
       write: sinon.fake(),
@@ -63,7 +65,7 @@ describe('Motion API Tests', function () {
 
   describe('#home()', function () {
     it('should call move() with each axis with a default position', function () {
-      const move = sinon.replace(ayva, 'move', sinon.fake.returns(Promise.resolve()));
+      const move = mockMove(ayva);
 
       ayva.home();
 
@@ -105,7 +107,7 @@ describe('Motion API Tests', function () {
   describe('#sleep', function () {
     it('should fulfill promise after number of seconds specified', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
       await ayva.sleep(0.02).should.become(true);
 
       setTimeout.callCount.should.equal(1);
@@ -115,7 +117,7 @@ describe('Motion API Tests', function () {
 
     it('should cancel sleep when calling ayva.stop()', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
 
       setTimeout(() => ayva.stop()); // Perform stop in timeout to ensure it happens after sleep()
       await ayva.sleep(1).should.become(false);
@@ -147,7 +149,7 @@ describe('Motion API Tests', function () {
     it('should resolve only when queued actions are finished', async function () {
       // TODO: Checking that the time has elapsed might not be the best way to do this...
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
 
       const startTime = performance.now();
       ayva.sleep(0.02);

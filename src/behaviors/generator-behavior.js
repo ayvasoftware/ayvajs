@@ -1,28 +1,63 @@
+import Callable from '../util/callable.js';
 import MoveBuilder from '../util/move-builder.js';
 
-class GeneratorBehavior {
+class GeneratorBehavior extends Callable {
+  complete = false;
+
   #generator;
 
   #done = false;
 
+  #ayva = null;
+
+  #unboundStart;
+
+  #unboundGenerate;
+
+  #unboundIterated;
+
   /**
-   * Generate the actions that make up this behavior. Subclasses should implement this method.
+   * Generate any actions that setup this behavior. Typically this is moving the device into
+   * some starting position. Subclasses can implement this method, although it is optional.
    *
    * For full details on how to implement this method, see the {@tutorial behavior-api} tutorial.
    *
-   * @param {Ayva} ayva - instance of Ayva to generate actions for.
+   * @param {Ayva} [ayva] - instance of Ayva to generate actions for. Defaults to the Ayva instance bound to this behavior (if it exists).
+   *//* c8 ignore start */
+  * start (ayva) { // eslint-disable-line require-yield, no-unused-vars
+    // Optional
+  }/* c8 ignore stop */
+
+  /**
+   * Generate the actions that make up this behavior. Subclasses must implement this method.
+   *
+   * For full details on how to implement this method, see the {@tutorial behavior-api} tutorial.
+   *
+   * @param {Ayva} [ayva] - instance of Ayva to generate actions for. Defaults to the Ayva instance bound to this behavior (if it exists).
    */
   * generate (ayva) { // eslint-disable-line require-yield, no-unused-vars
     throw new Error('generate() not implemented.');
   }
 
-  * iterate (count, ayva) {
+  /**
+   * Repeats the actions that make up this behavior the specified number of iterations.
+   *
+   * @param {Ayva} [ayva] - instance of Ayva to generate actions for. Defaults to the Ayva instance bound to this behavior (if it exists).
+   * @param {Number} count - the number of iterations
+   */
+  * iterated (ayva, count = 1) {
     for (let i = 0; i < count; i++) {
       yield* this.generate(ayva);
     }
   }
 
-  perform (ayva) {
+  /**
+   * Perform one step of this behavior.
+   *
+   * @param {Ayva} [ayva] - instance of Ayva to use. Defaults to the Ayva instance bound to this behavior (if it exists).
+   * @returns
+   */
+  perform (ayva = this.#ayva) {
     const value = this.#next(ayva);
 
     if (value) {
@@ -42,6 +77,43 @@ class GeneratorBehavior {
     return Promise.resolve();
   }
 
+  /**
+   * Binds this behavior to the specified Ayva instance.
+   *
+   * Not to be confused with Function.prototype.bind(). Although the effect is similar.
+   * This effects start(), generate(), iterated(), and when calling this behavior
+   * using the shorthand callable syntax.
+   *
+   * @param {Ayva} ayva
+   * @returns this behavior
+   */
+  bind (ayva) {
+    this.unbind();
+    this.#ayva = ayva;
+
+    this.#unboundStart = this.start;
+    this.#unboundGenerate = this.generate;
+    this.#unboundIterated = this.iterated;
+
+    this.start = this.start.bind(this, ayva);
+    this.generate = this.generate.bind(this, ayva);
+    this.iterated = this.iterated.bind(this, ayva);
+
+    return this;
+  }
+
+  /**
+   * Unbind this behavior from any Ayva instance.
+   */
+  unbind () {
+    if (this.#ayva) {
+      this.#ayva = null;
+      this.start = this.#unboundStart;
+      this.generate = this.#unboundGenerate;
+      this.iterated = this.#unboundIterated;
+    }
+  }
+
   #next (ayva) {
     if (!this.#generator || this.#done) {
       this.#generator = this.generate(ayva);
@@ -53,6 +125,22 @@ class GeneratorBehavior {
     this.#done = done;
 
     return !done ? value : null;
+  }
+
+  /**
+   * Implementation for Callable.
+   */
+  __call__ (...args) {
+    const countArg = this.#ayva ? args[0] : args[1];
+    const ayva = this.#ayva || args[0];
+
+    const count = Number.isFinite(countArg) && countArg >= 1 ? countArg : undefined;
+
+    if (this.#ayva) {
+      return count ? this.iterated(count) : this.generate();
+    }
+
+    return count ? this.iterated(ayva, count) : this.generate(ayva);
   }
 }
 
