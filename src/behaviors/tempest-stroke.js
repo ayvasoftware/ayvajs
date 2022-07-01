@@ -125,9 +125,22 @@ class TempestStroke extends GeneratorBehavior {
   }
 
   /**
+   * Generates moves that will move to the start position of this Tempest Stroke.
+   * The speed of the moves default to 1 unit per second.
+   *
+   * @param {Ayva} ayva
+   * @param {Object} [mixin] - configuration options to add or override for each move.
+   */
+  * start (ayva, mixin) {
+    const moves = this.getStartMoves(ayva, mixin);
+    yield moves;
+  }
+
+  /**
    * Returns an array of moves that will move to the start position of this Tempest Stroke.
    * The speed of the moves default to 1 unit per second.
    *
+   * @deprecated since version 0.13.0. Use start() generator instead.
    * @param {Ayva} ayva
    * @param {Object} [mixinConfig] - configuration options to add or override for each move.
    * @returns array of moves

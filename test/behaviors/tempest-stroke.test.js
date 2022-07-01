@@ -192,7 +192,8 @@ describe('Tempest Stroke Tests', function () {
 
     it('with default speed', async function () {
       verifyStart();
-      const moves = stroke.getStartMoves(ayva);
+      const startGenerator = stroke.start(ayva);
+      const moves = startGenerator.next().value;
 
       moves.forEach((move) => {
         if (move.axis === 'B1' || move.axis === 'B2') {
@@ -203,12 +204,13 @@ describe('Tempest Stroke Tests', function () {
       });
 
       await ayva.move(...moves);
+      expect(startGenerator.next().done).to.equal(true); // Honestly just for thest Test Coverage not gonna lie.
       verifyEnd();
     });
 
     it('with speed specified', async function () {
       verifyStart();
-      const moves = stroke.getStartMoves(ayva, { speed: 2 });
+      const moves = stroke.start(ayva, { speed: 2 }).next().value;
 
       moves.forEach((move) => {
         if (move.axis === 'B1' || move.axis === 'B2') {
@@ -224,7 +226,7 @@ describe('Tempest Stroke Tests', function () {
 
     it('with duration specified', async function () {
       verifyStart();
-      const moves = stroke.getStartMoves(ayva, { duration: 2 });
+      const moves = stroke.start(ayva, { duration: 2 }).next().value;
 
       moves.forEach((move) => {
         if (move.axis === 'B1' || move.axis === 'B2') {
@@ -354,7 +356,7 @@ describe('Tempest Stroke Tests', function () {
         L0: { from: 0, to: 1 },
       });
 
-      const startMoves = stroke.getStartMoves(ayva);
+      const startMoves = stroke.start(ayva).next().value;
 
       const unusedMoves = ['A0', 'A1'].map((axis) => ({
         // Auxiliary axes default to 0.
