@@ -7,24 +7,14 @@ import {
 } from '../test-helpers.js';
 
 /**
- * Test helper to create a GeneratorBehavior with the specified implementation of generate().
- */
-function createGeneratorBehavior (generate) {
-  const result = new GeneratorBehavior();
-  result.generate = generate;
-  return result;
-}
-
-/**
  * Test helper to create a GeneratorBehavior with an implementation of generate() that yields the specified results.
  */
 function createGeneratorBehaviorThatYields (...yieldResults) {
-  const resultBehavior = new GeneratorBehavior();
-  resultBehavior.generate = function* () {
+  const resultBehavior = new GeneratorBehavior(function* () {
     for (const yieldResult of yieldResults) {
       yield yieldResult;
     }
-  };
+  });
 
   return resultBehavior;
 }
@@ -124,7 +114,7 @@ describe('Generator Behavior Tests', function () {
 
     it('can complete behavior by setting complete property to true', async function () {
       // Arrange
-      const behavior = createGeneratorBehavior(function* () {
+      const behavior = new GeneratorBehavior(function* () {
         yield { to: 0, speed: 1 };
         yield { to: 1, speed: 1 };
 
@@ -175,10 +165,24 @@ describe('Generator Behavior Tests', function () {
       expect(ayva.performing).to.be.false;
     });
 
+    it('automatically converts generator function to generator behavior when passed to ayva.do()', async function () {
+      const generatorFunction = function* () {
+        yield { to: 0, speed: 1 };
+        yield { to: 1, speed: 1 };
+        this.complete = true;
+      };
+
+      await ayva.do(generatorFunction);
+
+      ayva.move.callCount.should.equal(2);
+      ayva.move.args[0][0].should.deep.equal({ to: 0, speed: 1 });
+      ayva.move.args[1][0].should.deep.equal({ to: 1, speed: 1 });
+    });
+
     it('throws an error when yielding an invalid value', async function () {
       restore();
 
-      const behavior = createGeneratorBehavior(function* () {
+      const behavior = new GeneratorBehavior(function* () {
         yield -1;
       });
 
@@ -189,16 +193,22 @@ describe('Generator Behavior Tests', function () {
       const generator = new GeneratorBehavior().generate();
       (() => generator.next()).should.throw(Error, 'generate() not implemented.');
     });
+
+    it('throws error if constructor argument is not a generator function', function () {
+      const generate = () => {};
+
+      (() => new GeneratorBehavior(generate)).should.throw(Error, 'Not a generator function: () => {}');
+    });
   });
 
   describe('#iterated', function () {
     it('should allow yielding child behaviors', async function () {
-      const childBehavior = createGeneratorBehavior(function* () {
+      const childBehavior = new GeneratorBehavior(function* () {
         yield { to: 0, speed: 1 };
         yield { to: 1, speed: 1 };
       });
 
-      const compositeBehavior = createGeneratorBehavior(function* () {
+      const compositeBehavior = new GeneratorBehavior(function* () {
         yield { to: 1, speed: 2 };
         yield* childBehavior.iterated(ayva, 2);
         yield { to: 0, speed: 0.5 };
@@ -260,7 +270,7 @@ describe('Generator Behavior Tests', function () {
 
     describe('#bind()', function () {
       beforeEach(function () {
-        behavior = createGeneratorBehavior(function* (ayvaInstance) {
+        behavior = new GeneratorBehavior(function* (ayvaInstance) {
           yield ayvaInstance.stroke(0, 1);
         });
       });

@@ -16,6 +16,18 @@ class GeneratorBehavior extends Callable {
 
   #unboundIterated;
 
+  constructor (generate) {
+    super();
+
+    if (generate) {
+      if (generate.constructor.name !== 'GeneratorFunction') {
+        throw Error(`Not a generator function: ${generate}`);
+      }
+
+      this.generate = generate;
+    }
+  }
+
   /**
    * Generate any actions that setup this behavior. Typically this is moving the device into
    * some starting position. Subclasses can implement this method, although it is optional.

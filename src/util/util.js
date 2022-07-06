@@ -60,8 +60,14 @@ export function has (obj, prop) {
 
 /**
  * Shorthand for throwing an error during validation.
- * @param {*} error
  */
 export function fail (error) {
   throw new Error(error);
+}
+
+/**
+ * Tests exactly what it says.
+ */
+export function isGeneratorFunction (value) {
+  return value.constructor.name === 'GeneratorFunction';
 }

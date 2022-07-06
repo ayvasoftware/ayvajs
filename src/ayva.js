@@ -2,7 +2,7 @@
 import MoveBuilder from './util/move-builder.js';
 import WorkerTimer from './util/worker-timer.js';
 import {
-  clamp, round, has, createConstantProperty, validNumber
+  clamp, round, has, createConstantProperty, validNumber, isGeneratorFunction
 } from './util/util.js';
 import validator from './util/validator.js';
 import OSR_CONFIG from './util/osr-config.js';
@@ -141,11 +141,11 @@ class Ayva {
 
     this.#performing = true;
 
-    const perform = typeof behavior === 'function' && !(behavior instanceof GeneratorBehavior) ? behavior : behavior.perform.bind(behavior);
+    const computedBehavior = this.#computeBehavior(behavior);
 
-    while (this.#currentBehaviorId === behaviorId && !behavior.complete) {
+    while (this.#currentBehaviorId === behaviorId && !computedBehavior.complete) {
       try {
-        await perform(this);
+        await computedBehavior.perform(this);
 
         // Allow any moves or sleeps that were queued to complete.
         await this.ready();
@@ -565,6 +565,20 @@ class Ayva {
         this.configureAxis(axis);
       });
     }
+  }
+
+  #computeBehavior (value) {
+    if (typeof value === 'function' && !(value instanceof GeneratorBehavior)) {
+      if (isGeneratorFunction(value)) {
+        return new GeneratorBehavior(value);
+      }
+
+      return {
+        perform: value,
+      };
+    }
+
+    return value;
   }
 
   /**
