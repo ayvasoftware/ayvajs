@@ -415,16 +415,21 @@ class Ayva {
    * Registers a new output device. Ayva outputs commands to all connected devices.
    * More than one device can be specified.
    *
-   * @param {...Object} device - object with a write method.
+   * @param {...Object} device - object with a write method or a function.
    */
   addOutputDevice (...devices) {
-    for (const device of devices) {
-      if (!(device && device.write && device.write instanceof Function)) {
+    const resultDevices = devices.map((device) => {
+      const isWritable = device && device.write && device.write instanceof Function;
+      const isFunction = device instanceof Function;
+
+      if (!isWritable && !isFunction) {
         throw new Error(`Invalid device: ${device}`);
       }
-    }
 
-    this.#devices.push(...devices);
+      return isWritable ? device : { write: device };
+    });
+
+    this.#devices.push(...resultDevices);
   }
 
   /**

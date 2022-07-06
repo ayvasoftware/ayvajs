@@ -29,14 +29,17 @@ describe('Device Protocols', function () {
       testAddDevice(42).should.throw(Error, 'Invalid device: 42');
       testAddDevice({ write: 42 }).should.throw(Error, 'Invalid device: [object Object]');
 
-      // Happy path.
+      // Happy paths.
       testAddDevice({ write: function () {} }).should.not.throw(Error);
+      testAddDevice(function () {}).should.not.throw(Error);
     });
   });
 
   it('#getOutputDevices()', function () {
+    // TODO: This test is testing too many things. Break out.
     const device = { write: function () {} };
     const device2 = { write: function () {} };
+    const device3 = function () {};
 
     ayva.addOutputDevice(device);
 
@@ -59,5 +62,10 @@ describe('Device Protocols', function () {
 
     devices.length.should.equal(1);
     devices[0].should.equal(device2);
+
+    ayva.addOutputDevice(device3);
+    devices = ayva.getOutputDevices();
+    devices.length.should.equal(2);
+    devices[1].should.deep.equal({ write: device3 });
   });
 });
