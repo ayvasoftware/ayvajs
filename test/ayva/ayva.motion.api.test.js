@@ -351,7 +351,7 @@ describe('Motion API Tests', function () {
     it('should throw an error for invalid tempest motion', function () {
       (function () {
         Ayva.tempestMotion(NaN, 1);
-      }).should.throw('One or more stroke parameters are invalid (NaN, 1, 0, 0, 60, 0)');
+      }).should.throw('One or more motion parameters are invalid (NaN, 1, 0, 0, 60, 0)');
     });
   });
 
@@ -654,9 +654,45 @@ describe('Motion API Tests', function () {
     });
 
     it('should allow tempest motion', async function () {
+      // TODO: This doesn't actually test that tempest motion "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
       ayva.getAxis('stroke').value.should.equal(0.5);
 
       const value = Ayva.tempestMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow parabolic motion', async function () {
+      // TODO: This doesn't actually test that parabolic motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.parabolicMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow linear motion', async function () {
+      // TODO: This doesn't actually test that linear motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.linearMotion(0.5, 1, 0, 0);
 
       expect(value.from).to.equal(0.5);
       expect(value.to).to.equal(1);

@@ -55,6 +55,7 @@ class TempestStroke extends GeneratorBehavior {
       phase: 0,
       ecc: 0,
       shift: 0,
+      construct: Ayva.tempestMotion,
     };
   }
 
@@ -158,7 +159,7 @@ class TempestStroke extends GeneratorBehavior {
       usedAxesMapByName[ayva.getAxis(axisNameOrAlias).name] = true;
       const params = this.axes[axisNameOrAlias];
 
-      const to = Ayva.tempestMotion(
+      const to = params.construct(
         params.from,
         params.to,
         params.phase,
@@ -238,7 +239,7 @@ class TempestStroke extends GeneratorBehavior {
 
       return {
         axis,
-        value: Ayva.tempestMotion(
+        value: params.construct(
           params.from,
           params.to,
           params.phase,
@@ -279,12 +280,16 @@ class TempestStrokeTransition extends GeneratorBehavior {
   }
 
   * generate (ayva) {
-    const defaultParamsLinearRotation = {
-      from: 0.5, to: 0.5, phase: 0, ecc: 0,
+    const zeroParamsLinearRotation = {
+      ...TempestStroke.DEFAULT_PARAMETERS,
+      from: 0.5,
+      to: 0.5,
     };
 
-    const defaultParamsAux = {
-      from: 0, to: 0, phase: 0, ecc: 0,
+    const zeroParamsAux = {
+      ...TempestStroke.DEFAULT_PARAMETERS,
+      from: 0,
+      to: 0,
     };
 
     const sourceAxes = this.#getAxisMapByName(this.#source.axes, ayva);
@@ -293,9 +298,9 @@ class TempestStrokeTransition extends GeneratorBehavior {
     const transitionAxisMoves = {};
 
     Object.keys(targetAxes).forEach((axis) => {
-      const defaultParams = ayva.getAxis(axis).type === 'auxiliary' ? defaultParamsAux : defaultParamsLinearRotation;
+      const zeroParams = ayva.getAxis(axis).type === 'auxiliary' ? zeroParamsAux : zeroParamsLinearRotation;
 
-      const sourceAxis = sourceAxes[axis] ?? { ...defaultParams };
+      const sourceAxis = sourceAxes[axis] ?? { ...zeroParams };
       const targetAxis = targetAxes[axis];
 
       transitionAxisMoves[axis] = this.#createTransitionAxisMove(sourceAxis, targetAxis);
@@ -304,10 +309,10 @@ class TempestStrokeTransition extends GeneratorBehavior {
     // Catch any dangling axes that were part of source but not part of target.
     Object.keys(sourceAxes).forEach((axis) => {
       if (!transitionAxisMoves[axis]) {
-        const defaultParams = ayva.getAxis(axis).type === 'auxiliary' ? defaultParamsAux : defaultParamsLinearRotation;
+        const zeroParams = ayva.getAxis(axis).type === 'auxiliary' ? zeroParamsAux : zeroParamsLinearRotation;
 
         const sourceAxis = sourceAxes[axis];
-        const targetAxis = { ...defaultParams };
+        const targetAxis = { ...zeroParams };
 
         transitionAxisMoves[axis] = this.#createTransitionAxisMove(sourceAxis, targetAxis);
       }
@@ -339,7 +344,12 @@ class TempestStrokeTransition extends GeneratorBehavior {
         const ecc = Ayva.map(x, 0, 1, sourceAxis.ecc, targetAxis.ecc);
         const bpm = Ayva.map(x, 0, 1, sourceBpm, averageBpm);
 
-        const provider = Ayva.tempestMotion(from, to, phase, ecc, bpm, this.#source.angle);
+        const provider = Ayva.blendMotion(
+          sourceAxis.construct(from, to, phase, ecc, bpm, this.#source.angle),
+          targetAxis.construct(from, to, phase, ecc, bpm, this.#source.angle),
+          x
+        );
+
         return provider(params);
       },
       duration: this.#duration,

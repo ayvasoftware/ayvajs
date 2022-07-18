@@ -977,7 +977,7 @@ class Ayva {
    * @returns the value provider.
    */
   static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
-    validator.validateTempestParameters(from, to, phase, ecc, bpm, shift);
+    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
 
     const angularVelocity = (2 * Math.PI * bpm) / 60;
     const scale = 0.5 * (to - from);
@@ -988,13 +988,76 @@ class Ayva {
       return midpoint - scale * Math.cos(angle + (ecc * Math.sin(angle)));
     };
 
+    Ayva.#createConstantMotionProperties(provider, from, to, phase, ecc, bpm);
+    return provider;
+  }
+
+  /**
+   * Eccentric Parametric Oscillatory Parabolic Motion™
+   *
+   * @param {Number} from - the start of the range of motion
+   * @param {Number} to - the end of the range of motion
+   * @param {Number} [phase] - the phase of the motion in multiples of π/2
+   * @param {Number} [ecc] - the eccentricity of the motion
+   * @param {Number} [bpm] - beats per minute
+   * @param {Number} [shift] - additional phase shift of the motion in radians
+   * @returns the value provider
+   */
+  static parabolicMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
+    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const { sin, PI } = Math;
+
+    const angularVelocity = (2 * PI * bpm) / 60;
+    const scale = to - from;
+    const offset = to;
+
+    const provider = ({ index, frequency }) => {
+      const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * PI * phase) + shift;
+
+      const x = ((angle % (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
+      return offset - scale * x * x;
+    };
+
+    Ayva.#createConstantMotionProperties(provider, from, to, phase, ecc, bpm);
+    return provider;
+  }
+
+  /**
+   * Eccentric Parametric Oscillatory Linear Motion™
+   *
+   * @param {Number} from - the start of the range of motion
+   * @param {Number} to - the end of the range of motion
+   * @param {Number} [phase] - the phase of the motion in multiples of π/2
+   * @param {Number} [ecc] - the eccentricity of the motion
+   * @param {Number} [bpm] - beats per minute
+   * @param {Number} [shift] - additional phase shift of the motion in radians
+   * @returns the value provider
+   */
+  static linearMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
+    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const { abs, sin, PI } = Math;
+
+    const angularVelocity = (2 * PI * bpm) / 60;
+    const scale = to - from;
+    const offset = to;
+
+    const provider = ({ index, frequency }) => {
+      const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * PI * phase) + shift;
+
+      const x = ((angle % (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
+      return offset - scale * abs(x);
+    };
+
+    Ayva.#createConstantMotionProperties(provider, from, to, phase, ecc, bpm);
+    return provider;
+  }
+
+  static #createConstantMotionProperties (provider, from, to, phase, ecc, bpm) {
     createConstantProperty(provider, 'from', from);
     createConstantProperty(provider, 'to', to);
     createConstantProperty(provider, 'phase', phase);
     createConstantProperty(provider, 'ecc', ecc);
     createConstantProperty(provider, 'bpm', bpm);
-
-    return provider;
   }
 
   /**
