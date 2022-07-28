@@ -150,7 +150,7 @@ class Ayva {
         // Allow any moves or sleeps that were queued to complete.
         await this.ready();
       } catch (error) {
-        console.error(`Error performing behavior: ${error}`); // eslint-disable-line no-console
+        console.error('Error performing behavior:', error?.stack); // eslint-disable-line no-console
         break;
       }
     }

@@ -224,9 +224,16 @@ class TempestStroke extends GeneratorBehavior {
     const nextStroke = new TempestStroke(nextStrokeConfig, bpm);
     nextStroke.angle = this.#computeTransitionStartAngle(duration, this, nextStroke.bpm);
 
+    const transitionStroke = this.#createBlendBehavior(nextStroke, duration);
+
+    if (this.ayva) {
+      nextStroke.bind(this.ayva);
+      transitionStroke.bind(this.ayva);
+    }
+
     return {
       nextStroke,
-      transitionStroke: this.#createBlendBehavior(nextStroke, duration),
+      transitionStroke,
     };
   }
 
@@ -280,6 +287,10 @@ class TempestStrokeTransition extends GeneratorBehavior {
   }
 
   * generate (ayva) {
+    if (typeof ayva !== 'object' || ayva.constructor.name !== 'Ayva') {
+      throw new TypeError(`Invalid Ayva instance: ${ayva}`);
+    }
+
     const zeroParamsLinearRotation = {
       ...TempestStroke.DEFAULT_PARAMETERS,
       from: 0.5,

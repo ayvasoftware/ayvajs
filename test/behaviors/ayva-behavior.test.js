@@ -379,15 +379,17 @@ describe('Behavior API Tests', function () {
 
     it('should throw error if behavior throws error', async function () {
       mock(console, 'error');
+      const error = new Error('Failed.');
 
       await ayva.do({
         perform () {
-          throw new Error('Failed.');
+          throw error;
         },
       });
 
       console.error.callCount.should.equal(1);
-      console.error.args[0][0].should.equal('Error performing behavior: Error: Failed.');
+      console.error.args[0][0].should.equal('Error performing behavior:');
+      console.error.args[0][1].should.equal(error.stack);
     });
   });
 });

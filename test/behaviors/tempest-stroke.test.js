@@ -261,6 +261,29 @@ describe('Tempest Stroke Tests', function () {
       });
     });
 
+    it('should allow auto-bind ayva instance to transition', function () {
+      const sourceParams = TempestStroke.library['orbit-grind'];
+      const targetParams = TempestStroke.library['thrust-forward'];
+
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
+
+      const transition = stroke.createTransition(10, targetParams);
+
+      expect(transition.transitionStroke.ayva).to.deep.equal(ayva);
+      expect(transition.nextStroke.ayva).to.deep.equal(ayva);
+    });
+
+    it('should throw error when called with no ayva instance', function () {
+      const sourceParams = TempestStroke.library['orbit-grind'];
+      const targetParams = TempestStroke.library['thrust-forward'];
+
+      const stroke = new TempestStroke(sourceParams);
+
+      const { transitionStroke } = stroke.createTransition(10, targetParams);
+
+      expect(() => transitionStroke().next()).to.throw(Error, 'Invalid Ayva instance: undefined');
+    });
+
     it('should handle a missing linear or rotation axis in source behavior', async function () {
       const sourceParams = TempestStroke.library['orbit-grind'];
       delete sourceParams.L0;

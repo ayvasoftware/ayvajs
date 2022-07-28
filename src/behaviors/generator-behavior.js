@@ -16,6 +16,10 @@ class GeneratorBehavior extends Callable {
 
   #unboundIterated;
 
+  get ayva () {
+    return this.#ayva;
+  }
+
   constructor (generate) {
     super();
 
@@ -93,7 +97,7 @@ class GeneratorBehavior extends Callable {
    * Binds this behavior to the specified Ayva instance.
    *
    * Not to be confused with Function.prototype.bind(). Although the effect is similar.
-   * This effects start(), generate(), iterated(), and when calling this behavior
+   * This affects start(), generate(), iterated(), and when calling this behavior
    * using the shorthand callable syntax.
    *
    * @param {Ayva} ayva
