@@ -80,7 +80,7 @@ class GeneratorBehavior extends Callable {
       if (Array.isArray(value)) {
         return ayva.move(...value);
       } else if (Number.isFinite(value) && value >= 0) {
-        return ayva.sleep(value);
+        return ayva.ready().then(() => ayva.sleep(value));
       } else if (value instanceof MoveBuilder) {
         return value.execute();
       } else if (value instanceof Promise) {
