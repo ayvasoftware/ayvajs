@@ -198,43 +198,22 @@ class TempestStroke extends GeneratorBehavior {
   }
 
   /**
-   * Creates a transition to a new TempestStroke. The result is an object with the properties
-   * <code>transitionStroke</code> and <code>nextStroke</code>. <code>transitionStroke</code> is a behavior that blends this stroke
-   * into <code>nextStroke</code>. <code>nextStroke</code> is the target stroke with a start angle that makes the transition
-   * seamless.
+   * Creates a new TempestStroke that starts with a transition from this TempestStroke.
    *
    * @example
-   * const stroke = new TempestStroke('orbit-grind');
+   * const orbit = new TempestStroke('orbit-grind');
    *
-   * // Create a transition from an orbit-grind to a vortex-tease that takes 5 seconds.
-   * const { transitionStroke, nextStroke } = stroke.createTransition(5, 'vortex-tease');
+   * // Create a transition from an orbit-grind to a 30 BPM vortex-tease that takes 5 seconds.
+   * const vortex = orbit.transition('vortex-tease', 30, 5);
    *
-   * ayva.do(transitionStroke).then((complete) => {
-   *   if (complete) {
-   *     ayva.do(nextStroke);
-   *   }
-   * });
+   * ayva.do(vortex);
    *
-   * @param {Number} duration - duration of the transition in seconds
-   * @param {Object|String} nextStrokeConfig - stroke config or name of library config
-   * @param {Number|Function} [bpm=60] - beats per minute of next stroke (or function that provides bpm)
-   * @returns object containing transitionStroke behavior and nextStroke behavior.
+   * @param {Object|String} config - stroke config or name of library config
+   * @param {Number|Function} bpm - beats per minute of next stroke (or function that provides bpm)
+   * @param {Number} duration - how long the transition should take in seconds
    */
-  createTransition (duration, nextStrokeConfig, bpm = 60) {
-    const nextStroke = new TempestStroke(nextStrokeConfig, bpm);
-    nextStroke.angle = this.#computeTransitionStartAngle(duration, this, nextStroke.bpm);
-
-    const transitionStroke = this.#createBlendBehavior(nextStroke, duration);
-
-    if (this.ayva) {
-      nextStroke.bind(this.ayva);
-      transitionStroke.bind(this.ayva);
-    }
-
-    return {
-      nextStroke,
-      transitionStroke,
-    };
+  transition (config, bpm = 60, duration = 1) {
+    return new TempestStrokeWithTransition(config, bpm, this, duration);
   }
 
   #createMoves (index) {
@@ -261,14 +240,28 @@ class TempestStroke extends GeneratorBehavior {
     this.#bpm = this.#bpmProvider.next();
     return moves;
   }
+}
 
-  #createBlendBehavior (targetTempestStroke, duration) {
-    return new TempestStrokeTransition(this, targetTempestStroke, duration);
+class TempestStrokeWithTransition extends TempestStroke {
+  #transition = null;
+
+  constructor (config, bpmProvider, source, duration) {
+    super(config, bpmProvider);
+    this.angle = TempestStrokeTransition.computeTransitionStartAngle(source, duration, this.bpm);
+    this.#transition = new TempestStrokeTransition(source, this, duration);
+
+    if (source.ayva) {
+      this.bind(source.ayva);
+      this.#transition.bind(source.ayva);
+    }
   }
 
-  #computeTransitionStartAngle (duration, sourceTempestStroke, targetBpm) {
-    const averageBpm = (sourceTempestStroke.bpm + targetBpm) / 2;
-    return sourceTempestStroke.angle + (Math.PI * 2 * (averageBpm / 60) * duration);
+  * generate (ayva) {
+    if (!this.#transition.complete) {
+      yield* this.#transition();
+    }
+
+    yield* super.generate(ayva);
   }
 }
 
@@ -374,6 +367,11 @@ class TempestStrokeTransition extends GeneratorBehavior {
       map[axisConfig.name] = axes[axis];
       return map;
     }, {});
+  }
+
+  static computeTransitionStartAngle (source, duration, targetBpm) {
+    const averageBpm = (source.bpm + targetBpm) / 2;
+    return source.angle + (Math.PI * 2 * (averageBpm / 60) * duration);
   }
 }
 

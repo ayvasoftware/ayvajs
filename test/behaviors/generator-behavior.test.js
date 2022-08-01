@@ -179,6 +179,19 @@ describe('Generator Behavior Tests', function () {
       ayva.move.args[1][0].should.deep.equal({ to: 1, speed: 1 });
     });
 
+    it('is iterable', async function () {
+      const behavior = createGeneratorBehaviorThatYields(
+        { to: 0, speed: 1 },
+        { to: 1, speed: 1 }
+      );
+      spy(behavior, 'generate');
+
+      const iterator = behavior[Symbol.iterator]();
+
+      expect(iterator.next().value).to.deep.equal({ to: 0, speed: 1 });
+      expect(iterator.next().value).to.deep.equal({ to: 1, speed: 1 });
+    });
+
     it('throws an error when yielding an invalid value', async function () {
       restore();
 

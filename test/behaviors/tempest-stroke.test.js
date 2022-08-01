@@ -242,22 +242,25 @@ describe('Tempest Stroke Tests', function () {
   });
 
   describe('transition behavior', function () {
-    it('should create a transition that ends at the start of the next stroke', async function () {
+    // TODO: Some of these tests doesn't really **test** the transition. But merely exercise it
+    //       to confirm that there are no exceptions.
+
+    it('should create a new stroke that includes a transition', async function () {
       const sourceParams = TempestStroke.library['orbit-grind'];
       const targetParams = TempestStroke.library['thrust-forward'];
-
-      const stroke = new TempestStroke(sourceParams);
-
-      const transition = stroke.createTransition(10, targetParams);
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
       });
 
-      await ayva.do(transition.transitionStroke);
+      await ayva.do(function* () {
+        yield* stroke(2);
 
-      Object.keys(targetParams).forEach((axis) => {
-        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+        const transition = stroke.transition(targetParams, 60, 1);
+
+        yield* transition(2);
+        this.complete = true;
       });
     });
 
@@ -267,10 +270,9 @@ describe('Tempest Stroke Tests', function () {
 
       const stroke = new TempestStroke(sourceParams).bind(ayva);
 
-      const transition = stroke.createTransition(10, targetParams);
+      const transition = stroke.transition(targetParams, 60, 10);
 
-      expect(transition.transitionStroke.ayva).to.deep.equal(ayva);
-      expect(transition.nextStroke.ayva).to.deep.equal(ayva);
+      expect(transition.ayva).to.deep.equal(ayva);
     });
 
     it('should throw error when called with no ayva instance', function () {
@@ -279,9 +281,9 @@ describe('Tempest Stroke Tests', function () {
 
       const stroke = new TempestStroke(sourceParams);
 
-      const { transitionStroke } = stroke.createTransition(10, targetParams);
+      const transition = stroke.transition(targetParams, 60, 10);
 
-      expect(() => transitionStroke().next()).to.throw(Error, 'Invalid Ayva instance: undefined');
+      expect(() => transition().next()).to.throw(Error, 'Invalid Ayva instance: undefined');
     });
 
     it('should handle a missing linear or rotation axis in source behavior', async function () {
@@ -289,18 +291,16 @@ describe('Tempest Stroke Tests', function () {
       delete sourceParams.L0;
       const targetParams = TempestStroke.library['thrust-forward'];
 
-      const stroke = new TempestStroke(sourceParams);
-
-      const transition = stroke.createTransition(10, targetParams);
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
       });
 
-      await ayva.do(transition.transitionStroke);
-
-      Object.keys(targetParams).forEach((axis) => {
-        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      await ayva.do(function* () {
+        yield* transition(2);
+        this.complete = true;
       });
     });
 
@@ -311,18 +311,16 @@ describe('Tempest Stroke Tests', function () {
         from: 0.5, to: 0.5, phase: 0.5, ecc: 0.5,
       };
 
-      const stroke = new TempestStroke(sourceParams);
-
-      const transition = stroke.createTransition(10, targetParams);
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
       });
 
-      await ayva.do(transition.transitionStroke);
-
-      Object.keys(targetParams).forEach((axis) => {
-        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      await ayva.do(function* () {
+        yield* transition(2);
+        this.complete = true;
       });
     });
 
@@ -331,21 +329,17 @@ describe('Tempest Stroke Tests', function () {
       const targetParams = TempestStroke.library['thrust-forward'];
       delete targetParams.L0;
 
-      const stroke = new TempestStroke(sourceParams);
-
-      const transition = stroke.createTransition(10, targetParams);
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
       });
 
-      await ayva.do(transition.transitionStroke);
-
-      Object.keys(targetParams).forEach((axis) => {
-        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      await ayva.do(function* () {
+        yield* transition(2);
+        this.complete = true;
       });
-
-      expect(ayva.$.L0.value).to.equal(0.5);
     });
 
     it('should handle a missing auxiliary axis in target behavior', async function () {
@@ -357,21 +351,17 @@ describe('Tempest Stroke Tests', function () {
       };
       const targetParams = TempestStroke.library['thrust-forward'];
 
-      const stroke = new TempestStroke(sourceParams);
-
-      const transition = stroke.createTransition(10, targetParams);
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
       });
 
-      await ayva.do(transition.transitionStroke);
-
-      Object.keys(targetParams).forEach((axis) => {
-        expect(ayva.$[axis].value).to.equal(targetParams[axis].from);
+      await ayva.do(function* () {
+        yield* transition(2);
+        this.complete = true;
       });
-
-      expect(ayva.$.A0.value).to.equal(0);
     });
 
     it('should create start moves that reset unused axes to default', function () {

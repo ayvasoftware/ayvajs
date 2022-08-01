@@ -158,6 +158,10 @@ class GeneratorBehavior extends Callable {
 
     return count ? this.iterated(ayva, count) : this.generate(ayva);
   }
+
+  [Symbol.iterator] () {
+    return this.generate();
+  }
 }
 
 export default GeneratorBehavior;
