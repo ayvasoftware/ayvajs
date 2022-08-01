@@ -364,6 +364,36 @@ describe('Tempest Stroke Tests', function () {
       });
     });
 
+    it('should allow onTransitionStart and onTransitionEnd callbacks', async function () {
+      const sourceParams = TempestStroke.library['orbit-grind'];
+      const targetParams = TempestStroke.library['thrust-forward'];
+      const stroke = new TempestStroke(sourceParams).bind(ayva);
+
+      Object.keys(sourceParams).forEach((axis) => {
+        expect(ayva.$[axis].value).to.equal(0.5);
+      });
+
+      const onTransitionStart = sinon.fake();
+      const onTransitionEnd = sinon.fake();
+
+      await ayva.do(function* () {
+        yield* stroke(2);
+
+        const transition = stroke.transition(targetParams, 30, 1, onTransitionStart, onTransitionEnd);
+
+        yield* transition(2);
+        this.complete = true;
+      });
+
+      onTransitionStart.callCount.should.equal(1);
+      onTransitionStart.args[0][0].should.equal(1);
+      onTransitionStart.args[0][1].should.equal(30);
+
+      onTransitionEnd.callCount.should.equal(1);
+      onTransitionEnd.args[0][0].should.deep.equal(targetParams);
+      onTransitionEnd.args[0][1].should.equal(30);
+    });
+
     it('should create start moves that reset unused axes to default', function () {
       const stroke = new TempestStroke({
         L0: { from: 0, to: 1 },

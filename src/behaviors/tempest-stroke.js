@@ -212,8 +212,8 @@ class TempestStroke extends GeneratorBehavior {
    * @param {Number|Function} bpm - beats per minute of next stroke (or function that provides bpm)
    * @param {Number} duration - how long the transition should take in seconds
    */
-  transition (config, bpm = 60, duration = 1) {
-    return new TempestStrokeWithTransition(config, bpm, this, duration);
+  transition (config, bpm = 60, duration = 1, onTransitionStart = null, onTransitionEnd = null) {
+    return new TempestStrokeWithTransition(config, bpm, this, duration, onTransitionStart, onTransitionEnd);
   }
 
   #createMoves (index) {
@@ -243,12 +243,21 @@ class TempestStroke extends GeneratorBehavior {
 }
 
 class TempestStrokeWithTransition extends TempestStroke {
-  #transition = null;
+  #config;
 
-  constructor (config, bpmProvider, source, duration) {
+  #transition;
+
+  #onTransitionStart;
+
+  #onTransitionEnd;
+
+  constructor (config, bpmProvider, source, duration, onTransitionStart, onTransitionEnd) {
     super(config, bpmProvider);
     this.angle = TempestStrokeTransition.computeTransitionStartAngle(source, duration, this.bpm);
     this.#transition = new TempestStrokeTransition(source, this, duration);
+    this.#config = config;
+    this.#onTransitionStart = onTransitionStart;
+    this.#onTransitionEnd = onTransitionEnd;
 
     if (source.ayva) {
       this.bind(source.ayva);
@@ -258,7 +267,15 @@ class TempestStrokeWithTransition extends TempestStroke {
 
   * generate (ayva) {
     if (!this.#transition.complete) {
+      if (this.#onTransitionStart instanceof Function) {
+        this.#onTransitionStart(this.#transition.duration, this.bpm);
+      }
+
       yield* this.#transition();
+
+      if (this.#onTransitionEnd instanceof Function) {
+        this.#onTransitionEnd(this.#config, this.bpm);
+      }
     }
 
     yield* super.generate(ayva);
@@ -271,6 +288,10 @@ class TempestStrokeTransition extends GeneratorBehavior {
   #target;
 
   #duration;
+
+  get duration () {
+    return this.#duration;
+  }
 
   constructor (sourceBehavior, targetBehavior, duration) {
     super();
