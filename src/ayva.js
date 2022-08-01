@@ -412,10 +412,37 @@ class Ayva {
   }
 
   /**
+   * Registers a new output. Ayva outputs commands to all connected outputs.
+   * More than one output can be specified.
+   *
+   * @param {...Function|Object} output - a function or an object with a write() method.
+   */
+  addOutput (...output) {
+    this.addOutputDevice(...output);
+  }
+
+  /**
+   * Return a list of all outputs.
+   */
+  getOutput () {
+    return this.getOutputDevices();
+  }
+
+  /**
+   * Remove the specified output.
+   *
+   * @param {Object} output - the output to remove.
+   */
+  removeOutput (output) {
+    this.removeOutputDevice(output);
+  }
+
+  /**
    * Registers a new output device. Ayva outputs commands to all connected devices.
    * More than one device can be specified.
    *
-   * @param {...Object} device - object with a write method or a function.
+   * @deprecated since version 0.13.0. Use addOutput() instead.
+   * @param {...Object} device - a function or an object with a write method.
    */
   addOutputDevice (...devices) {
     const resultDevices = devices.map((device) => {
@@ -433,17 +460,8 @@ class Ayva {
   }
 
   /**
-   * Alias for #addOutputDevice()
-   *
-   * @ignore
-   * @param {...Object} device - object with a write method.
-   */
-  addOutputDevices (...devices) {
-    this.addOutputDevice(...devices);
-  }
-
-  /**
    * Return a list of all output devices.
+   * @deprecated since version 0.13.0. Use getOutput() instead.
    */
   getOutputDevices () {
     return [...this.#devices];
@@ -452,6 +470,7 @@ class Ayva {
   /**
    * Remove the specified device.
    *
+   * @deprecated since version 0.13.0. Use removeOutput() instead.
    * @param {Object} device - the device to remove.
    */
   removeOutputDevice (device) {
