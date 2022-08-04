@@ -1,6 +1,11 @@
 import Callable from '../util/callable.js';
 import MoveBuilder from '../util/move-builder.js';
 
+/**
+ * Base class for Generator Behaviors.
+ *
+ * For full details on how to use this class, see the {@tutorial behavior-api} tutorial.
+ */
 class GeneratorBehavior extends Callable {
   complete = false;
 
