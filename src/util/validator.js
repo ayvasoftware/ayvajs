@@ -225,7 +225,7 @@ export default {
     return resultConfig;
   },
 
-  validateTempestParameters (from, to, phase, ecc, bpm, shift) {
+  validateMotionParameters (from, to, phase, ecc, bpm, shift) {
     const valid = validNumber(from, 0, 1)
       && validNumber(to, 0, 1)
       && validNumber(phase)
@@ -234,7 +234,7 @@ export default {
       && validNumber(shift);
 
     if (!valid) {
-      throw new Error(`One or more stroke parameters are invalid (${from}, ${to}, ${phase}, ${ecc}, ${bpm}, ${shift})`);
+      throw new Error(`One or more motion parameters are invalid (${from}, ${to}, ${phase}, ${ecc}, ${bpm}, ${shift})`);
     }
   },
 };

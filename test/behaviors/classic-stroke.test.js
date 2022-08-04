@@ -3,7 +3,9 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import ClassicStroke from '../../src/behaviors/classic-stroke.js';
-import { createTestConfig } from '../test-helpers.js';
+import {
+  createTestConfig, mockSleep, mockMove, spyMove
+} from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 describe('Classic Stroke Tests', function () {
@@ -25,8 +27,8 @@ describe('Classic Stroke Tests', function () {
    * Performs the specified stroke and checks that ayva.move() was called with the expected move.
    */
   const testStroke = async function (stroke, expectedMove, index = 0) {
-    await stroke.perform(ayva); // Generate stroke.
     await stroke.perform(ayva); // Perform stroke.
+    await stroke.perform(ayva); // Restart
 
     ayva.move.args[index][0].should.deep.equal(expectedMove);
     ayva.$.stroke.value.should.equal(expectedMove.to);
@@ -63,8 +65,8 @@ describe('Classic Stroke Tests', function () {
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
     ayva.addOutputDevice({ write: sinon.fake() });
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-    sinon.replace(ayva, 'move', sinon.fake(ayva.move));
+    mockSleep(ayva);
+    spyMove(ayva);
   });
 
   afterEach(function () {
@@ -311,8 +313,8 @@ describe('Classic Stroke Tests', function () {
           },
         });
 
-        await stroke.perform(ayva); // Generate stroke.
-        await stroke.perform(ayva); // Perform stroke.
+        await stroke.perform(ayva); // Perform.
+        await stroke.perform(ayva); // Restart.
 
         ayva.move.callCount.should.equal(1);
         let move = ayva.move.args[0][1];
@@ -358,6 +360,10 @@ describe('Classic Stroke Tests', function () {
     });
 
     it('should allow suck algorithm', async function () {
+      sinon.restore();
+      mockSleep(ayva);
+      mockMove(ayva); // Suppress output from move();
+
       const write = sinon.fake();
       ayva.addOutputDevice({ write });
 

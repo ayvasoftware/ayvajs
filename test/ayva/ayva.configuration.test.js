@@ -1,11 +1,10 @@
 /* eslint-disable no-unused-expressions */
 import { Blob } from 'buffer';
 import '../setup-chai.js';
-import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import WorkerTimer from '../../src/util/worker-timer.js';
 import OSR_CONFIG from '../../src/util/osr-config.js';
-import { createTestConfig, createFunctionBinder } from '../test-helpers.js';
+import { createTestConfig, createFunctionBinder, mockSleep } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Axis Configuration.
@@ -271,7 +270,7 @@ describe('Configuration Tests', function () {
     });
 
     it('should retain value after reconfiguring axis', async function () {
-      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve())); // Do not actually sleep.
+      mockSleep(ayva);
       ayva.addOutputDevice({ write: () => {} });
 
       ayva.configureAxis({

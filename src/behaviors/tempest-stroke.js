@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable no-use-before-define */
-import AyvaBehavior from './ayva-behavior.js';
+import GeneratorBehavior from './generator-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
@@ -11,7 +11,7 @@ import { createConstantProperty, has, validNumber } from '../util/util.js';
  * number of axes with a formula loosely based on orbital motion calculations.
  * See the [Tempest Stroke Tutorial]{@link https://ayvajs.github.io/ayvajs-docs/tutorial-behavior-api-tempest-stroke.html}.
  */
-class TempestStroke extends AyvaBehavior {
+class TempestStroke extends GeneratorBehavior {
   #angle;
 
   #bpm;
@@ -55,6 +55,7 @@ class TempestStroke extends AyvaBehavior {
       phase: 0,
       ecc: 0,
       shift: 0,
+      construct: Ayva.tempestMotion,
     };
   }
 
@@ -114,24 +115,33 @@ class TempestStroke extends AyvaBehavior {
     this.#bpm = this.#bpmProvider.next();
   }
 
-  generateActions () {
+  * generate () {
     const { granularity } = TempestStroke;
 
     for (let i = 0; i < granularity; i++) {
-      this.queueFunction((behavior) => {
-        this.#createMoves(behavior, i);
-      });
+      yield this.#createMoves(i);
     }
 
-    this.queueFunction(() => {
-      this.#angle += Math.PI;
-    });
+    this.#angle += Math.PI;
+  }
+
+  /**
+   * Generates moves that will move to the start position of this Tempest Stroke.
+   * The speed of the moves default to 1 unit per second.
+   *
+   * @param {Ayva} ayva
+   * @param {Object} [mixin] - configuration options to add or override for each move.
+   */
+  * start (ayva, mixin) {
+    const moves = this.getStartMoves(ayva, mixin);
+    yield moves;
   }
 
   /**
    * Returns an array of moves that will move to the start position of this Tempest Stroke.
    * The speed of the moves default to 1 unit per second.
    *
+   * @deprecated since version 0.13.0. Use start() generator instead.
    * @param {Ayva} ayva
    * @param {Object} [mixinConfig] - configuration options to add or override for each move.
    * @returns array of moves
@@ -149,7 +159,7 @@ class TempestStroke extends AyvaBehavior {
       usedAxesMapByName[ayva.getAxis(axisNameOrAlias).name] = true;
       const params = this.axes[axisNameOrAlias];
 
-      const to = Ayva.tempestMotion(
+      const to = params.construct(
         params.from,
         params.to,
         params.phase,
@@ -188,39 +198,25 @@ class TempestStroke extends AyvaBehavior {
   }
 
   /**
-   * Creates a transition to a new TempestStroke. The result is an object with the properties
-   * <code>transitionStroke</code> and <code>nextStroke</code>. <code>transitionStroke</code> is a behavior that blends this stroke
-   * into <code>nextStroke</code>. <code>nextStroke</code> is the target stroke with a start angle that makes the transition
-   * seamless.
+   * Creates a new TempestStroke that starts with a transition from this TempestStroke.
    *
    * @example
-   * const stroke = new TempestStroke('orbit-grind');
+   * const orbit = new TempestStroke('orbit-grind');
    *
-   * // Create a transition from an orbit-grind to a vortex-tease that takes 5 seconds.
-   * const { transitionStroke, nextStroke } = stroke.createTransition(5, 'vortex-tease');
+   * // Create a transition from an orbit-grind to a 30 BPM vortex-tease that takes 5 seconds.
+   * const vortex = orbit.transition('vortex-tease', 30, 5);
    *
-   * ayva.do(transitionStroke).then((complete) => {
-   *   if (complete) {
-   *     ayva.do(nextStroke);
-   *   }
-   * });
+   * ayva.do(vortex);
    *
-   * @param {Number} duration - duration of the transition in seconds
-   * @param {Object|String} nextStrokeConfig - stroke config or name of library config
-   * @param {Number|Function} [bpm=60] - beats per minute of next stroke (or function that provides bpm)
-   * @returns object containing transitionStroke behavior and nextStroke behavior.
+   * @param {Object|String} config - stroke config or name of library config
+   * @param {Number|Function} bpm - beats per minute of next stroke (or function that provides bpm)
+   * @param {Number} duration - how long the transition should take in seconds
    */
-  createTransition (duration, nextStrokeConfig, bpm = 60) {
-    const nextStroke = new TempestStroke(nextStrokeConfig, bpm);
-    nextStroke.angle = this.#computeTransitionStartAngle(duration, this, nextStroke.bpm);
-
-    return {
-      nextStroke,
-      transitionStroke: this.#createBlendBehavior(nextStroke, duration),
-    };
+  transition (config, bpm = 60, duration = 1, onTransitionStart = null, onTransitionEnd = null) {
+    return new TempestStrokeWithTransition(config, bpm, this, duration, onTransitionStart, onTransitionEnd);
   }
 
-  #createMoves (behavior, index) {
+  #createMoves (index) {
     const { granularity } = TempestStroke;
     const moves = Object.keys(this.axes).map((axis) => {
       const params = this.axes[axis];
@@ -229,7 +225,7 @@ class TempestStroke extends AyvaBehavior {
 
       return {
         axis,
-        value: Ayva.tempestMotion(
+        value: params.construct(
           params.from,
           params.to,
           params.phase,
@@ -241,26 +237,61 @@ class TempestStroke extends AyvaBehavior {
       };
     });
 
-    behavior.insertMove(...moves);
     this.#bpm = this.#bpmProvider.next();
-  }
-
-  #createBlendBehavior (targetTempestStroke, duration) {
-    return new TempestStrokeTransition(this, targetTempestStroke, duration);
-  }
-
-  #computeTransitionStartAngle (duration, sourceTempestStroke, targetBpm) {
-    const averageBpm = (sourceTempestStroke.bpm + targetBpm) / 2;
-    return sourceTempestStroke.angle + (Math.PI * 2 * (averageBpm / 60) * duration);
+    return moves;
   }
 }
 
-class TempestStrokeTransition extends AyvaBehavior {
+class TempestStrokeWithTransition extends TempestStroke {
+  #config;
+
+  #transition;
+
+  #onTransitionStart;
+
+  #onTransitionEnd;
+
+  constructor (config, bpmProvider, source, duration, onTransitionStart, onTransitionEnd) {
+    super(config, bpmProvider);
+    this.angle = TempestStrokeTransition.computeTransitionStartAngle(source, duration, this.bpm);
+    this.#transition = new TempestStrokeTransition(source, this, duration);
+    this.#config = config;
+    this.#onTransitionStart = onTransitionStart;
+    this.#onTransitionEnd = onTransitionEnd;
+
+    if (source.ayva) {
+      this.bind(source.ayva);
+      this.#transition.bind(source.ayva);
+    }
+  }
+
+  * generate (ayva) {
+    if (!this.#transition.complete) {
+      if (this.#onTransitionStart instanceof Function) {
+        this.#onTransitionStart(this.#transition.duration, this.bpm);
+      }
+
+      yield* this.#transition();
+
+      if (this.#onTransitionEnd instanceof Function) {
+        this.#onTransitionEnd(this.#config, this.bpm);
+      }
+    }
+
+    yield* super.generate(ayva);
+  }
+}
+
+class TempestStrokeTransition extends GeneratorBehavior {
   #source;
 
   #target;
 
   #duration;
+
+  get duration () {
+    return this.#duration;
+  }
 
   constructor (sourceBehavior, targetBehavior, duration) {
     super();
@@ -269,13 +300,21 @@ class TempestStrokeTransition extends AyvaBehavior {
     this.#duration = duration;
   }
 
-  generateActions (ayva) {
-    const defaultParamsLinearRotation = {
-      from: 0.5, to: 0.5, phase: 0, ecc: 0,
+  * generate (ayva) {
+    if (typeof ayva !== 'object' || ayva.constructor.name !== 'Ayva') {
+      throw new TypeError(`Invalid Ayva instance: ${ayva}`);
+    }
+
+    const zeroParamsLinearRotation = {
+      ...TempestStroke.DEFAULT_PARAMETERS,
+      from: 0.5,
+      to: 0.5,
     };
 
-    const defaultParamsAux = {
-      from: 0, to: 0, phase: 0, ecc: 0,
+    const zeroParamsAux = {
+      ...TempestStroke.DEFAULT_PARAMETERS,
+      from: 0,
+      to: 0,
     };
 
     const sourceAxes = this.#getAxisMapByName(this.#source.axes, ayva);
@@ -284,9 +323,9 @@ class TempestStrokeTransition extends AyvaBehavior {
     const transitionAxisMoves = {};
 
     Object.keys(targetAxes).forEach((axis) => {
-      const defaultParams = ayva.getAxis(axis).type === 'auxiliary' ? defaultParamsAux : defaultParamsLinearRotation;
+      const zeroParams = ayva.getAxis(axis).type === 'auxiliary' ? zeroParamsAux : zeroParamsLinearRotation;
 
-      const sourceAxis = sourceAxes[axis] ?? { ...defaultParams };
+      const sourceAxis = sourceAxes[axis] ?? { ...zeroParams };
       const targetAxis = targetAxes[axis];
 
       transitionAxisMoves[axis] = this.#createTransitionAxisMove(sourceAxis, targetAxis);
@@ -295,10 +334,10 @@ class TempestStrokeTransition extends AyvaBehavior {
     // Catch any dangling axes that were part of source but not part of target.
     Object.keys(sourceAxes).forEach((axis) => {
       if (!transitionAxisMoves[axis]) {
-        const defaultParams = ayva.getAxis(axis).type === 'auxiliary' ? defaultParamsAux : defaultParamsLinearRotation;
+        const zeroParams = ayva.getAxis(axis).type === 'auxiliary' ? zeroParamsAux : zeroParamsLinearRotation;
 
         const sourceAxis = sourceAxes[axis];
-        const targetAxis = { ...defaultParams };
+        const targetAxis = { ...zeroParams };
 
         transitionAxisMoves[axis] = this.#createTransitionAxisMove(sourceAxis, targetAxis);
       }
@@ -312,8 +351,8 @@ class TempestStrokeTransition extends AyvaBehavior {
       });
     });
 
-    this.queueMove(...moves);
-    this.queueComplete();
+    yield moves;
+    this.complete = true;
   }
 
   #createTransitionAxisMove (sourceAxis, targetAxis) {
@@ -330,7 +369,12 @@ class TempestStrokeTransition extends AyvaBehavior {
         const ecc = Ayva.map(x, 0, 1, sourceAxis.ecc, targetAxis.ecc);
         const bpm = Ayva.map(x, 0, 1, sourceBpm, averageBpm);
 
-        const provider = Ayva.tempestMotion(from, to, phase, ecc, bpm, this.#source.angle);
+        const provider = Ayva.blendMotion(
+          sourceAxis.construct(from, to, phase, ecc, bpm, this.#source.angle),
+          targetAxis.construct(from, to, phase, ecc, bpm, this.#source.angle),
+          x
+        );
+
         return provider(params);
       },
       duration: this.#duration,
@@ -344,6 +388,11 @@ class TempestStrokeTransition extends AyvaBehavior {
       map[axisConfig.name] = axes[axis];
       return map;
     }, {});
+  }
+
+  static computeTransitionStartAngle (source, duration, targetBpm) {
+    const averageBpm = (source.bpm + targetBpm) / 2;
+    return source.angle + (Math.PI * 2 * (averageBpm / 60) * duration);
   }
 }
 

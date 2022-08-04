@@ -2,7 +2,9 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { createTestConfig } from '../test-helpers.js';
+import {
+  createTestConfig, mock, spy, mockMove, mockSleep
+} from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 /**
@@ -47,8 +49,8 @@ describe('Motion API Tests', function () {
     ayva = new Ayva(createTestConfig());
     ayva.defaultRamp = Ayva.RAMP_LINEAR;
 
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-    warn = sinon.replace(console, 'warn', sinon.fake());
+    mockSleep(ayva);
+    warn = mock(console, 'warn');
 
     device = {
       write: sinon.fake(),
@@ -63,7 +65,7 @@ describe('Motion API Tests', function () {
 
   describe('#home()', function () {
     it('should call move() with each axis with a default position', function () {
-      const move = sinon.replace(ayva, 'move', sinon.fake.returns(Promise.resolve()));
+      const move = mockMove(ayva);
 
       ayva.home();
 
@@ -105,7 +107,7 @@ describe('Motion API Tests', function () {
   describe('#sleep', function () {
     it('should fulfill promise after number of seconds specified', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
       await ayva.sleep(0.02).should.become(true);
 
       setTimeout.callCount.should.equal(1);
@@ -115,10 +117,45 @@ describe('Motion API Tests', function () {
 
     it('should cancel sleep when calling ayva.stop()', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
 
       setTimeout(() => ayva.stop()); // Perform stop in timeout to ensure it happens after sleep()
       await ayva.sleep(1).should.become(false);
+    });
+  });
+
+  describe('#ready', function () {
+    it('should resolve when there are no actions queued', async function () {
+      await ayva.ready().should.be.fulfilled;
+    });
+
+    it('should resolve when move is finished', async function () {
+      ayva.move({ to: 0, speed: 1 });
+
+      await ayva.ready().should.be.fulfilled;
+
+      expect(ayva.$.stroke.value).to.equal(0);
+    });
+
+    it('should resolve when multiple moves are finished', async function () {
+      ayva.move({ to: 0, speed: 1 });
+      ayva.move({ to: 0.75, speed: 1 });
+
+      await ayva.ready().should.be.fulfilled;
+
+      expect(ayva.$.stroke.value).to.equal(0.75);
+    });
+
+    it('should resolve only when queued actions are finished', async function () {
+      // TODO: Checking that the time has elapsed might not be the best way to do this...
+      sinon.restore(); // So we can test actual sleep function.
+      spy(global, 'setTimeout');
+
+      const startTime = performance.now();
+      ayva.sleep(0.02);
+      await ayva.ready().should.be.fulfilled;
+
+      expect(performance.now() - startTime).to.be.above(20); // Should have waited at least 20ms.
     });
   });
 
@@ -314,7 +351,7 @@ describe('Motion API Tests', function () {
     it('should throw an error for invalid tempest motion', function () {
       (function () {
         Ayva.tempestMotion(NaN, 1);
-      }).should.throw('One or more stroke parameters are invalid (NaN, 1, 0, 0, 60, 0)');
+      }).should.throw('One or more motion parameters are invalid (NaN, 1, 0, 0, 60, 0)');
     });
   });
 
@@ -617,9 +654,45 @@ describe('Motion API Tests', function () {
     });
 
     it('should allow tempest motion', async function () {
+      // TODO: This doesn't actually test that tempest motion "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
       ayva.getAxis('stroke').value.should.equal(0.5);
 
       const value = Ayva.tempestMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow parabolic motion', async function () {
+      // TODO: This doesn't actually test that parabolic motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.parabolicMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow linear motion', async function () {
+      // TODO: This doesn't actually test that linear motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.linearMotion(0.5, 1, 0, 0);
 
       expect(value.from).to.equal(0.5);
       expect(value.to).to.equal(1);

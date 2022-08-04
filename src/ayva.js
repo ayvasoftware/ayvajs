@@ -2,10 +2,11 @@
 import MoveBuilder from './util/move-builder.js';
 import WorkerTimer from './util/worker-timer.js';
 import {
-  clamp, round, has, createConstantProperty, validNumber
+  clamp, round, has, createConstantProperty, validNumber, isGeneratorFunction
 } from './util/util.js';
 import validator from './util/validator.js';
 import OSR_CONFIG from './util/osr-config.js';
+import GeneratorBehavior from './behaviors/generator-behavior.js';
 
 class Ayva {
   #devices = [];
@@ -27,6 +28,8 @@ class Ayva {
   #timer;
 
   #sleepResolves = new Set();
+
+  #readyResolves = new Set();
 
   defaultRamp = Ayva.RAMP_COS;
 
@@ -124,7 +127,7 @@ class Ayva {
    *
    * For full details on how to use this method, see the {@tutorial behavior-api} tutorial.
    *
-   * @param {AyvaBehavior} behavior - the behavior to perform.
+   * @param {GeneratorBehavior|Function|Object} behavior - the behavior to perform.
    */
   async do (behavior) {
     this.stop();
@@ -138,11 +141,16 @@ class Ayva {
 
     this.#performing = true;
 
-    while (this.#currentBehaviorId === behaviorId && !behavior.complete) {
+    const computedBehavior = this.#computeBehavior(behavior);
+
+    while (this.#currentBehaviorId === behaviorId && !computedBehavior.complete) {
       try {
-        await behavior.perform(this);
+        await computedBehavior.perform(this);
+
+        // Allow any moves or sleeps that were queued to complete.
+        await this.ready();
       } catch (error) {
-        console.error(`Error performing behavior: ${error}`); // eslint-disable-line no-console
+        console.error('Error performing behavior:', error?.stack); // eslint-disable-line no-console
         break;
       }
     }
@@ -199,7 +207,23 @@ class Ayva {
 
     return this.#performMovements(movementId, movements).finally(() => {
       this.#movements.delete(movementId);
+      this.#checkNotifyReady();
     });
+  }
+
+  /**
+   * Wait until ayva is not doing anything (neither moving nor sleeping).
+   *
+   * @return {Promise} a promise that resolves when there are no more moves or sleeps queued.
+   */
+  ready () {
+    if (this.#sleepResolves.size || this.#movements.size) {
+      return new Promise((resolve) => {
+        this.#readyResolves.add(resolve);
+      });
+    }
+
+    return Promise.resolve();
   }
 
   /**
@@ -274,6 +298,7 @@ class Ayva {
       sleepCanceller.then(() => false),
     ]).finally(() => {
       this.#sleepResolves.delete(sleepResolve);
+      this.#checkNotifyReady();
     });
   }
 
@@ -387,33 +412,56 @@ class Ayva {
   }
 
   /**
-   * Registers a new output device. Ayva outputs commands to all connected devices.
-   * More than one device can be specified.
+   * Registers a new output. Ayva outputs commands to all connected outputs.
+   * More than one output can be specified.
    *
-   * @param {...Object} device - object with a write method.
+   * @param {...Function|Object} output - a function or an object with a write() method.
    */
-  addOutputDevice (...devices) {
-    for (const device of devices) {
-      if (!(device && device.write && device.write instanceof Function)) {
-        throw new Error(`Invalid device: ${device}`);
-      }
-    }
-
-    this.#devices.push(...devices);
+  addOutput (...output) {
+    this.addOutputDevice(...output);
   }
 
   /**
-   * Alias for #addOutputDevice()
-   *
-   * @ignore
-   * @param {...Object} device - object with a write method.
+   * Return a list of all outputs.
    */
-  addOutputDevices (...devices) {
-    this.addOutputDevice(...devices);
+  getOutput () {
+    return this.getOutputDevices();
+  }
+
+  /**
+   * Remove the specified output.
+   *
+   * @param {Object} output - the output to remove.
+   */
+  removeOutput (output) {
+    this.removeOutputDevice(output);
+  }
+
+  /**
+   * Registers a new output device. Ayva outputs commands to all connected devices.
+   * More than one device can be specified.
+   *
+   * @deprecated since version 0.13.0. Use addOutput() instead.
+   * @param {...Object} device - a function or an object with a write method.
+   */
+  addOutputDevice (...devices) {
+    const resultDevices = devices.map((device) => {
+      const isWritable = device && device.write && device.write instanceof Function;
+      const isFunction = device instanceof Function;
+
+      if (!isWritable && !isFunction) {
+        throw new Error(`Invalid device: ${device}`);
+      }
+
+      return isWritable ? device : { write: device };
+    });
+
+    this.#devices.push(...resultDevices);
   }
 
   /**
    * Return a list of all output devices.
+   * @deprecated since version 0.13.0. Use getOutput() instead.
    */
   getOutputDevices () {
     return [...this.#devices];
@@ -422,6 +470,7 @@ class Ayva {
   /**
    * Remove the specified device.
    *
+   * @deprecated since version 0.13.0. Use removeOutput() instead.
    * @param {Object} device - the device to remove.
    */
   removeOutputDevice (device) {
@@ -540,6 +589,20 @@ class Ayva {
         this.configureAxis(axis);
       });
     }
+  }
+
+  #computeBehavior (value) {
+    if (typeof value === 'function' && !(value instanceof GeneratorBehavior)) {
+      if (isGeneratorFunction(value)) {
+        return new GeneratorBehavior(value);
+      }
+
+      return {
+        perform: value,
+      };
+    }
+
+    return value;
   }
 
   /**
@@ -838,6 +901,16 @@ class Ayva {
     return Object.values(uniqueAxes).sort(sortByName);
   }
 
+  #checkNotifyReady () {
+    if (this.#sleepResolves.size === 0 && this.#movements.size === 0 && this.#readyResolves.size) {
+      for (const resolve of this.#readyResolves) {
+        resolve();
+      }
+
+      this.#readyResolves.clear();
+    }
+  }
+
   /**
    * Convert the function provided into a ramp function.
    *
@@ -923,7 +996,7 @@ class Ayva {
    * @returns the value provider.
    */
   static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
-    validator.validateTempestParameters(from, to, phase, ecc, bpm, shift);
+    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
 
     const angularVelocity = (2 * Math.PI * bpm) / 60;
     const scale = 0.5 * (to - from);
@@ -934,13 +1007,76 @@ class Ayva {
       return midpoint - scale * Math.cos(angle + (ecc * Math.sin(angle)));
     };
 
+    Ayva.#createConstantMotionProperties(provider, from, to, phase, ecc, bpm);
+    return provider;
+  }
+
+  /**
+   * Eccentric Parametric Oscillatory Parabolic Motion™
+   *
+   * @param {Number} from - the start of the range of motion
+   * @param {Number} to - the end of the range of motion
+   * @param {Number} [phase] - the phase of the motion in multiples of π/2
+   * @param {Number} [ecc] - the eccentricity of the motion
+   * @param {Number} [bpm] - beats per minute
+   * @param {Number} [shift] - additional phase shift of the motion in radians
+   * @returns the value provider
+   */
+  static parabolicMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
+    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const { sin, PI } = Math;
+
+    const angularVelocity = (2 * PI * bpm) / 60;
+    const scale = to - from;
+    const offset = to;
+
+    const provider = ({ index, frequency }) => {
+      const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * PI * phase) + shift;
+
+      const x = ((angle % (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
+      return offset - scale * x * x;
+    };
+
+    Ayva.#createConstantMotionProperties(provider, from, to, phase, ecc, bpm);
+    return provider;
+  }
+
+  /**
+   * Eccentric Parametric Oscillatory Linear Motion™
+   *
+   * @param {Number} from - the start of the range of motion
+   * @param {Number} to - the end of the range of motion
+   * @param {Number} [phase] - the phase of the motion in multiples of π/2
+   * @param {Number} [ecc] - the eccentricity of the motion
+   * @param {Number} [bpm] - beats per minute
+   * @param {Number} [shift] - additional phase shift of the motion in radians
+   * @returns the value provider
+   */
+  static linearMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
+    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const { abs, sin, PI } = Math;
+
+    const angularVelocity = (2 * PI * bpm) / 60;
+    const scale = to - from;
+    const offset = to;
+
+    const provider = ({ index, frequency }) => {
+      const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * PI * phase) + shift;
+
+      const x = ((angle % (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
+      return offset - scale * abs(x);
+    };
+
+    Ayva.#createConstantMotionProperties(provider, from, to, phase, ecc, bpm);
+    return provider;
+  }
+
+  static #createConstantMotionProperties (provider, from, to, phase, ecc, bpm) {
     createConstantProperty(provider, 'from', from);
     createConstantProperty(provider, 'to', to);
     createConstantProperty(provider, 'phase', phase);
     createConstantProperty(provider, 'ecc', ecc);
     createConstantProperty(provider, 'bpm', bpm);
-
-    return provider;
   }
 
   /**
