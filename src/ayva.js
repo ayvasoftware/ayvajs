@@ -1029,11 +1029,12 @@ class Ayva {
     const angularVelocity = (2 * PI * bpm) / 60;
     const scale = to - from;
     const offset = to;
+    const mod = (a, b) => ((a % b) + b) % b; // Proper mathematical modulus operator.
 
     const provider = ({ index, frequency }) => {
       const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * PI * phase) + shift;
 
-      const x = ((angle % (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
+      const x = (mod(angle, (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
       return offset - scale * x * x;
     };
 
@@ -1059,11 +1060,12 @@ class Ayva {
     const angularVelocity = (2 * PI * bpm) / 60;
     const scale = to - from;
     const offset = to;
+    const mod = (a, b) => ((a % b) + b) % b; // Proper mathematical modulus operator.
 
     const provider = ({ index, frequency }) => {
       const angle = (((index + 1) * angularVelocity) / frequency) + (0.5 * PI * phase) + shift;
 
-      const x = ((angle % (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
+      const x = (mod(angle, (2 * PI)) / PI) - 1 + (ecc / PI) * sin(angle);
       return offset - scale * abs(x);
     };
 
