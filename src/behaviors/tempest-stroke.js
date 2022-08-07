@@ -301,7 +301,7 @@ class TempestStrokeTransition extends GeneratorBehavior {
   }
 
   * generate (ayva) {
-    if (typeof ayva !== 'object' || ayva.constructor.name !== 'Ayva') {
+    if (!(ayva instanceof Ayva)) {
       throw new TypeError(`Invalid Ayva instance: ${ayva}`);
     }
 
