@@ -55,7 +55,7 @@ class TempestStroke extends GeneratorBehavior {
       phase: 0,
       ecc: 0,
       shift: 0,
-      construct: Ayva.tempestMotion,
+      motion: Ayva.tempestMotion,
     };
   }
 
@@ -159,7 +159,7 @@ class TempestStroke extends GeneratorBehavior {
       usedAxesMapByName[ayva.getAxis(axisNameOrAlias).name] = true;
       const params = this.axes[axisNameOrAlias];
 
-      const to = params.construct(
+      const to = params.motion(
         params.from,
         params.to,
         params.phase,
@@ -225,7 +225,7 @@ class TempestStroke extends GeneratorBehavior {
 
       return {
         axis,
-        value: params.construct(
+        value: params.motion(
           params.from,
           params.to,
           params.phase,
@@ -370,8 +370,8 @@ class TempestStrokeTransition extends GeneratorBehavior {
         const bpm = Ayva.map(x, 0, 1, sourceBpm, averageBpm);
 
         const provider = Ayva.blendMotion(
-          sourceAxis.construct(from, to, phase, ecc, bpm, this.#source.angle),
-          targetAxis.construct(from, to, phase, ecc, bpm, this.#source.angle),
+          sourceAxis.motion(from, to, phase, ecc, bpm, this.#source.angle),
+          targetAxis.motion(from, to, phase, ecc, bpm, this.#source.angle),
           x
         );
 
