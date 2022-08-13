@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-exports */
-export { default } from './src/ayva.js';
 export { default as Ayva } from './src/ayva.js';
 export { default as AyvaBehavior } from './src/behaviors/ayva-behavior.js';
 export { default as GeneratorBehavior } from './src/behaviors/generator-behavior.js';
