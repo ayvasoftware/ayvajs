@@ -52,16 +52,16 @@ describe('Move Builder Tests', function () {
   describe('#configureAxis', function () {
     it('should remove alias property on $ when reconfiguring axis', function () {
       expect(ayva.$).to.have.property('stroke');
-      expect(ayva.$).to.not.have.property('new-alias');
+      expect(ayva.$).to.not.have.property('newAlias');
 
       ayva.configureAxis({
         name: 'L0',
-        alias: 'new-alias',
+        alias: 'newAlias',
         type: 'linear',
       });
 
       expect(ayva.$).to.not.have.property('stroke');
-      expect(ayva.$).to.have.property('new-alias');
+      expect(ayva.$).to.have.property('newAlias');
     });
   });
 
@@ -221,17 +221,17 @@ describe('Move Builder Tests', function () {
       write.callCount.should.equal(1);
       write.args[0][0].should.equal('L02000\n');
 
-      ayva.$['test-boolean-axis'].value.should.equal(false);
+      ayva.$.testBooleanAxis.value.should.equal(false);
 
-      ayva.$['test-boolean-axis'].value = true;
+      ayva.$.testBooleanAxis.value = true;
 
-      ayva.$['test-boolean-axis'].value.should.equal(true);
+      ayva.$.testBooleanAxis.value.should.equal(true);
       write.callCount.should.equal(2);
       write.args[1][0].should.equal('B19999\n');
 
-      ayva.$['test-boolean-axis'].value = false;
+      ayva.$.testBooleanAxis.value = false;
 
-      ayva.$['test-boolean-axis'].value.should.equal(false);
+      ayva.$.testBooleanAxis.value.should.equal(false);
       write.callCount.should.equal(3);
       write.args[2][0].should.equal('B10000\n');
     });

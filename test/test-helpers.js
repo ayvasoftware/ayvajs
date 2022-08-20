@@ -52,12 +52,12 @@ export function createTestConfig () {
       {
         name: 'B1',
         type: 'boolean',
-        alias: 'test-boolean-axis',
+        alias: 'testBooleanAxis',
       },
       {
         name: 'B2',
         type: 'boolean',
-        alias: 'test-boolean-axis-2',
+        alias: 'testBooleanAxis2',
       },
     ],
   };

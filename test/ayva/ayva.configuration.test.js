@@ -144,6 +144,21 @@ describe('Configuration Tests', function () {
       testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: max = 1, min = 1`);
     });
 
+    it('should throw an error when name or alias is invalid', function () {
+      config.name = '0L';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: name = 0L`);
+
+      config.name = 'L-0';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: name = L-0`);
+
+      config.name = 'L0';
+      config.alias = '0L';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: alias = 0L`);
+
+      config.alias = 'L-0';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: alias = L-0`);
+    });
+
     it('should allow a valid configuration to be retrieved by name or alias', function () {
       ayva.configureAxis(config);
       let axis = ayva.getAxis('L0');
@@ -285,10 +300,10 @@ describe('Configuration Tests', function () {
       ayva.configureAxis({
         name: 'L0',
         type: 'linear',
-        alias: 'new-alias',
+        alias: 'newAlias',
       });
 
-      ayva.getAxis('new-alias').value.should.equal(0);
+      ayva.getAxis('newAlias').value.should.equal(0);
     });
   });
 

@@ -333,13 +333,11 @@ describe('Behavior API Tests', function () {
         const thirdBehavior = generateFakeBehavior();
         const thirdPerform = thirdBehavior.perform ?? thirdBehavior;
 
-        console.error('start-test-why');
         ayva.do(firstBehavior);
         ayva.do(secondBehavior);
         ayva.do(thirdBehavior);
 
         await tickBehavior();
-        console.error('huh?');
 
         firstPerform.callCount.should.equal(1);
         secondPerform.callCount.should.equal(0);

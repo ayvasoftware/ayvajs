@@ -176,6 +176,10 @@ export default {
           if (!Number.isFinite(value) || value < 0 || value > 1) {
             invalid.push(property);
           }
+        } else if (property === 'alias' || property === 'name') {
+          if (!/^[a-zA-Z]+[a-zA-Z0-9]*$/.test(value)) {
+            invalid.push(property);
+          }
         }
       }
     });
