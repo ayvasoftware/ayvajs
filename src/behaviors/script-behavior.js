@@ -1,4 +1,7 @@
+/* eslint-disable guard-for-in */
+
 import GeneratorBehavior from './generator-behavior.js';
+import * as AyvaModules from '../util/script-whitelist.js';
 
 /**
  * A behavior that allows the execution of scripts stored in a string.
@@ -9,10 +12,14 @@ import GeneratorBehavior from './generator-behavior.js';
  * For full details on how to use this class, see the {@tutorial behavior-api} tutorial.
  */
 class ScriptBehavior extends GeneratorBehavior {
+  #scope;
+
   #code;
 
-  constructor (script) {
+  constructor (script, scope = {}) {
     super();
+
+    this.#scope = { ...AyvaModules, ...scope };
 
     // Escape quotes and backslashes.
     this.#code = script.replace(/["'`\\]/g, (v) => `\\${v}`);
@@ -36,11 +43,19 @@ class ScriptBehavior extends GeneratorBehavior {
   }
 
   #createSandboxGenerator (ayva) {
+    const scopeValues = [];
     let sandboxFunction = 'new Function(';
 
-    for (const prop in globalThis) { // eslint-disable-line guard-for-in
-      // Blacklist globals.
-      sandboxFunction += `"${prop}", `;
+    for (const scopeProp in this.#scope) {
+      sandboxFunction += `"${scopeProp}", `;
+      scopeValues.push(this.#scope[scopeProp]);
+    }
+
+    for (const prop in globalThis) {
+      // Blacklist globals that haven't been put in scope.
+      if (!Object.prototype.hasOwnProperty.call(this.#scope, prop)) {
+        sandboxFunction += `"${prop}", `;
+      }
     }
 
     // Blacklist eval and Function
@@ -49,20 +64,24 @@ class ScriptBehavior extends GeneratorBehavior {
     // Create the generate function from script.
     sandboxFunction += `\`
       return (function*(ayva) { 
-        ${this.#expose(ayva)}
+        ${this.#scopeAyva(ayva)}
         ${this.#code} 
       }).bind(this);\`);`;
 
     try {
       const sandbox = eval(sandboxFunction); // eslint-disable-line no-eval
-      return sandbox.call(this);
+      return sandbox.call(this, ...scopeValues);
     } catch (error) {
       throw new SyntaxError('Invalid AyvaScript.');
     }
   }
 
-  #expose (ayva) {
-    return `const { ${Object.keys(ayva.$).join(', ')} } = ayva.$;`;
+  #scopeAyva (ayva) {
+    return `
+      const { ${Object.keys(ayva.$).join(', ')} } = ayva.$;
+      const home = ayva.home.bind(ayva);
+      const move = ayva.move.bind(ayva);
+    `;
   }
 }
 
