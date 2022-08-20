@@ -267,24 +267,4 @@ describe('Move Builder Tests', function () {
       }]);
     });
   });
-
-  describe('#convenienceMethods', function () {
-    function testConvenienceMethod (axis) {
-      ayva[axis](0, 1);
-
-      ayva.move.callCount.should.equal(1);
-
-      expect(ayva.move.args[0]).to.deep.equal([{
-        axis,
-        to: 0,
-        speed: 1,
-      }]);
-    }
-
-    for (const axis of ['stroke', 'left', 'forward', 'twist', 'roll', 'pitch']) {
-      it(`#${axis}`, function () {
-        testConvenienceMethod(axis);
-      });
-    }
-  });
 });

@@ -76,7 +76,7 @@ class GeneratorBehavior extends Callable {
    * Perform one step of this behavior.
    *
    * @param {Ayva} [ayva] - instance of Ayva to use. Defaults to the Ayva instance bound to this behavior (if it exists).
-   * @returns - a Promise that resolves when the step is complete.
+   * @returns Promise that resolves when the step is complete.
    */
   perform (ayva = this.#ayva) {
     const value = this.next(ayva);

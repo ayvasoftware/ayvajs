@@ -482,54 +482,6 @@ class Ayva {
   }
 
   /**
-   * Shorthand method for <code>ayva.$.stroke(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'stroke'.
-   */
-  stroke (...args) {
-    return this.$.stroke(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.left(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'left'.
-   */
-  left (...args) {
-    return this.$.left(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.forward(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'forward'.
-   */
-  forward (...args) {
-    return this.$.forward(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.twist(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'twist'.
-   */
-  twist (...args) {
-    return this.$.twist(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.roll(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'roll'.
-   */
-  roll (...args) {
-    return this.$.roll(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.pitch(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'pitch'.
-   */
-  pitch (...args) {
-    return this.$.pitch(...args).execute();
-  }
-
-  /**
    * Add the start of a move builder chain to $ for the specified axis.
    * Also add shortcut properties for value, min, and max to each axis.
    */
