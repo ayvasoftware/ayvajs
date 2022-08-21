@@ -274,8 +274,8 @@ describe('Motion API Tests', function () {
         ayva.move(
           { to: 0, speed: 1 },
           { axis: 'twist', to: 0, sync: 'roll' },
-          { axis: 'roll', to: 0, sync: 'left' },
-          { axis: 'left', to: 0, sync: 'twist' },
+          { axis: 'roll', to: 0, sync: 'sway' },
+          { axis: 'sway', to: 0, sync: 'twist' },
         ).should.be.rejectedWith(Error, syncCycleError),
       ]);
     });

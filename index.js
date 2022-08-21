@@ -1,5 +1,4 @@
 export { default as Ayva } from './src/ayva.js';
-export { default as AyvaBehavior } from './src/behaviors/ayva-behavior.js';
 export { default as GeneratorBehavior } from './src/behaviors/generator-behavior.js';
 export { default as ScriptBehavior } from './src/behaviors/script-behavior.js';
 export { default as ClassicStroke } from './src/behaviors/classic-stroke.js';

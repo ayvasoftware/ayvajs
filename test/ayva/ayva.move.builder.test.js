@@ -118,12 +118,12 @@ describe('Move Builder Tests', function () {
 
     it('should call ayva.move() with correct parameters <value, duration>', function () {
       const value = function () { };
-      ayva.$.left(value, 1).execute();
+      ayva.$.sway(value, 1).execute();
 
       ayva.move.callCount.should.equal(1);
 
       expect(ayva.move.args[0][0]).to.deep.equal({
-        axis: 'left',
+        axis: 'sway',
         value,
         duration: 1,
       });
