@@ -140,6 +140,7 @@ class Ayva {
     }
 
     this.#performing = true;
+    this.lastTargetTickTime = this.#timer.now();
 
     const computedBehavior = this.#computeBehavior(behavior);
 
@@ -622,15 +623,14 @@ class Ayva {
 
     this.#executeProviders(immediateProviders, 0);
 
-    let errorCorrection = 0;
-    const startTime = this.#timer.now();
+    const startTime = this.lastTargetTickTime;
 
     if (stepCount) {
       for (let index = 0; index < stepCount; index++) {
         const unfinishedProviders = stepProviders.filter((provider) => index < provider.parameters.stepCount);
         this.#executeProviders(unfinishedProviders, index);
 
-        errorCorrection = await this.#stepSleep(index, stepCount, duration, startTime, errorCorrection);
+        await this.#stepSleep(index, stepCount, duration, startTime)
 
         if (!this.#movements.has(movementId)) {
           // This move was cancelled.
@@ -653,22 +653,15 @@ class Ayva {
    *
    * @returns the new error correction
    */
-  async #stepSleep (index, stepCount, duration, startTime, errorCorrection) {
+  async #stepSleep (index, stepCount, duration, startTime) {
+    let newTargetTickTime = this.lastTargetTickTime + this.#period
+
     if (index === stepCount - 1) {
-      // This shenanigans is to (attempt to) account for the fact that a move is
-      // an integer number of steps but a duration may be fractional. In the final step
-      // we may have time remaining that is less than the period.
-      const currentElapsed = this.#timer.now() - startTime;
-      const remaining = Math.min(Math.max(duration - currentElapsed, 0), this.#period);
-      await this.sleep(remaining);
-    } else {
-      await this.sleep(this.#period - errorCorrection);
+      newTargetTickTime = startTime + duration
     }
 
-    const actualElapsed = this.#timer.now() - startTime;
-    const expectedElapsed = (index + 1) * this.#period;
-
-    return actualElapsed - expectedElapsed;
+    await this.sleep(newTargetTickTime - this.#timer.now())
+    this.lastTargetTickTime = newTargetTickTime
   }
 
   #executeProviders (providers, index) {
