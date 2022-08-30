@@ -135,7 +135,7 @@ export function spySleep (ayva) {
  */
 export function mockOutput (ayva) {
   const write = sinon.fake();
-  ayva.addOutputDevice({ write });
+  ayva.addOutput({ write });
 
   return write;
 }

@@ -56,7 +56,7 @@ describe('Motion API Tests', function () {
       write: sinon.fake(),
     };
 
-    ayva.addOutputDevice(device);
+    ayva.addOutput(device);
   });
 
   afterEach(function () {
@@ -216,7 +216,7 @@ describe('Motion API Tests', function () {
       delete configWithoutDefault.defaultAxis;
 
       ayva = new Ayva(configWithoutDefault);
-      ayva.addOutputDevice(device);
+      ayva.addOutput(device);
       return ayva.move({ to: 0, speed: 1 }).should.be.rejectedWith(Error, 'No default axis configured. Must specify an axis for each movement.');
     });
 
@@ -613,7 +613,7 @@ describe('Motion API Tests', function () {
         write: sinon.fake(),
       };
 
-      ayva.addOutputDevice(secondDevice);
+      ayva.addOutput(secondDevice);
 
       ayva.getAxis('R0').value.should.equal(0.5);
 

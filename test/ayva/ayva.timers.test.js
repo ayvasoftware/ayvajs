@@ -22,7 +22,7 @@ describe('Timer Tests', function () {
 
     ayva = new Ayva(createTestConfig());
 
-    ayva.addOutputDevice({
+    ayva.addOutput({
       write: sinon.fake(),
     });
 

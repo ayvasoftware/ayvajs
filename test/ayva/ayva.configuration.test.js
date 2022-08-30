@@ -286,7 +286,7 @@ describe('Configuration Tests', function () {
 
     it('should retain value after reconfiguring axis', async function () {
       mockSleep(ayva);
-      ayva.addOutputDevice({ write: () => {} });
+      ayva.addOutput({ write: () => {} });
 
       ayva.configureAxis({
         name: 'L0',

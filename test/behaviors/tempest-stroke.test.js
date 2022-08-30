@@ -20,7 +20,7 @@ describe('Tempest Stroke Tests', function () {
 
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
-    ayva.addOutputDevice({ write: sinon.fake() });
+    ayva.addOutput({ write: sinon.fake() });
     mockSleep(ayva);
     spyMove(ayva);
     TempestStroke.granularity = 6;

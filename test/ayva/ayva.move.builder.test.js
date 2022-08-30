@@ -14,7 +14,7 @@ describe('Move Builder Tests', function () {
     write = sinon.fake();
     ayva = new Ayva(createTestConfig());
     ayva.defaultRamp = Ayva.RAMP_LINEAR;
-    ayva.addOutputDevice({ write });
+    ayva.addOutput({ write });
     mockMove(ayva);
 
     moveBuilder = ayva.moveBuilder();
