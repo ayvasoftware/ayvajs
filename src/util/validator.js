@@ -229,7 +229,9 @@ export default {
     return resultConfig;
   },
 
-  validateMotionParameters (from, to, phase, ecc, bpm, shift) {
+  validateMotionParameters ({
+    from, to, phase, ecc, bpm, shift,
+  }) {
     const valid = validNumber(from, 0, 1)
       && validNumber(to, 0, 1)
       && validNumber(phase)
