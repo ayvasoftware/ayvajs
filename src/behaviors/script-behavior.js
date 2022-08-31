@@ -16,6 +16,12 @@ class ScriptBehavior extends GeneratorBehavior {
 
   #code;
 
+  /**
+   * Create a new ScriptBehavior.
+   *
+   * @param {String} script - the script.
+   * @param {Object} scope - an object containing variables to include in the script's scope.
+   */
   constructor (script, scope = {}) {
     super();
 
