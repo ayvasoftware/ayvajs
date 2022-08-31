@@ -176,6 +176,10 @@ export default {
           if (!Number.isFinite(value) || value < 0 || value > 1) {
             invalid.push(property);
           }
+        } else if (property === 'alias' || property === 'name') {
+          if (!/^[a-zA-Z]+[a-zA-Z0-9]*$/.test(value)) {
+            invalid.push(property);
+          }
         }
       }
     });
@@ -225,7 +229,9 @@ export default {
     return resultConfig;
   },
 
-  validateMotionParameters (from, to, phase, ecc, bpm, shift) {
+  validateMotionParameters ({
+    from, to, phase, ecc, bpm, shift,
+  }) {
     const valid = validNumber(from, 0, 1)
       && validNumber(to, 0, 1)
       && validNumber(phase)

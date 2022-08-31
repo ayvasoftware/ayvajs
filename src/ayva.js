@@ -482,54 +482,6 @@ class Ayva {
   }
 
   /**
-   * Shorthand method for <code>ayva.$.stroke(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'stroke'.
-   */
-  stroke (...args) {
-    return this.$.stroke(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.left(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'left'.
-   */
-  left (...args) {
-    return this.$.left(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.forward(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'forward'.
-   */
-  forward (...args) {
-    return this.$.forward(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.twist(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'twist'.
-   */
-  twist (...args) {
-    return this.$.twist(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.roll(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'roll'.
-   */
-  roll (...args) {
-    return this.$.roll(...args).execute();
-  }
-
-  /**
-   * Shorthand method for <code>ayva.$.pitch(...).execute()</code>.
-   * Only applicable for configurations that have an axis named 'pitch'.
-   */
-  pitch (...args) {
-    return this.$.pitch(...args).execute();
-  }
-
-  /**
    * Add the start of a move builder chain to $ for the specified axis.
    * Also add shortcut properties for value, min, and max to each axis.
    */
@@ -982,10 +934,10 @@ class Ayva {
    * ayva.$.stroke(Ayva.tempestMotion(1, 0), 10).execute();
    *
    * // ... out of phase with a little eccentricity.
-   * ayva.$.stroke(Ayva.tempestMotion(1, 0, 1, 2), 10).execute();
+   * ayva.$.stroke(Ayva.tempestMotion(1, 0, 1, 0.2), 10).execute();
    *
    * // ... at 30 BPM.
-   * ayva.$.stroke(Ayva.tempestMotion(1, 0, 1, 2, 30), 10).execute();
+   * ayva.$.stroke(Ayva.tempestMotion(1, 0, 1, 0.2, 30), 10).execute();
    *
    * @param {Number} from - the start of the range of motion
    * @param {Number} to - the end of the range of motion
@@ -994,9 +946,57 @@ class Ayva {
    * @param {Number} [bpm] - beats per minute
    * @param {Number} [shift] - additional phase shift of the wave in radians
    * @returns the value provider.
+   *//**
+   * Creates a value provider that generates oscillatory motion. The formula is:
+   *
+   * cos(θ + phase·π/2 + ecc·sin(θ + phase·π/2))
+   *
+   * The result is translated and scaled to fit the range and beats per minute specified.
+   * This formula was created by [Tempest MAx]{@link https://www.patreon.com/tempestvr}—loosely based
+   * on orbital motion calculations. Hence, tempestMotion.
+   *
+   * See [this graph]{@link https://www.desmos.com/calculator/vnfke1rprt} of the function
+   * where you can adjust the parameters to see how they affect the motion.
+   *
+   * @example
+   * // Note: These examples use Move Builders from the Motion API.
+   *
+   * // Simple up/down stroke for 10 seconds.
+   * ayva.$.stroke(Ayva.tempestMotion({ from: 1, to: 0}), 10).execute();
+   *
+   * // ... out of phase with a little eccentricity.
+   * ayva.$.stroke(Ayva.tempestMotion({ from: 1, to: 0, phase: 1, ecc: 0.2 }), 10).execute();
+   *
+   * // ... at 30 BPM.
+   * ayva.$.stroke(Ayva.tempestMotion({ from: 1, to: 0, phase: 1, ecc: 0.2, bpm: 30 }), 10).execute();
+   *
+   * @param {Object} params - the parameters of the motion.
+   * @returns the value provider.
    */
   static tempestMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
-    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const params = typeof from === 'object' ? from : {
+      from, to, phase, ecc, bpm, shift,
+    };
+
+    return Ayva.#tempestMotion(params);
+  }
+
+  static #tempestMotion (params) {
+    params = { // eslint-disable-line no-param-reassign
+      from: 0,
+      to: 1,
+      phase: 0,
+      ecc: 0,
+      shift: 0,
+      bpm: 60,
+      ...params,
+    };
+
+    validator.validateMotionParameters(params);
+
+    const {
+      from, to, phase, ecc, bpm, shift,
+    } = params;
 
     const angularVelocity = (2 * Math.PI * bpm) / 60;
     const scale = 0.5 * (to - from);
@@ -1021,9 +1021,38 @@ class Ayva {
    * @param {Number} [bpm] - beats per minute
    * @param {Number} [shift] - additional phase shift of the motion in radians
    * @returns the value provider
+   *//**
+   * Eccentric Parametric Oscillatory Parabolic Motion™
+   *
+   * @param {Object} params - the parameters of the motion.
+   * @returns the value provider
    */
   static parabolicMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
-    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const params = typeof from === 'object' ? from : {
+      from, to, phase, ecc, bpm, shift,
+    };
+
+    return Ayva.#parabolicMotion(params);
+  }
+
+  static #parabolicMotion (params) {
+    // TODO: Thou shalt not repeat thyself.
+    params = { // eslint-disable-line no-param-reassign
+      from: 0,
+      to: 1,
+      phase: 0,
+      ecc: 0,
+      shift: 0,
+      bpm: 60,
+      ...params,
+    };
+
+    validator.validateMotionParameters(params);
+
+    const {
+      from, to, phase, ecc, bpm, shift,
+    } = params;
+
     const { sin, PI } = Math;
 
     const angularVelocity = (2 * PI * bpm) / 60;
@@ -1052,9 +1081,38 @@ class Ayva {
    * @param {Number} [bpm] - beats per minute
    * @param {Number} [shift] - additional phase shift of the motion in radians
    * @returns the value provider
+   *//**
+   * Eccentric Parametric Oscillatory Linear Motion™
+   *
+   * @param {Object} params - the parameters of the motion.
+   * @returns the value provider
    */
   static linearMotion (from, to, phase = 0, ecc = 0, bpm = 60, shift = 0) {
-    validator.validateMotionParameters(from, to, phase, ecc, bpm, shift);
+    const params = typeof from === 'object' ? from : {
+      from, to, phase, ecc, bpm, shift,
+    };
+
+    return Ayva.#linearMotion(params);
+  }
+
+  static #linearMotion (params) {
+    // TODO: Thou shalt not repeat thyself.
+    params = { // eslint-disable-line no-param-reassign
+      from: 0,
+      to: 1,
+      phase: 0,
+      ecc: 0,
+      shift: 0,
+      bpm: 60,
+      ...params,
+    };
+
+    validator.validateMotionParameters(params);
+
+    const {
+      from, to, phase, ecc, bpm, shift,
+    } = params;
+
     const { abs, sin, PI } = Math;
 
     const angularVelocity = (2 * PI * bpm) / 60;

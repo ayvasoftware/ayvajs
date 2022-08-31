@@ -13,11 +13,11 @@ export default {
     {
       name: 'L1',
       type: 'linear',
-      alias: 'forward',
+      alias: 'surge',
     }, {
       name: 'L2',
       type: 'linear',
-      alias: 'left',
+      alias: 'sway',
     },
     {
       name: 'R0',

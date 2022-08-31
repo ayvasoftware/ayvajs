@@ -17,12 +17,12 @@ export function createTestConfig () {
       {
         name: 'L1',
         type: 'linear',
-        alias: 'forward',
+        alias: 'surge',
       },
       {
         name: 'L2',
         type: 'linear',
-        alias: 'left',
+        alias: 'sway',
       },
       {
         name: 'R0',
@@ -52,12 +52,12 @@ export function createTestConfig () {
       {
         name: 'B1',
         type: 'boolean',
-        alias: 'test-boolean-axis',
+        alias: 'testBooleanAxis',
       },
       {
         name: 'B2',
         type: 'boolean',
-        alias: 'test-boolean-axis-2',
+        alias: 'testBooleanAxis2',
       },
     ],
   };
@@ -135,7 +135,7 @@ export function spySleep (ayva) {
  */
 export function mockOutput (ayva) {
   const write = sinon.fake();
-  ayva.addOutputDevice({ write });
+  ayva.addOutput({ write });
 
   return write;
 }

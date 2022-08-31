@@ -284,7 +284,7 @@ describe('Generator Behavior Tests', function () {
     describe('#bind()', function () {
       beforeEach(function () {
         behavior = new GeneratorBehavior(function* (ayvaInstance) {
-          yield ayvaInstance.stroke(0, 1);
+          yield ayvaInstance.$.stroke(0, 1).execute();
         });
       });
 

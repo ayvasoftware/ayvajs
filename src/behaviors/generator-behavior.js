@@ -76,10 +76,10 @@ class GeneratorBehavior extends Callable {
    * Perform one step of this behavior.
    *
    * @param {Ayva} [ayva] - instance of Ayva to use. Defaults to the Ayva instance bound to this behavior (if it exists).
-   * @returns
+   * @returns Promise that resolves when the step is complete.
    */
   perform (ayva = this.#ayva) {
-    const value = this.#next(ayva);
+    const value = this.next(ayva);
 
     if (value) {
       if (Array.isArray(value)) {
@@ -135,7 +135,13 @@ class GeneratorBehavior extends Callable {
     }
   }
 
-  #next (ayva) {
+  /**
+   * Generate and return the next action of this behavior.
+   *
+   * @param {Ayva} ayva - defaults to the bound instance (if any)
+   * @returns - the next action.
+   */
+  next (ayva = this.#ayva) {
     if (!this.#generator || this.#done) {
       this.#generator = this.generate(ayva);
       this.#done = false;

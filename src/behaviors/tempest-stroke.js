@@ -37,7 +37,7 @@ class TempestStroke extends GeneratorBehavior {
    * This controls how often a bpm provider is called per stroke.
    */
   static set granularity (value) {
-    if (!validNumber(value, 1)) {
+    if (!validNumber(value, 1, 180)) {
       throw new Error(`Invalid granularity: ${value}`);
     }
 
@@ -55,6 +55,7 @@ class TempestStroke extends GeneratorBehavior {
       phase: 0,
       ecc: 0,
       shift: 0,
+      noise: 0,
       motion: Ayva.tempestMotion,
     };
   }
@@ -97,6 +98,8 @@ class TempestStroke extends GeneratorBehavior {
     createConstantProperty(this, 'axes', {});
 
     Object.keys(config).forEach((axis) => {
+      this.#validateNoise(config[axis]);
+
       createConstantProperty(this.axes, axis, {});
 
       Object.keys(config[axis]).forEach((property) => {
@@ -108,6 +111,10 @@ class TempestStroke extends GeneratorBehavior {
           createConstantProperty(this.axes[axis], property, TempestStroke.DEFAULT_PARAMETERS[property]);
         }
       });
+
+      const { from, to } = this.axes[axis];
+
+      createConstantProperty(this.axes[axis], '$current', { from, to });
     });
 
     this.#angle = angle;
@@ -118,11 +125,12 @@ class TempestStroke extends GeneratorBehavior {
   * generate () {
     const { granularity } = TempestStroke;
 
+    const startAngle = this.#angle;
+
     for (let i = 0; i < granularity; i++) {
       yield this.#createMoves(i);
+      this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
     }
-
-    this.#angle += Math.PI;
   }
 
   /**
@@ -160,8 +168,8 @@ class TempestStroke extends GeneratorBehavior {
       const params = this.axes[axisNameOrAlias];
 
       const to = params.motion(
-        params.from,
-        params.to,
+        params.$current.from,
+        params.$current.to,
         params.phase,
         params.ecc,
         this.#bpm,
@@ -216,29 +224,82 @@ class TempestStroke extends GeneratorBehavior {
     return new TempestStrokeWithTransition(config, bpm, this, duration, onTransitionStart, onTransitionEnd);
   }
 
-  #createMoves (index) {
+  #createMoves () {
     const { granularity } = TempestStroke;
     const moves = Object.keys(this.axes).map((axis) => {
       const params = this.axes[axis];
       const seconds = 30 / granularity;
-      const angleSlice = Math.PI / granularity;
 
-      return {
+      const result = {
         axis,
         value: params.motion(
-          params.from,
-          params.to,
+          params.$current.from,
+          params.$current.to,
           params.phase,
           params.ecc,
           this.#bpm,
-          params.shift + this.#angle + (index * angleSlice)
+          params.shift + this.#angle,
         ),
         duration: seconds / this.#bpm,
       };
+
+      this.#generateNoise(params);
+
+      return result;
     });
 
     this.#bpm = this.#bpmProvider.next();
     return moves;
+  }
+
+  #generateNoise (params) {
+    if (params.noise) {
+      const { PI } = Math;
+      const angleSlice = PI / TempestStroke.granularity;
+      const deg = (radians) => (radians * 180) / PI;
+      const getNoise = (which) => (validNumber(params.noise) ? params.noise : params.noise[which] || 0);
+      const phaseAngle = (params.phase * PI) / 2;
+      const absoluteAngle = phaseAngle + params.shift + this.#angle;
+
+      // We convert the angle to degrees and round so it's asthetically easier to find the transitions.
+      const startDegrees = Math.round(deg(absoluteAngle % (PI * 2)));
+      const endDegrees = Math.round(startDegrees + deg(angleSlice));
+      const movingToStart = startDegrees < 360 && endDegrees >= 360;
+      const movingToMid = startDegrees < 180 && endDegrees >= 180;
+
+      if (movingToStart) {
+        const noise = getNoise('to');
+        const noiseRange = (params.from - params.to) / 2;
+        params.$current.to = params.to + noise * noiseRange * Math.random();
+      } else if (movingToMid) {
+        const noise = getNoise('from');
+        const noiseRange = (params.to - params.from) / 2;
+        params.$current.from = params.from + noise * noiseRange * Math.random();
+      }
+    }
+  }
+
+  #validateNoise (params) {
+    if (has(params, 'noise')) {
+      const { noise } = params;
+      const error = (value) => {
+        throw new Error(`Invalid noise: ${value}`);
+      };
+
+      const isObject = typeof noise === 'object';
+
+      if (isObject && has(noise, 'from') && !validNumber(noise.from, 0, 1)) {
+        error(noise.from);
+      }
+
+      if (isObject && has(noise, 'to') && !validNumber(noise.to, 0, 1)) {
+        error(noise.to);
+      }
+
+      if (!isObject && !validNumber(noise, 0, 1)) {
+        error(noise);
+      }
+    }
   }
 }
 
@@ -309,12 +370,20 @@ class TempestStrokeTransition extends GeneratorBehavior {
       ...TempestStroke.DEFAULT_PARAMETERS,
       from: 0.5,
       to: 0.5,
+      $current: {
+        from: 0.5,
+        to: 0.5,
+      },
     };
 
     const zeroParamsAux = {
       ...TempestStroke.DEFAULT_PARAMETERS,
       from: 0,
       to: 0,
+      $current: {
+        from: 0,
+        to: 0,
+      },
     };
 
     const sourceAxes = this.#getAxisMapByName(this.#source.axes, ayva);
@@ -363,8 +432,8 @@ class TempestStrokeTransition extends GeneratorBehavior {
       value: (params) => {
         const { x } = params;
 
-        const from = Ayva.map(x, 0, 1, sourceAxis.from, targetAxis.from);
-        const to = Ayva.map(x, 0, 1, sourceAxis.to, targetAxis.to);
+        const from = Ayva.map(x, 0, 1, sourceAxis.$current.from, targetAxis.$current.from);
+        const to = Ayva.map(x, 0, 1, sourceAxis.$current.to, targetAxis.$current.to);
         const phase = Ayva.map(x, 0, 1, sourceAxis.phase, targetAxis.phase);
         const ecc = Ayva.map(x, 0, 1, sourceAxis.ecc, targetAxis.ecc);
         const bpm = Ayva.map(x, 0, 1, sourceBpm, averageBpm);

@@ -64,7 +64,7 @@ describe('Classic Stroke Tests', function () {
 
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
-    ayva.addOutputDevice({ write: sinon.fake() });
+    ayva.addOutput({ write: sinon.fake() });
     mockSleep(ayva);
     spyMove(ayva);
   });
@@ -365,7 +365,7 @@ describe('Classic Stroke Tests', function () {
       mockMove(ayva); // Suppress output from move();
 
       const write = sinon.fake();
-      ayva.addOutputDevice({ write });
+      ayva.addOutput({ write });
 
       const stroke = new ClassicStroke({
         suck: 0.3,
