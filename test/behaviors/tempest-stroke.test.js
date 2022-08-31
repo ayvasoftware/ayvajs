@@ -4,7 +4,9 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import Ayva from '../../src/ayva.js';
 import TempestStroke from '../../src/behaviors/tempest-stroke.js';
-import { createTestConfig, mockSleep, spyMove } from '../test-helpers.js';
+import {
+  createTestConfig, mock, mockSleep, spyMove
+} from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 describe('Tempest Stroke Tests', function () {
@@ -140,6 +142,90 @@ describe('Tempest Stroke Tests', function () {
 
     motion.angle.should.equal(Math.PI);
     motion.bpm.should.equal(42);
+  });
+
+  it('should allow specifying noise as number', async function () {
+    // TODO: This test depends on the underlying implementation using Math.random()... Don't.
+    mock(Math, 'random', 0.5);
+
+    ayva.$.stroke.value.should.equal(0.5);
+    ayva.$.twist.value.should.equal(0.5);
+
+    const motion = new TempestStroke({
+      stroke: {
+        from: 0,
+        to: 1,
+        noise: 1,
+      },
+
+      twist: {
+        from: 1,
+        to: 0,
+        noise: 1,
+      },
+    });
+
+    await performTempestStroke(motion);
+
+    round(ayva.$.stroke.value, 2).should.equal(1);
+    round(ayva.$.twist.value, 2).should.equal(0);
+    motion.angle.should.equal(Math.PI);
+
+    await performTempestStroke(motion);
+
+    round(ayva.$.stroke.value, 2).should.equal(0.25);
+    round(ayva.$.twist.value, 2).should.equal(0.75);
+    motion.angle.should.equal(Math.PI * 2);
+
+    await performTempestStroke(motion);
+
+    round(ayva.$.stroke.value, 2).should.equal(0.75);
+    round(ayva.$.twist.value, 2).should.equal(0.25);
+    motion.angle.should.equal(Math.PI * 3);
+  });
+
+  it('should allow specifying noise as an object', async function () {
+    // TODO: This test depends on the underlying implementation using Math.random()... Don't.
+    mock(Math, 'random', 0.5);
+
+    ayva.$.stroke.value.should.equal(0.5);
+    ayva.$.twist.value.should.equal(0.5);
+
+    const motion = new TempestStroke({
+      stroke: {
+        from: 0,
+        to: 1,
+        noise: {
+          from: 1,
+        },
+      },
+
+      twist: {
+        from: 1,
+        to: 0,
+        noise: {
+          to: 1,
+        },
+      },
+    });
+
+    await performTempestStroke(motion);
+
+    round(ayva.$.stroke.value, 2).should.equal(1);
+    round(ayva.$.twist.value, 2).should.equal(0);
+    motion.angle.should.equal(Math.PI);
+
+    await performTempestStroke(motion);
+
+    round(ayva.$.stroke.value, 2).should.equal(0.25);
+    round(ayva.$.twist.value, 2).should.equal(1);
+    motion.angle.should.equal(Math.PI * 2);
+
+    await performTempestStroke(motion);
+
+    round(ayva.$.stroke.value, 2).should.equal(1);
+    round(ayva.$.twist.value, 2).should.equal(0.25);
+    motion.angle.should.equal(Math.PI * 3);
   });
 
   it('should allow performing library strokes by name', async function () {
