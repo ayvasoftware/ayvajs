@@ -228,6 +228,23 @@ describe('Tempest Stroke Tests', function () {
     motion.angle.should.equal(Math.PI * 3);
   });
 
+  it('should throw an error if noise is out of range', async function () {
+    const createStrokeWithNoise = (noise) => function () {
+      new TempestStroke({
+        stroke: {
+          noise,
+        },
+      });
+    };
+
+    createStrokeWithNoise(4).should.throw(Error, 'Invalid noise: 4');
+    createStrokeWithNoise(-1).should.throw(Error, 'Invalid noise: -1');
+    createStrokeWithNoise({ from: 3 }).should.throw(Error, 'Invalid noise: 3');
+    createStrokeWithNoise({ to: 2 }).should.throw(Error, 'Invalid noise: 2');
+    createStrokeWithNoise({ from: -1 }).should.throw(Error, 'Invalid noise: -1');
+    createStrokeWithNoise({ to: -1 }).should.throw(Error, 'Invalid noise: -1');
+  });
+
   it('should allow performing library strokes by name', async function () {
     const strokes = Object.keys(TempestStroke.library);
 

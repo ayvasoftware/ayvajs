@@ -98,6 +98,8 @@ class TempestStroke extends GeneratorBehavior {
     createConstantProperty(this, 'axes', {});
 
     Object.keys(config).forEach((axis) => {
+      this.#validateNoise(config[axis]);
+
       createConstantProperty(this.axes, axis, {});
 
       Object.keys(config[axis]).forEach((property) => {
@@ -273,6 +275,29 @@ class TempestStroke extends GeneratorBehavior {
         const noise = getNoise('from');
         const noiseRange = (params.to - params.from) / 2;
         params.$current.from = params.from + noise * noiseRange * Math.random();
+      }
+    }
+  }
+
+  #validateNoise (params) {
+    if (has(params, 'noise')) {
+      const { noise } = params;
+      const error = (value) => {
+        throw new Error(`Invalid noise: ${value}`);
+      };
+
+      const isObject = typeof noise === 'object';
+
+      if (isObject && has(noise, 'from') && !validNumber(noise.from, 0, 1)) {
+        error(noise.from);
+      }
+
+      if (isObject && has(noise, 'to') && !validNumber(noise.to, 0, 1)) {
+        error(noise.to);
+      }
+
+      if (!isObject && !validNumber(noise, 0, 1)) {
+        error(noise);
       }
     }
   }
