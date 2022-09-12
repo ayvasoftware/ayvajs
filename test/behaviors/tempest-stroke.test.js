@@ -307,6 +307,21 @@ describe('Tempest Stroke Tests', function () {
     }).should.throw('No stroke named non-existent found.');
   });
 
+  it('should synchronize using a timer when provided', async function () {
+    let index = 0;
+    const timer = {
+      now () {
+        return (0.5 / TempestStroke.granularity) * index++;
+      },
+    };
+
+    const syncStroke = new TempestStroke('down-forward', 60, 0, timer);
+
+    await performTempestStroke(syncStroke);
+
+    expect(round(syncStroke.angle, 15)).to.equal(Math.PI);
+  });
+
   describe('transition moves', function () {
     let stroke;
     const verifyStart = () => {

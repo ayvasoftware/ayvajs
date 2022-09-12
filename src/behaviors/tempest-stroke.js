@@ -18,6 +18,12 @@ class TempestStroke extends GeneratorBehavior {
 
   #bpmProvider;
 
+  #timer;
+
+  #startTime;
+
+  #startAngle;
+
   get angle () {
     return this.#angle;
   }
@@ -98,8 +104,9 @@ class TempestStroke extends GeneratorBehavior {
    * @param {Object} config
    * @param {Number} [bpm=60]
    * @param {Number} [angle=0]
+   * @param {Boolean} [synchronized=false] - Whether or
    */
-  constructor (config, bpm = 60, angle = 0) {
+  constructor (config, bpm = 60, angle = 0, timer = null) {
     super();
 
     if (typeof config === 'string') {
@@ -133,18 +140,17 @@ class TempestStroke extends GeneratorBehavior {
     });
 
     this.#angle = angle;
+    this.#startAngle = angle;
     this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
+    this.#timer = timer;
   }
 
   * generate () {
-    const { granularity } = TempestStroke;
-
-    const startAngle = this.#angle;
-
-    for (let i = 0; i < granularity; i++) {
-      yield this.#createMoves(i);
-      this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
+    if (this.#timer) {
+      yield* this.#synchronizedGenerate();
+    } else {
+      yield* this.#unsynchronizedGenerate();
     }
   }
 
@@ -237,6 +243,32 @@ class TempestStroke extends GeneratorBehavior {
    */
   transition (config, bpm = 60, duration = 1, onTransitionStart = null, onTransitionEnd = null) {
     return new TempestStrokeWithTransition(config, bpm, this, duration, onTransitionStart, onTransitionEnd);
+  }
+
+  * #synchronizedGenerate () {
+    const { granularity } = TempestStroke;
+
+    this.#startTime = this.#startTime || this.#timer.now();
+
+    for (let i = 0; i < granularity; i++) {
+      const currentBpm = this.#bpm;
+      yield this.#createMoves(i);
+      const elapsed = this.#timer.now() - this.#startTime;
+
+      const elapsedRadians = elapsed * ((currentBpm * 2 * Math.PI) / 60);
+      this.#angle = this.#startAngle + elapsedRadians;
+    }
+  }
+
+  * #unsynchronizedGenerate () {
+    const { granularity } = TempestStroke;
+
+    const startAngle = this.#angle;
+
+    for (let i = 0; i < granularity; i++) {
+      yield this.#createMoves(i);
+      this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
+    }
   }
 
   #createMoves () {
