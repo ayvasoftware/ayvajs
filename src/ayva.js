@@ -185,30 +185,15 @@ class Ayva {
    * @param  {...Object} movements
    * @return {Promise} a promise that resolves with the boolean value true when all movements have finished, or false if the move was cancelled.
    */
-  async move (...movements) {
+
+  move (...movements) {
     if (!this.#devices || !this.#devices.length) {
       throw new Error('No output devices have been added.');
     }
 
     validator.validateMovements(movements, this.#axes, this.defaultAxis);
 
-    const movementId = this.#nextMovementId++;
-    this.#movements.add(movementId);
-
-    while (this.#movements.has(movementId) && this.#movements.values().next().value !== movementId) {
-      // Wait until current movements have completed to proceed.
-      await this.sleep();
-    }
-
-    if (!this.#movements.has(movementId)) {
-      // This move must have been cancelled.
-      return false;
-    }
-
-    return this.#performMovements(movementId, movements).finally(() => {
-      this.#movements.delete(movementId);
-      this.#checkNotifyReady();
-    });
+    return this.#asyncMove(...movements);
   }
 
   /**
@@ -479,6 +464,26 @@ class Ayva {
     if (index !== -1) {
       this.#devices.splice(index, 1);
     }
+  }
+
+  async #asyncMove (...movements) {
+    const movementId = this.#nextMovementId++;
+    this.#movements.add(movementId);
+
+    while (this.#movements.has(movementId) && this.#movements.values().next().value !== movementId) {
+      // Wait until current movements have completed to proceed.
+      await this.sleep();
+    }
+
+    if (!this.#movements.has(movementId)) {
+      // This move must have been cancelled.
+      return false;
+    }
+
+    return this.#performMovements(movementId, movements).finally(() => {
+      this.#movements.delete(movementId);
+      this.#checkNotifyReady();
+    });
   }
 
   /**

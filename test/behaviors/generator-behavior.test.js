@@ -199,7 +199,7 @@ describe('Generator Behavior Tests', function () {
         yield -1;
       });
 
-      return behavior.perform(ayva).should.be.rejectedWith(Error, 'Invalid movement: -1');
+      (() => behavior.perform(ayva)).should.throw(Error, 'Invalid movement: -1');
     });
 
     it('throws an error when generate() is not implemented', async function () {

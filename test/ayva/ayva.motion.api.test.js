@@ -3,7 +3,7 @@ import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
 import {
-  createTestConfig, mock, spy, mockMove, mockSleep
+  createTestConfig, createFunctionBinder, mock, spy, mockMove, mockSleep
 } from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
@@ -14,6 +14,7 @@ describe('Motion API Tests', function () {
   let ayva;
   let device;
   let warn; // console.warn
+  let testMove;
 
   /**
    * Helper to check that the specified tcodes were written to the output device.
@@ -48,6 +49,8 @@ describe('Motion API Tests', function () {
   beforeEach(function () {
     ayva = new Ayva(createTestConfig());
     ayva.defaultRamp = Ayva.RAMP_LINEAR;
+
+    testMove = createFunctionBinder(ayva, 'move');
 
     mockSleep(ayva);
     warn = mock(console, 'warn');
@@ -166,49 +169,43 @@ describe('Motion API Tests', function () {
     const invalidNumericValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity];
 
     it('should throw an error if invalid movement is passed', function () {
-      const testInvalidMovePromises = [...invalidNumericValues, -1, 0, 1].map((
-        value
-      ) => ayva.move(value).should.be.rejectedWith(Error, `Invalid movement: ${value}`));
+      testMove().should.throw(Error, 'Must supply at least one movement.');
 
-      return Promise.all([
-        ayva.move().should.be.rejectedWith(Error, 'Must supply at least one movement.'),
-        ...testInvalidMovePromises,
-      ]);
+      [...invalidNumericValues, -1, 0, 1].forEach((value) => {
+        testMove(value).should.throw(Error, `Invalid movement: ${value}`);
+      });
     });
 
     it('should throw an error if \'to\' parameter is missing or invalid', function () {
       // 0 <= to <= 1
-      const testInvalidMovePromises = [...invalidNumericValues, -1, 2].map(
-        (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'to': ${value}`)
-      );
+      [...invalidNumericValues, -1, 2].forEach((value) => {
+        testMove({ to: value }).should.throw(Error, `Invalid value for parameter 'to': ${value}`);
+      });
 
-      return Promise.all([
-        ayva.move({}).should.be.rejectedWith(Error, 'Must provide a \'to\' property or \'value\' function.'),
-        ayva.move({ to: 0 }).should.be.rejectedWith(Error, 'At least one movement must have a speed or duration.'),
-        ...testInvalidMovePromises,
-      ]);
+      testMove({}).should.throw(Error, 'Must provide a \'to\' property or \'value\' function.');
+      testMove({ to: 0 }).should.throw(Error, 'At least one movement must have a speed or duration.');
     });
 
     it('should throw an error if \'speed\' is invalid', function () {
       // speed > 0
-      return Promise.all([...invalidNumericValues, -1, 0].map(
-        (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'speed': ${value}`)
-      ));
+      [...invalidNumericValues, -1, 0].forEach((value) => {
+        testMove({ to: 0, speed: value }).should.throw(Error, `Invalid value for parameter 'speed': ${value}`);
+      });
     });
 
     it('should throw an error if \'duration\' is invalid', function () {
       // duration > 0
-      return Promise.all([...invalidNumericValues, -1, 0].map(
-        (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'duration': ${value}`)
-      ));
+      [...invalidNumericValues, -1, 0].forEach((value) => {
+        testMove({ to: 0, duration: value }).should.throw(Error, `Invalid value for parameter 'duration': ${value}`);
+      });
     });
 
     it('should throw an error if speed is provided and no target position is specified', function () {
-      return ayva.move({ value: () => {}, speed: 1 }).should.be.rejectedWith(Error, 'Must provide a target position when specifying speed.');
+      testMove({ value: () => {}, speed: 1 }).should.throw(Error, 'Must provide a target position when specifying speed.');
     });
 
     it('should not allow specifying both speed and duration', function () {
-      return ayva.move({ to: 0, duration: 1, speed: 1 }).should.be.rejectedWith(Error, 'Cannot supply both speed and duration.');
+      testMove({ to: 0, duration: 1, speed: 1 }).should.throw(Error, 'Cannot supply both speed and duration.');
     });
 
     it('should throw an error if axis is not specified and there is no default axis', function () {
@@ -217,79 +214,70 @@ describe('Motion API Tests', function () {
 
       ayva = new Ayva(configWithoutDefault);
       ayva.addOutput(device);
-      return ayva.move({ to: 0, speed: 1 }).should.be.rejectedWith(Error, 'No default axis configured. Must specify an axis for each movement.');
+      createFunctionBinder(ayva, 'move')({ to: 0, speed: 1 })
+        .should.throw(Error, 'No default axis configured. Must specify an axis for each movement.');
     });
 
     it('should throw an error if axis is invalid', function () {
-      return Promise.all([...invalidNumericValues, 'non-existent', 0, 1, -1].map(
-        (value) => ayva.move({ to: 0, speed: 1, axis: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'axis': ${value}`)
-      ));
+      [...invalidNumericValues, 'non-existent', 0, 1, -1].forEach(
+        (value) => testMove({ to: 0, speed: 1, axis: value }).should.throw(Error, `Invalid value for parameter 'axis': ${value}`)
+      );
     });
 
     it('should throw an error if value is not a function', function () {
-      const testInvalidMovePromises = [...invalidNumericValues, 0, 1, -1].filter((v) => !(v instanceof Function)).map(
-        (value) => ayva.move({ to: 0, speed: 1, value }).should.be.rejectedWith(Error, '\'value\' must be a function.')
+      [...invalidNumericValues, 0, 1, -1].filter((v) => !(v instanceof Function)).forEach(
+        (value) => testMove({ to: 0, speed: 1, value }).should.throw(Error, '\'value\' must be a function.')
       );
-
-      return Promise.all(testInvalidMovePromises);
     });
 
     it('should throw an error if axis specified more than once', function () {
-      return Promise.all([
-        ayva.move({ to: 0, speed: 1 }, { to: 0, speed: 1 })
-          .should.be.rejectedWith(Error, 'Duplicate axis movement: L0'),
-        ayva.move({ axis: 'roll', to: 0, speed: 1 }, { axis: 'roll', to: 0, speed: 1 })
-          .should.be.rejectedWith(Error, 'Duplicate axis movement: roll'),
-      ]);
+      testMove({ to: 0, speed: 1 }, { to: 0, speed: 1 })
+        .should.throw(Error, 'Duplicate axis movement: L0');
+      testMove({ axis: 'roll', to: 0, speed: 1 }, { axis: 'roll', to: 0, speed: 1 })
+        .should.throw(Error, 'Duplicate axis movement: roll');
     });
 
     it('should throw an error if the sync property is invalid data type', function () {
       const invalidValues = [null, undefined, '', ' ', false, true, () => {}, NaN, Infinity, 0, 1, -1];
 
-      const testInvalidMovePromises = invalidValues.map(
-        (value) => ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: value })
-          .should.be.rejectedWith(Error, `Invalid value for parameter 'sync': ${value}`)
+      invalidValues.forEach(
+        (value) => testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: value })
+          .should.throw(Error, `Invalid value for parameter 'sync': ${value}`)
       );
-
-      return Promise.all(testInvalidMovePromises);
     });
 
     it('should throw an error if the sync property is invalid', function () {
       const syncCycleError = 'Sync axes cannot form a cycle.';
 
-      return Promise.all([
-        // Sync with non-existent axis.
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' })
-          .should.be.rejectedWith(Error, 'Cannot sync with axis not specified in movement: twist -> roll'),
+      // Sync with non-existent axis.
+      testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' })
+        .should.throw(Error, 'Cannot sync with axis not specified in movement: twist -> roll');
 
-        // Sync with self.
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'twist' })
-          .should.be.rejectedWith(Error, syncCycleError),
+      // Sync with self.
+      testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'twist' })
+        .should.throw(Error, syncCycleError);
 
-        // Sync cycle (2)
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' }, { axis: 'roll', to: 0, sync: 'twist' })
-          .should.be.rejectedWith(Error, syncCycleError),
+      // Sync cycle (2)
+      testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' }, { axis: 'roll', to: 0, sync: 'twist' })
+        .should.throw(Error, syncCycleError);
 
-        // Sync cycle (3)
-        ayva.move(
-          { to: 0, speed: 1 },
-          { axis: 'twist', to: 0, sync: 'roll' },
-          { axis: 'roll', to: 0, sync: 'sway' },
-          { axis: 'sway', to: 0, sync: 'twist' },
-        ).should.be.rejectedWith(Error, syncCycleError),
-      ]);
+      // Sync cycle (3)
+      testMove(
+        { to: 0, speed: 1 },
+        { axis: 'twist', to: 0, sync: 'roll' },
+        { axis: 'roll', to: 0, sync: 'sway' },
+        { axis: 'sway', to: 0, sync: 'twist' },
+      ).should.throw(Error, syncCycleError);
     });
 
     it('should throw an error if the sync property is specified with a speed or duration', function () {
-      return Promise.all([
-        ayva.move({ to: 0, speed: 1 }, {
-          axis: 'twist', to: 0, speed: 1, sync: 'stroke',
-        }).should.be.rejectedWith(Error, 'Cannot specify a speed or duration when sync property is present: twist'),
+      testMove({ to: 0, speed: 1 }, {
+        axis: 'twist', to: 0, speed: 1, sync: 'stroke',
+      }).should.throw(Error, 'Cannot specify a speed or duration when sync property is present: twist');
 
-        ayva.move({ to: 0, speed: 1 }, {
-          axis: 'roll', to: 0, duration: 1, sync: 'stroke',
-        }).should.be.rejectedWith(Error, 'Cannot specify a speed or duration when sync property is present: roll'),
-      ]);
+      testMove({ to: 0, speed: 1 }, {
+        axis: 'roll', to: 0, duration: 1, sync: 'stroke',
+      }).should.throw(Error, 'Cannot specify a speed or duration when sync property is present: roll');
     });
 
     it('should allow boolean values for axis type boolean', function () {
@@ -302,25 +290,23 @@ describe('Motion API Tests', function () {
     it('should throw an error if speed is specified for type boolean', function () {
       const errorMessage = 'Cannot specify speed for boolean axes: testBooleanAxis';
 
-      return Promise.all([
-        ayva.move({ axis: 'testBooleanAxis', to: true, speed: 1 }).should.be.rejectedWith(Error, errorMessage),
+      testMove({ axis: 'testBooleanAxis', to: true, speed: 1 }).should.throw(Error, errorMessage);
 
-        ayva.move({
-          axis: 'testBooleanAxis', to: false, duration: 1,
-        }).should.be.rejectedWith(Error, 'Cannot specify a duration for a boolean axis movement with constant value.'),
+      testMove({
+        axis: 'testBooleanAxis', to: false, duration: 1,
+      }).should.throw(Error, 'Cannot specify a duration for a boolean axis movement with constant value.');
 
-        // Boolean axis should allow duration if providing a value function.
-        ayva.move({ axis: 'testBooleanAxis', value: () => {}, duration: 1 }).should.be.fulfilled,
-      ]);
+      // Boolean axis should allow duration if providing a value function.
+      testMove({ axis: 'testBooleanAxis', value: () => {}, duration: 1 }).should.not.throw(Error);
     });
 
     it('should throw an error if number passed to boolean axis', function () {
-      return ayva.move({ axis: 'testBooleanAxis', to: 1 }).should.be.rejectedWith(Error, 'Invalid value for parameter \'to\': 1');
+      testMove({ axis: 'testBooleanAxis', to: 1 }).should.throw(Error, 'Invalid value for parameter \'to\': 1');
     });
 
     it('should emit a warning when value provider gives invalid values', async function () {
-      await ayva.move({ value: () => ({}), duration: 1 }).should.be.fulfilled;
-      await ayva.move({ value: () => NaN, duration: 1 }).should.be.fulfilled;
+      await ayva.move({ value: () => ({}), duration: 1 });
+      await ayva.move({ value: () => NaN, duration: 1 });
 
       warn.callCount.should.equal(ayva.frequency * 2);
       warn.getCall(0).args[0].should.equal('Invalid value provided: [object Object]');
@@ -330,7 +316,7 @@ describe('Motion API Tests', function () {
     it('should reject movement if value provider throws error', function () {
       const errorMessage = 'All ur cock r belong to us.';
 
-      return ayva.move({
+      ayva.move({
         value: () => {
           throw new Error(errorMessage);
         },
@@ -342,10 +328,10 @@ describe('Motion API Tests', function () {
       ayva = new Ayva(createTestConfig());
       const errorMessage = 'No output devices have been added.';
 
-      return ayva.move({
+      createFunctionBinder(ayva, 'move')({
         to: 0,
         duration: 1,
-      }).should.be.rejectedWith(errorMessage);
+      }).should.throw(Error, errorMessage);
     });
 
     it('should throw an error for invalid tempest motion', function () {
