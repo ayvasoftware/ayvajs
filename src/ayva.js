@@ -223,7 +223,7 @@ class Ayva {
       });
     }
 
-    return Promise.resolve();
+    return this.sleep();
   }
 
   /**

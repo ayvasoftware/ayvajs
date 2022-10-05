@@ -91,7 +91,7 @@ describe('Generator Behavior Tests', function () {
       const result = await behavior.perform(ayva);
 
       expect(result).to.be.true;
-      ayva.sleep.callCount.should.equal(1);
+      ayva.sleep.callCount.should.equal(2); // Call count = 2 because ayva.ready() also calls sleep.
       expect(ayva.sleep.firstArg).to.equal(1);
     });
 
