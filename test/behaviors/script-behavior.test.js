@@ -33,18 +33,6 @@ describe('Script Behavior Tests', function () {
     expect(ayva.move.firstArg).to.deep.equal({ to: 0, speed: 1 });
   });
 
-  it('can access move builders defined on ayva instance ($)', async function () {
-    const behavior = new ScriptBehavior(`
-      stroke(0, 1).execute();
-    `);
-
-    const result = await behavior.perform(ayva);
-
-    expect(result).to.be.undefined; // Because we didn't yield anything.
-    ayva.move.callCount.should.equal(1);
-    expect(ayva.move.firstArg).to.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
-  });
-
   it('throws syntax error if invalid JavaScript', async function () {
     const behavior = new ScriptBehavior(`
       console.log(');

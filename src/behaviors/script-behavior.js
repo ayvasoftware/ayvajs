@@ -70,7 +70,6 @@ class ScriptBehavior extends GeneratorBehavior {
     // Create the generate function from script.
     sandboxFunction += `\`
       return (function*(ayva) { 
-        ${this.#scopeAyva(ayva)}
         ${this.#code} 
       }).bind(this);\`);`;
 
@@ -80,14 +79,6 @@ class ScriptBehavior extends GeneratorBehavior {
     } catch (error) {
       throw new SyntaxError('Invalid AyvaScript.');
     }
-  }
-
-  #scopeAyva (ayva) {
-    return `
-      const { ${Object.keys(ayva.$).join(', ')} } = ayva.$;
-      const home = ayva.home.bind(ayva);
-      const move = ayva.move.bind(ayva);
-    `;
   }
 }
 
