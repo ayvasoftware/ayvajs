@@ -1,5 +1,6 @@
 import Callable from '../util/callable.js';
 import MoveBuilder from '../util/move-builder.js';
+import Ayva from '../ayva.js'; // eslint-disable-line import/no-cycle
 
 /**
  * Base class for Generator Behaviors.
@@ -162,6 +163,12 @@ class GeneratorBehavior extends Callable {
     const ayva = this.#ayva || args[0];
 
     const count = Number.isFinite(countArg) && countArg >= 1 ? countArg : undefined;
+
+    if (ayva !== undefined) {
+      if (!(ayva instanceof Ayva)) {
+        throw new TypeError(`Invalid Ayva instance: ${ayva}`);
+      }
+    }
 
     if (this.#ayva) {
       return count ? this.iterated(count) : this.generate();

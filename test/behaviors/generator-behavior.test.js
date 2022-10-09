@@ -348,6 +348,16 @@ describe('Generator Behavior Tests', function () {
         (function () { behavior.generate().next(); }).should.throw(TypeError);
         (function () { behavior.iterated().next(); }).should.throw(TypeError);
       });
+
+      it('calling behavior with invalid (bound) ayva instance throws error', function () {
+        behavior.bind(2);
+
+        (function () { behavior(); }).should.throw(TypeError, 'Invalid Ayva instance: 2');
+      });
+
+      it('calling behavior with invalid ayva instance throws error', function () {
+        (function () { behavior(2); }).should.throw(TypeError, 'Invalid Ayva instance: 2');
+      });
     });
   });
 });

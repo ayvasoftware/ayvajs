@@ -6,7 +6,7 @@ import {
 } from './util/util.js';
 import validator from './util/validator.js';
 import OSR_CONFIG from './util/osr-config.js';
-import GeneratorBehavior from './behaviors/generator-behavior.js';
+import GeneratorBehavior from './behaviors/generator-behavior.js'; // eslint-disable-line import/no-cycle
 
 class Ayva {
   #devices = [];

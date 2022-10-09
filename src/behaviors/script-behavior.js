@@ -48,7 +48,7 @@ class ScriptBehavior extends GeneratorBehavior {
     /* c8 ignore stop */
   }
 
-  #createSandboxGenerator (ayva) {
+  #createSandboxGenerator () {
     const scopeValues = [];
     let sandboxFunction = 'new Function(';
 
