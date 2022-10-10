@@ -124,7 +124,8 @@ class TempestStroke extends GeneratorBehavior {
    * @param {Object} config
    * @param {Number} [bpm=60]
    * @param {Number} [angle=0]
-   * @param {Boolean} [synchronized=false] - Whether or
+   * @param {Object} [timer=null]
+   * @param {Number} [startTime=null]
    */
   constructor (config, bpm = 60, angle = 0, timer = null, startTime = null) {
     super();
