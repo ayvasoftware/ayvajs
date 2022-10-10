@@ -32,8 +32,28 @@ class TempestStroke extends GeneratorBehavior {
     this.#angle = rad;
   }
 
+  get startAngle () {
+    return this.#startAngle;
+  }
+
+  set startAngle (angle) {
+    this.#startAngle = angle;
+  }
+
   get bpm () {
     return this.#bpm;
+  }
+
+  get startTime () {
+    return this.#startTime;
+  }
+
+  set startTime (time) {
+    this.#startTime = time;
+  }
+
+  get timer () {
+    return this.#timer;
   }
 
   static #granularity = 36;
@@ -106,7 +126,7 @@ class TempestStroke extends GeneratorBehavior {
    * @param {Number} [angle=0]
    * @param {Boolean} [synchronized=false] - Whether or
    */
-  constructor (config, bpm = 60, angle = 0, timer = null) {
+  constructor (config, bpm = 60, angle = 0, timer = null, startTime = null) {
     super();
 
     if (typeof config === 'string') {
@@ -144,6 +164,7 @@ class TempestStroke extends GeneratorBehavior {
     this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
     this.#timer = timer;
+    this.#startTime = startTime;
   }
 
   * generate () {
@@ -251,12 +272,13 @@ class TempestStroke extends GeneratorBehavior {
     this.#startTime = this.#startTime || this.#timer.now();
 
     for (let i = 0; i < granularity; i++) {
-      const currentBpm = this.#bpm;
       yield this.#createMoves(i);
-      const elapsed = this.#timer.now() - this.#startTime;
 
-      const elapsedRadians = elapsed * ((currentBpm * 2 * Math.PI) / 60);
+      const elapsed = this.#timer.now() - this.#startTime;
+      const elapsedRadians = elapsed * ((this.#bpm * 2 * Math.PI) / 60);
+
       this.#angle = this.#startAngle + elapsedRadians;
+      this.#bpm = this.#bpmProvider.next();
     }
   }
 
@@ -268,6 +290,7 @@ class TempestStroke extends GeneratorBehavior {
     for (let i = 0; i < granularity; i++) {
       yield this.#createMoves(i);
       this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
+      this.#bpm = this.#bpmProvider.next();
     }
   }
 
@@ -295,7 +318,6 @@ class TempestStroke extends GeneratorBehavior {
       return result;
     });
 
-    this.#bpm = this.#bpmProvider.next();
     return moves;
   }
 
@@ -360,8 +382,17 @@ class TempestStrokeWithTransition extends TempestStroke {
   #onTransitionEnd;
 
   constructor (config, bpmProvider, source, duration, onTransitionStart, onTransitionEnd) {
-    super(config, bpmProvider);
+    super(config, bpmProvider, 0, source.timer, source.startTime);
     this.angle = TempestStrokeTransition.computeTransitionStartAngle(source, duration, this.bpm);
+
+    this.startAngle = this.angle;
+
+    // Magic maths to make sure new stroke's start time meshes well with the
+    // new start angle... <3
+    const elapsedRadians = source.angle - source.startAngle;
+    const elapsed = elapsedRadians / ((source.bpm * 2 * Math.PI) / 60);
+
+    this.startTime += elapsed + duration;
     this.#transition = new TempestStrokeTransition(source, this, duration);
     this.#config = config;
     this.#onTransitionStart = onTransitionStart;
