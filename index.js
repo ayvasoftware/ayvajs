@@ -3,5 +3,6 @@ export { default as GeneratorBehavior } from './src/behaviors/generator-behavior
 export { default as ScriptBehavior } from './src/behaviors/script-behavior.js';
 export { default as ClassicStroke } from './src/behaviors/classic-stroke.js';
 export { default as TempestStroke } from './src/behaviors/tempest-stroke.js';
+export { default as TempestDanceStroke } from './src/behaviors/tempest-dance-stroke.js';
 export { default as VariableDuration } from './src/util/variable-duration.js';
 export { default as WebSerialDevice } from './src/devices/web-serial-device.js';
