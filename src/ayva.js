@@ -130,7 +130,7 @@ class Ayva {
    * @param {GeneratorBehavior|Function|Object} behavior - the behavior to perform.
    */
   async do (behavior) {
-    this.stop();
+    this.#stop();
 
     const behaviorId = this.#nextBehaviorId++;
     this.#currentBehaviorId = behaviorId;
@@ -253,15 +253,8 @@ class Ayva {
    * Cancels all running or pending movements, clears the current behavior (if any), and cancels any sleeps.
    */
   stop () {
-    this.#currentBehaviorId = null;
-    this.#movements.clear();
-    this.#sleepResolves.forEach((resolve) => resolve());
-
-    this.#getAxesArray().forEach((axis) => {
-      if (axis.resetOnStop) {
-        this.$[axis.name].value = axis.defaultValue;
-      }
-    });
+    // TODO: Add on stop notification here once event listening is implemented.
+    this.#stop();
   }
 
   /**
@@ -483,6 +476,18 @@ class Ayva {
     return this.#performMovements(movementId, movements).finally(() => {
       this.#movements.delete(movementId);
       this.#checkNotifyReady();
+    });
+  }
+
+  #stop () {
+    this.#currentBehaviorId = null;
+    this.#movements.clear();
+    this.#sleepResolves.forEach((resolve) => resolve());
+
+    this.#getAxesArray().forEach((axis) => {
+      if (axis.resetOnStop) {
+        this.$[axis.name].value = axis.defaultValue;
+      }
     });
   }
 
