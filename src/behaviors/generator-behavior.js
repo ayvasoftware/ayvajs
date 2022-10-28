@@ -8,8 +8,6 @@ import Ayva from '../ayva.js'; // eslint-disable-line import/no-cycle
  * For full details on how to use this class, see the {@tutorial behavior-api} tutorial.
  */
 class GeneratorBehavior extends Callable {
-  complete = false;
-
   #generator;
 
   #done = false;

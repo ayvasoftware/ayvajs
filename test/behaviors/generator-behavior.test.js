@@ -126,7 +126,7 @@ describe('Generator Behavior Tests', function () {
 
       // Assert state while behavior is running.
       expect(ayva.performing).to.be.true;
-      expect(behavior.complete).to.be.false;
+      expect(!!behavior.complete).to.be.false;
       ayva.move.callCount.should.equal(1);
       ayva.move.args[0][0].should.deep.equal({ to: 0, speed: 1 });
 
