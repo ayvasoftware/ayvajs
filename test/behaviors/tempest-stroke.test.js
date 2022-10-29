@@ -32,6 +32,21 @@ describe('Tempest Stroke Tests', function () {
     sinon.restore();
   });
 
+  it('should allow updating tempest stroke library', function () {
+    const orbit = TempestStroke.library['orbit-grind'];
+    orbit.L0 = { from: 0, to: 0.42 };
+
+    expect(orbit).to.not.deep.equal(TempestStroke.library['orbit-grind']);
+
+    TempestStroke.updateLibrary('orbit-grind', orbit);
+
+    expect(orbit).to.deep.equal(TempestStroke.library['orbit-grind']);
+
+    // Subsequent changes do not update the library.
+    orbit.L0 = { from: 0.32, to: 0.42 };
+    expect(orbit).to.not.deep.equal(TempestStroke.library['orbit-grind']);
+  });
+
   it('should throw error if granularity is invalid number', function () {
     (function () {
       TempestStroke.granularity = -1;

@@ -61,8 +61,13 @@ class TempestStroke extends GeneratorBehavior {
   }
 
   static get library () {
-    // TODO: Deep clone some other way.
+    // TODO: Deep clone more efficiently.
     return JSON.parse(JSON.stringify(tempestStrokeLibrary));
+  }
+
+  static updateLibrary (key, value) {
+    // TODO: Deep clone more efficiently.
+    tempestStrokeLibrary[key] = JSON.parse(JSON.stringify(value));
   }
 
   /**
