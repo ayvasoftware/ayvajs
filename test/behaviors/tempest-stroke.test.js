@@ -30,21 +30,51 @@ describe('Tempest Stroke Tests', function () {
 
   afterEach(function () {
     sinon.restore();
+    TempestStroke.restoreLibrary();
   });
 
   it('should allow updating tempest stroke library', function () {
     const orbit = TempestStroke.library['orbit-grind'];
     orbit.L0 = { from: 0, to: 0.42 };
 
-    expect(orbit).to.not.deep.equal(TempestStroke.library['orbit-grind']);
+    const originalOrbit = TempestStroke.library['orbit-grind'];
+    expect(orbit).to.not.deep.equal(originalOrbit);
 
-    TempestStroke.updateLibrary('orbit-grind', orbit);
+    TempestStroke.update('orbit-grind', orbit);
 
     expect(orbit).to.deep.equal(TempestStroke.library['orbit-grind']);
 
     // Subsequent changes do not update the library.
     orbit.L0 = { from: 0.32, to: 0.42 };
     expect(orbit).to.not.deep.equal(TempestStroke.library['orbit-grind']);
+  });
+
+  it('should allow removing strokes from library', function () {
+    const orbit = TempestStroke.library['orbit-grind'];
+    expect(orbit).to.deep.equal({
+      L0: {
+        from: 0.0, to: 0.3, phase: 0, ecc: 0.3,
+      },
+      L1: {
+        from: 0.0, to: 0.6, phase: 0, ecc: -0.3,
+      },
+      L2: {
+        from: 0.2, to: 0.8, phase: 1, ecc: -0.3,
+      },
+      R0: {
+        from: 0.5, to: 0.5, phase: 0, ecc: 0.0,
+      },
+      R1: {
+        from: 0.1, to: 0.9, phase: 1, ecc: -0.3,
+      },
+      R2: {
+        from: 0.9, to: 0.1, phase: 0, ecc: -0.3,
+      },
+    });
+
+    TempestStroke.remove('orbit-grind', orbit);
+
+    expect(undefined).to.deep.equal(TempestStroke.library['orbit-grind']);
   });
 
   it('should throw error if granularity is invalid number', function () {

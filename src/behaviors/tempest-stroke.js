@@ -32,6 +32,8 @@ class TempestStroke extends GeneratorBehavior {
 
   static #granularity = 36;
 
+  static #library = JSON.parse(JSON.stringify(tempestStrokeLibrary));
+
   /**
    * How many slices to divide a stroke (180 degrees) into.
    * This controls how often a bpm provider is called per stroke.
@@ -62,12 +64,20 @@ class TempestStroke extends GeneratorBehavior {
 
   static get library () {
     // TODO: Deep clone more efficiently.
-    return JSON.parse(JSON.stringify(tempestStrokeLibrary));
+    return JSON.parse(JSON.stringify(TempestStroke.#library));
   }
 
-  static updateLibrary (key, value) {
+  static update (key, value) {
     // TODO: Deep clone more efficiently.
-    tempestStrokeLibrary[key] = JSON.parse(JSON.stringify(value));
+    TempestStroke.#library[key] = JSON.parse(JSON.stringify(value));
+  }
+
+  static remove (key) {
+    delete TempestStroke.#library[key];
+  }
+
+  static restoreLibrary () {
+    TempestStroke.#library = JSON.parse(JSON.stringify(tempestStrokeLibrary));
   }
 
   /**
@@ -93,11 +103,11 @@ class TempestStroke extends GeneratorBehavior {
     super();
 
     if (typeof config === 'string') {
-      if (!has(tempestStrokeLibrary, config)) {
+      if (!has(TempestStroke.library, config)) {
         throw new Error(`No stroke named ${config} found.`);
       }
 
-      config = tempestStrokeLibrary[config]; // eslint-disable-line no-param-reassign
+      config = TempestStroke.library[config]; // eslint-disable-line no-param-reassign
     }
 
     createConstantProperty(this, 'axes', {});
