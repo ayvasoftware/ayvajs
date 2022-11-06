@@ -363,7 +363,36 @@ describe('Configuration Tests', function () {
     });
   });
 
-  describe('#defaultConfiguraion', function () {
+  describe('#updateFrequency', function () {
+    it('should throw error if invalid frequency', function () {
+      const ayva = new Ayva(TEST_CONFIG);
+      const expectedInvalidMessage = (value) => `Invalid frequency ${value}. Frequency must be a number between 1 and 250.`;
+
+      (function () {
+        ayva.frequency = 0;
+      }).should.throw(Error, expectedInvalidMessage('0'));
+
+      (function () {
+        ayva.frequency = 251;
+      }).should.throw(Error, expectedInvalidMessage('251'));
+
+      (function () {
+        ayva.frequency = 'what';
+      }).should.throw(Error, expectedInvalidMessage('what'));
+    });
+
+    it('should change frequency', function () {
+      const ayva = new Ayva(TEST_CONFIG);
+
+      expect(ayva.frequency).to.equal(50);
+
+      ayva.frequency = 100;
+
+      expect(ayva.frequency).to.equal(100);
+    });
+  });
+
+  describe('#defaultConfiguration', function () {
     it('should allow using a default configuration', function () {
       const ayva = new Ayva().defaultConfiguration();
 

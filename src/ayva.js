@@ -57,6 +57,14 @@ class Ayva {
     return this.#frequency;
   }
 
+  set frequency (value) {
+    if (!validNumber(value, 1, 250)) {
+      throw new Error(`Invalid frequency ${value}. Frequency must be a number between 1 and 250.`);
+    }
+
+    this.#frequency = value;
+  }
+
   get period () {
     return this.#period;
   }
