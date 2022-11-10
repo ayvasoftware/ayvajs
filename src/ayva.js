@@ -38,6 +38,10 @@ class Ayva {
     return 10;
   }
 
+  static get maxFrequency () {
+    return 250;
+  }
+
   get performing () {
     return this.#performing;
   }
@@ -58,8 +62,8 @@ class Ayva {
   }
 
   set frequency (value) {
-    if (!validNumber(value, 1, 250)) {
-      throw new Error(`Invalid frequency ${value}. Frequency must be a number between 1 and 250.`);
+    if (!validNumber(value, 1, Ayva.maxFrequency)) {
+      throw new Error(`Invalid frequency ${value}. Frequency must be a number between 1 and ${Ayva.maxFrequency}.`);
     }
 
     this.#frequency = value;
@@ -624,15 +628,17 @@ class Ayva {
    * @returns the new error correction
    */
   async #stepSleep (index, stepCount, duration, startTime, errorCorrection) {
+    const clampPeriod = (period) => Math.max(period, 1 / Ayva.maxFrequency);
+
     if (index === stepCount - 1) {
       // This shenanigans is to (attempt to) account for the fact that a move is
       // an integer number of steps but a duration may be fractional. In the final step
       // we may have time remaining that is less than the period.
       const currentElapsed = this.#timer.now() - startTime;
       const remaining = Math.min(Math.max(duration - currentElapsed, 0), this.#period);
-      await this.sleep(remaining);
+      await this.sleep(clampPeriod(remaining));
     } else {
-      await this.sleep(this.#period - errorCorrection);
+      await this.sleep(clampPeriod(this.#period - errorCorrection));
     }
 
     const actualElapsed = this.#timer.now() - startTime;
