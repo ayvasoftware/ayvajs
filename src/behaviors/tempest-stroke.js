@@ -88,6 +88,10 @@ class TempestStroke extends GeneratorBehavior {
     };
   }
 
+  static get DEFAULT_TIMER () {
+    return () => performance.now() / 1000;
+  }
+
   static get library () {
     // TODO: Deep clone more efficiently.
     return JSON.parse(JSON.stringify(TempestStroke.#library));
@@ -127,7 +131,7 @@ class TempestStroke extends GeneratorBehavior {
    * @param {Object} [timer=null]
    * @param {Number} [startTime=null]
    */
-  constructor (config, bpm = 60, angle = 0, timer = null, startTime = null) {
+  constructor (config, bpm = 60, angle = 0, timer = TempestStroke.DEFAULT_TIMER, startTime = null) {
     super();
 
     if (typeof config === 'string') {
@@ -164,15 +168,17 @@ class TempestStroke extends GeneratorBehavior {
     this.#startAngle = angle;
     this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
-    this.#timer = timer;
+    this.#timer = timer instanceof Function ? {
+      now: timer,
+    } : timer;
     this.#startTime = startTime;
   }
 
-  * generate () {
+  * generate (ayva) {
     if (this.#timer) {
-      yield* this.#synchronizedGenerate();
+      yield* this.#synchronizedGenerate(ayva);
     } else {
-      yield* this.#unsynchronizedGenerate();
+      yield* this.#unsynchronizedGenerate(ayva);
     }
   }
 
@@ -267,19 +273,29 @@ class TempestStroke extends GeneratorBehavior {
     return new TempestStrokeWithTransition(config, bpm, this, duration, onTransitionStart, onTransitionEnd);
   }
 
-  * #synchronizedGenerate () {
-    const { granularity } = TempestStroke;
-
+  * #synchronizedGenerate (ayva) {
     this.#startTime = this.#startTime || this.#timer.now();
 
-    for (let i = 0; i < granularity; i++) {
-      yield this.#createMoves(i);
+    const traversed = Math.abs(this.#angle - this.#startAngle);
+    const strokeCount = Math.floor(traversed / Math.PI);
+    const targetAngle = ((strokeCount + 1) * Math.PI) + this.#startAngle;
 
-      const elapsed = this.#timer.now() - this.#startTime;
-      const elapsedRadians = elapsed * ((this.#bpm * 2 * Math.PI) / 60);
+    while (this.#angle < targetAngle) {
+      const time = this.#timer.now() - this.#startTime;
+      const bpmFactor = ((time * 2 * Math.PI) / 60);
+      const theta = this.#bpm * bpmFactor;
+      const originalAngle = this.#angle;
+      this.#angle = this.#startAngle + theta;
 
-      this.#angle = this.#startAngle + elapsedRadians;
+      this.#setAxisValues(ayva, this.#angle - originalAngle);
+
+      const originalBpm = this.#bpm;
       this.#bpm = this.#bpmProvider.next();
+
+      // Magic maths to make sure bpm changes don't mess up the angle.
+      this.#startAngle += (originalBpm - this.#bpm) * bpmFactor;
+
+      yield ayva.period;
     }
   }
 
@@ -293,6 +309,23 @@ class TempestStroke extends GeneratorBehavior {
       this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
       this.#bpm = this.#bpmProvider.next();
     }
+  }
+
+  #setAxisValues (ayva, angleSlice) {
+    Object.keys(this.axes).forEach((axis) => {
+      const params = this.axes[axis];
+
+      ayva.$[axis].value = params.motion(
+        params.$current.from,
+        params.$current.to,
+        params.phase,
+        params.ecc,
+        this.#bpm,
+        params.shift + this.#angle,
+      )({ index: -1, frequency: ayva.frequency });
+
+      this.#generateNoise(params, this.#angle - angleSlice, angleSlice);
+    });
   }
 
   #createMoves () {
@@ -314,7 +347,7 @@ class TempestStroke extends GeneratorBehavior {
         duration: seconds / this.#bpm,
       };
 
-      this.#generateNoise(params);
+      this.#generateNoise(params, this.#angle, Math.PI / TempestStroke.granularity);
 
       return result;
     });
@@ -322,14 +355,13 @@ class TempestStroke extends GeneratorBehavior {
     return moves;
   }
 
-  #generateNoise (params) {
+  #generateNoise (params, angle, angleSlice) {
     if (params.noise) {
       const { PI } = Math;
-      const angleSlice = PI / TempestStroke.granularity;
       const deg = (radians) => (radians * 180) / PI;
       const getNoise = (which) => (validNumber(params.noise) ? params.noise : params.noise[which] || 0);
       const phaseAngle = (params.phase * PI) / 2;
-      const absoluteAngle = phaseAngle + params.shift + this.#angle;
+      const absoluteAngle = phaseAngle + params.shift + angle;
 
       // We convert the angle to degrees and round so it's asthetically easier to find the transitions.
       const startDegrees = Math.round(deg(absoluteAngle % (PI * 2)));

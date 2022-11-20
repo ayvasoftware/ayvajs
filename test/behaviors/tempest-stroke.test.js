@@ -100,7 +100,7 @@ describe('Tempest Stroke Tests', function () {
         ecc,
         shift,
       },
-    }, bpm);
+    }, bpm, 0, null);
 
     expect(stroke).to.have.property('axes');
     expect(stroke.axes).to.have.property('twist');
@@ -135,7 +135,7 @@ describe('Tempest Stroke Tests', function () {
         from: 0.5,
         to: 0,
       },
-    });
+    }, 60, 0, null);
 
     await performTempestStroke(motion);
 
@@ -159,7 +159,7 @@ describe('Tempest Stroke Tests', function () {
         from: 0.5,
         to: 1,
       },
-    }, (index) => bpms[index % bpms.length]);
+    }, (index) => bpms[index % bpms.length], 0, null);
 
     motion.bpm.should.equal(bpms[0]);
 
@@ -179,7 +179,7 @@ describe('Tempest Stroke Tests', function () {
         from: 0.5,
         to: 1,
       },
-    }, bpms);
+    }, bpms, 0, null);
 
     motion.bpm.should.equal(bpms[0]);
 
@@ -208,7 +208,7 @@ describe('Tempest Stroke Tests', function () {
         to: 0,
         noise: 1,
       },
-    });
+    }, 60, 0, null);
 
     await performTempestStroke(motion);
 
@@ -252,7 +252,7 @@ describe('Tempest Stroke Tests', function () {
           to: 1,
         },
       },
-    });
+    }, 60, 0, null);
 
     await performTempestStroke(motion);
 
@@ -279,7 +279,7 @@ describe('Tempest Stroke Tests', function () {
         stroke: {
           noise,
         },
-      });
+      }, 60, 0, null);
     };
 
     createStrokeWithNoise(4).should.throw(Error, 'Invalid noise: 4');
@@ -294,7 +294,7 @@ describe('Tempest Stroke Tests', function () {
     const strokes = Object.keys(TempestStroke.library);
 
     for (let i = 0; i < strokes.length; i++) {
-      const motion = new TempestStroke(strokes[i]);
+      const motion = new TempestStroke(strokes[i], 60, 0, null);
 
       await performTempestStroke(motion);
 
@@ -350,7 +350,7 @@ describe('Tempest Stroke Tests', function () {
           from: 0.75,
           to: 1,
         },
-      });
+      }, 60, 0, null);
     });
 
     it('with default speed', async function () {
@@ -411,7 +411,7 @@ describe('Tempest Stroke Tests', function () {
     it('should create a new stroke that includes a transition', async function () {
       const sourceParams = TempestStroke.library['orbit-grind'];
       const targetParams = TempestStroke.library['thrust-forward'];
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
@@ -431,7 +431,7 @@ describe('Tempest Stroke Tests', function () {
       const sourceParams = TempestStroke.library['orbit-grind'];
       const targetParams = TempestStroke.library['thrust-forward'];
 
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
 
       const transition = stroke.transition(targetParams, 60, 10);
 
@@ -442,7 +442,7 @@ describe('Tempest Stroke Tests', function () {
       const sourceParams = TempestStroke.library['orbit-grind'];
       const targetParams = TempestStroke.library['thrust-forward'];
 
-      const stroke = new TempestStroke(sourceParams);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null);
 
       const transition = stroke.transition(targetParams, 60, 10);
 
@@ -454,7 +454,7 @@ describe('Tempest Stroke Tests', function () {
       delete sourceParams.L0;
       const targetParams = TempestStroke.library['thrust-forward'];
 
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
       const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
@@ -474,7 +474,7 @@ describe('Tempest Stroke Tests', function () {
         from: 0.5, to: 0.5, phase: 0.5, ecc: 0.5,
       };
 
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
       const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
@@ -492,7 +492,7 @@ describe('Tempest Stroke Tests', function () {
       const targetParams = TempestStroke.library['thrust-forward'];
       delete targetParams.L0;
 
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
       const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
@@ -514,7 +514,7 @@ describe('Tempest Stroke Tests', function () {
       };
       const targetParams = TempestStroke.library['thrust-forward'];
 
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
       const transition = stroke.transition(targetParams, 60, 10);
 
       Object.keys(sourceParams).forEach((axis) => {
@@ -530,7 +530,7 @@ describe('Tempest Stroke Tests', function () {
     it('should allow onTransitionStart and onTransitionEnd callbacks', async function () {
       const sourceParams = TempestStroke.library['orbit-grind'];
       const targetParams = TempestStroke.library['thrust-forward'];
-      const stroke = new TempestStroke(sourceParams).bind(ayva);
+      const stroke = new TempestStroke(sourceParams, 60, 0, null).bind(ayva);
 
       Object.keys(sourceParams).forEach((axis) => {
         expect(ayva.$[axis].value).to.equal(0.5);
