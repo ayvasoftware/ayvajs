@@ -18,6 +18,12 @@ class TempestStroke extends GeneratorBehavior {
 
   #bpmProvider;
 
+  #timer;
+
+  #startTime;
+
+  #startAngle;
+
   get angle () {
     return this.#angle;
   }
@@ -26,8 +32,28 @@ class TempestStroke extends GeneratorBehavior {
     this.#angle = rad;
   }
 
+  get startAngle () {
+    return this.#startAngle;
+  }
+
+  set startAngle (angle) {
+    this.#startAngle = angle;
+  }
+
   get bpm () {
     return this.#bpm;
+  }
+
+  get startTime () {
+    return this.#startTime;
+  }
+
+  set startTime (time) {
+    this.#startTime = time;
+  }
+
+  get timer () {
+    return this.#timer;
   }
 
   static #granularity = 36;
@@ -60,6 +86,10 @@ class TempestStroke extends GeneratorBehavior {
       noise: 0,
       motion: Ayva.tempestMotion,
     };
+  }
+
+  static get DEFAULT_TIMER () {
+    return () => performance.now() / 1000;
   }
 
   static get library () {
@@ -98,8 +128,10 @@ class TempestStroke extends GeneratorBehavior {
    * @param {Object} config
    * @param {Number} [bpm=60]
    * @param {Number} [angle=0]
+   * @param {Object} [timer=null]
+   * @param {Number} [startTime=null]
    */
-  constructor (config, bpm = 60, angle = 0) {
+  constructor (config, bpm = 60, angle = 0, timer = TempestStroke.DEFAULT_TIMER, startTime = null) {
     super();
 
     if (typeof config === 'string') {
@@ -133,18 +165,20 @@ class TempestStroke extends GeneratorBehavior {
     });
 
     this.#angle = angle;
+    this.#startAngle = angle;
     this.#bpmProvider = StrokeParameterProvider.createFrom(bpm);
     this.#bpm = this.#bpmProvider.next();
+    this.#timer = timer instanceof Function ? {
+      now: timer,
+    } : timer;
+    this.#startTime = startTime;
   }
 
-  * generate () {
-    const { granularity } = TempestStroke;
-
-    const startAngle = this.#angle;
-
-    for (let i = 0; i < granularity; i++) {
-      yield this.#createMoves(i);
-      this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
+  * generate (ayva) {
+    if (this.#timer) {
+      yield* this.#synchronizedGenerate(ayva);
+    } else {
+      yield* this.#unsynchronizedGenerate(ayva);
     }
   }
 
@@ -239,6 +273,61 @@ class TempestStroke extends GeneratorBehavior {
     return new TempestStrokeWithTransition(config, bpm, this, duration, onTransitionStart, onTransitionEnd);
   }
 
+  * #synchronizedGenerate (ayva) {
+    this.#startTime = this.#startTime || this.#timer.now();
+
+    const traversed = Math.abs(this.#angle - this.#startAngle);
+    const strokeCount = Math.floor(traversed / Math.PI);
+    const targetAngle = ((strokeCount + 1) * Math.PI) + this.#startAngle;
+
+    while (this.#angle < targetAngle) {
+      const time = this.#timer.now() - this.#startTime;
+      const bpmFactor = ((time * 2 * Math.PI) / 60);
+      const theta = this.#bpm * bpmFactor;
+      const originalAngle = this.#angle;
+      this.#angle = this.#startAngle + theta;
+
+      this.#setAxisValues(ayva, this.#angle - originalAngle);
+
+      const originalBpm = this.#bpm;
+      this.#bpm = this.#bpmProvider.next();
+
+      // Magic maths to make sure bpm changes don't mess up the angle.
+      this.#startAngle += (originalBpm - this.#bpm) * bpmFactor;
+
+      yield ayva.period;
+    }
+  }
+
+  * #unsynchronizedGenerate () {
+    const { granularity } = TempestStroke;
+
+    const startAngle = this.#angle;
+
+    for (let i = 0; i < granularity; i++) {
+      yield this.#createMoves(i);
+      this.#angle = startAngle + (((i + 1) * Math.PI) / granularity);
+      this.#bpm = this.#bpmProvider.next();
+    }
+  }
+
+  #setAxisValues (ayva, angleSlice) {
+    Object.keys(this.axes).forEach((axis) => {
+      const params = this.axes[axis];
+
+      ayva.$[axis].value = params.motion(
+        params.$current.from,
+        params.$current.to,
+        params.phase,
+        params.ecc,
+        this.#bpm,
+        params.shift + this.#angle,
+      )({ index: -1, frequency: ayva.frequency });
+
+      this.#generateNoise(params, this.#angle - angleSlice, angleSlice);
+    });
+  }
+
   #createMoves () {
     const { granularity } = TempestStroke;
     const moves = Object.keys(this.axes).map((axis) => {
@@ -258,23 +347,21 @@ class TempestStroke extends GeneratorBehavior {
         duration: seconds / this.#bpm,
       };
 
-      this.#generateNoise(params);
+      this.#generateNoise(params, this.#angle, Math.PI / TempestStroke.granularity);
 
       return result;
     });
 
-    this.#bpm = this.#bpmProvider.next();
     return moves;
   }
 
-  #generateNoise (params) {
+  #generateNoise (params, angle, angleSlice) {
     if (params.noise) {
       const { PI } = Math;
-      const angleSlice = PI / TempestStroke.granularity;
       const deg = (radians) => (radians * 180) / PI;
       const getNoise = (which) => (validNumber(params.noise) ? params.noise : params.noise[which] || 0);
       const phaseAngle = (params.phase * PI) / 2;
-      const absoluteAngle = phaseAngle + params.shift + this.#angle;
+      const absoluteAngle = phaseAngle + params.shift + angle;
 
       // We convert the angle to degrees and round so it's asthetically easier to find the transitions.
       const startDegrees = Math.round(deg(absoluteAngle % (PI * 2)));
@@ -328,8 +415,17 @@ class TempestStrokeWithTransition extends TempestStroke {
   #onTransitionEnd;
 
   constructor (config, bpmProvider, source, duration, onTransitionStart, onTransitionEnd) {
-    super(config, bpmProvider);
+    super(config, bpmProvider, 0, source.timer, source.startTime);
     this.angle = TempestStrokeTransition.computeTransitionStartAngle(source, duration, this.bpm);
+
+    this.startAngle = this.angle;
+
+    // Magic maths to make sure new stroke's start time meshes well with the
+    // new start angle... <3
+    const elapsedRadians = source.angle - source.startAngle;
+    const elapsed = elapsedRadians / ((source.bpm * 2 * Math.PI) / 60);
+
+    this.startTime += elapsed + duration;
     this.#transition = new TempestStrokeTransition(source, this, duration);
     this.#config = config;
     this.#onTransitionStart = onTransitionStart;
