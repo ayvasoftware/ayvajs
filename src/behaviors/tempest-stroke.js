@@ -4,7 +4,9 @@ import GeneratorBehavior from './generator-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
-import { createConstantProperty, has, validNumber } from '../util/util.js';
+import {
+  createConstantProperty, has, validNumber, round
+} from '../util/util.js';
 
 /**
  * A behavior that allows specifying oscillatory motion on an arbitrary
@@ -276,7 +278,7 @@ class TempestStroke extends GeneratorBehavior {
   * #synchronizedGenerate (ayva) {
     this.#startTime = this.#startTime || this.#timer.now();
 
-    const traversed = Math.abs(this.#angle - this.#startAngle);
+    const traversed = round(Math.abs(this.#angle - this.#startAngle), 10);
     const strokeCount = Math.floor(traversed / Math.PI);
     const targetAngle = ((strokeCount + 1) * Math.PI) + this.#startAngle;
 
