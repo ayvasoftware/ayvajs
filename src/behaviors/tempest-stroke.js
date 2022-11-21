@@ -5,7 +5,7 @@ import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
 import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
 import {
-  createConstantProperty, has, validNumber, round
+  createConstantProperty, has, validNumber
 } from '../util/util.js';
 
 /**
@@ -97,6 +97,19 @@ class TempestStroke extends GeneratorBehavior {
   static get library () {
     // TODO: Deep clone more efficiently.
     return JSON.parse(JSON.stringify(TempestStroke.#library));
+  }
+
+  static computeTargetAngle (angle, startAngle) {
+    const traversed = Math.abs(angle - startAngle);
+    const strokeCount = Math.floor(traversed / Math.PI);
+    const targetAngle = ((strokeCount + 1) * Math.PI) + startAngle;
+
+    if (targetAngle === angle) {
+      // Because rounding errors... :(
+      return ((strokeCount + 2) * Math.PI) + startAngle;
+    }
+
+    return targetAngle;
   }
 
   static update (key, value) {
@@ -277,10 +290,7 @@ class TempestStroke extends GeneratorBehavior {
 
   * #synchronizedGenerate (ayva) {
     this.#startTime = this.#startTime || this.#timer.now();
-
-    const traversed = round(Math.abs(this.#angle - this.#startAngle), 10);
-    const strokeCount = Math.floor(traversed / Math.PI);
-    const targetAngle = ((strokeCount + 1) * Math.PI) + this.#startAngle;
+    const targetAngle = TempestStroke.computeTargetAngle(this.#angle, this.#startAngle);
 
     while (this.#angle < targetAngle) {
       const time = this.#timer.now() - this.#startTime;

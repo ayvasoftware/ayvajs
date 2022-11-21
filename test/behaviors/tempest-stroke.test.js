@@ -83,6 +83,15 @@ describe('Tempest Stroke Tests', function () {
     }).should.throw('Invalid granularity: -1');
   });
 
+  it('should account for rounding errors when computing target angles', function () {
+    // TODO: Find less contrived numbers for this test case.
+    const angle = -227.09314490914022;
+    const startAngle = -230.23473756273;
+
+    const targetAngle = TempestStroke.computeTargetAngle(angle, startAngle);
+    expect(targetAngle).to.equal(startAngle + (2 * Math.PI));
+  });
+
   it('should make stroke parameters available on axes property', function () {
     const from = 0.25;
     const to = 0.75;
