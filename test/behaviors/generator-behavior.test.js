@@ -73,7 +73,7 @@ describe('Generator Behavior Tests', function () {
       expect(ayva.move.firstArg).to.deep.equal({
         axis: 'stroke',
         to: 0,
-        speed: 1,
+        duration: 1,
       });
     });
 
@@ -295,7 +295,7 @@ describe('Generator Behavior Tests', function () {
 
         expect(result).to.deep.equal(behavior);
         ayva.move.callCount.should.equal(1);
-        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, duration: 1 });
       });
 
       it('auto-binds ayva instance to iterated', function () {
@@ -305,7 +305,7 @@ describe('Generator Behavior Tests', function () {
 
         expect(result).to.deep.equal(behavior);
         ayva.move.callCount.should.equal(1);
-        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, duration: 1 });
       });
 
       it('auto-binds ayva instance to callable', function () {
@@ -315,7 +315,7 @@ describe('Generator Behavior Tests', function () {
 
         expect(result).to.deep.equal(behavior);
         ayva.move.callCount.should.equal(1);
-        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, duration: 1 });
       });
 
       it('auto-binds ayva instance to callable for iterated', function () {
@@ -327,7 +327,7 @@ describe('Generator Behavior Tests', function () {
 
         expect(result).to.deep.equal(behavior);
         ayva.move.callCount.should.equal(1);
-        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, speed: 1 });
+        ayva.move.firstArg.should.deep.equal({ axis: 'stroke', to: 0, duration: 1 });
         iteratedSpy.callCount.should.equal(1);
         iteratedSpy.args[0][0].should.equal(count);
       });

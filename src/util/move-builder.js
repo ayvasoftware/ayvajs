@@ -26,19 +26,19 @@ class MoveBuilder {
   #createBuilderFunction (axis) {
     return (...args) => {
       if (args.length === 3 && typeof args[0] === 'number' && typeof args[1] === 'number' && typeof args[2] === 'function') {
-        // <to, speed, value>
+        // <to, duration, value>
         this.#moves.push({
           axis,
           to: args[0],
-          speed: args[1],
+          duration: args[1],
           value: args[2],
         });
       } else if (args.length === 2 && typeof args[0] === 'number' && typeof args[1] === 'number') {
-        // <to, speed>
+        // <to, duration>
         this.#moves.push({
           axis,
           to: args[0],
-          speed: args[1],
+          duration: args[1],
         });
       } else if (args.length === 2 && typeof args[0] === 'number' && typeof args[1] === 'function') {
         // <to, value>

@@ -402,6 +402,18 @@ class Ayva {
   }
 
   /**
+   * Live update axis values.
+   *
+   * @param {Object} axisValueMap - axis to value map
+   */
+  setValues (axisValueMap) {
+    // TODO: Validate instead of silently ignoring invalid values?
+    const axisValues = Object.entries(axisValueMap).map(([axis, value]) => ({ axis, value }));
+
+    this.#writeAxisValues(axisValues);
+  }
+
+  /**
    * Registers a new output. Ayva outputs commands to all connected outputs.
    * More than one output can be specified.
    *
@@ -496,11 +508,17 @@ class Ayva {
     this.#movements.clear();
     this.#sleepResolves.forEach((resolve) => resolve());
 
+    const resetValues = {};
+
     this.#getAxesArray().forEach((axis) => {
       if (axis.resetOnStop) {
-        this.$[axis.name].value = axis.defaultValue;
+        resetValues[axis.name] = axis.defaultValue;
       }
     });
+
+    if (Object.keys(resetValues).length) {
+      this.setValues(resetValues);
+    }
   }
 
   /**
@@ -518,18 +536,17 @@ class Ayva {
     Object.defineProperty(this.$[axis], 'value', {
       get: () => this.#axes[axis].value,
       set: (target) => {
-        // TODO: Thou shalt not repeat thyself?
         const { type } = this.#axes[axis];
 
         if (type !== 'boolean' && !validNumber(target, 0, 1)) {
+          // TODO: Move this validation out into a place it can be reused for setValues() method?
           throw new Error(`Invalid value: ${target}`);
         }
 
-        const value = type === 'boolean' ? !!target : target;
-        const tcode = this.#tcode(axis, value);
-        this.#write(`${tcode}\n`);
-        this.#axes[axis].lastValue = this.#axes[axis].value;
-        this.#axes[axis].value = value;
+        this.#writeAxisValues([{
+          axis,
+          value: target,
+        }]);
       },
     });
 
@@ -648,20 +665,9 @@ class Ayva {
   }
 
   #executeProviders (providers, index) {
-    const axisValues = providers
-      .map((provider) => this.#executeProvider(provider, index))
-      .filter(({ value }) => this.#isValidAxisValue(value));
+    const axisValues = providers.map((provider) => this.#executeProvider(provider, index));
 
-    const tcodes = axisValues.map(({ axis, value }) => this.#tcode(axis, value));
-
-    if (tcodes.length) {
-      this.#write(`${tcodes.join(' ')}\n`);
-
-      axisValues.forEach(({ axis, value }) => {
-        this.#axes[axis].lastValue = this.#axes[axis].value;
-        this.#axes[axis].value = value;
-      });
-    }
+    this.#writeAxisValues(axisValues);
   }
 
   #executeProvider (provider, index) {
@@ -689,6 +695,20 @@ class Ayva {
       axis: parameters.axis,
       value: Number.isFinite(nextValue) ? clamp(round(nextValue, Ayva.precision), 0, 1) : nextValue,
     };
+  }
+
+  #writeAxisValues (axisValues) {
+    const filteredAxisValues = axisValues.filter(({ value }) => this.#isValidAxisValue(value));
+    const tcodes = filteredAxisValues.map(({ axis, value }) => this.#tcode(axis, value));
+
+    if (tcodes.length) {
+      this.#write(`${tcodes.join(' ')}\n`);
+
+      axisValues.forEach(({ axis, value }) => {
+        this.#axes[axis].lastValue = this.#axes[axis].value;
+        this.#axes[axis].value = value;
+      });
+    }
   }
 
   #isValidAxisValue (value) {

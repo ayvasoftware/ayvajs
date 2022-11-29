@@ -65,8 +65,8 @@ describe('Move Builder Tests', function () {
     });
   });
 
-  describe('#execute() (single axis', function () {
-    it('should call ayva.move() with correct parameters <to, speed, value>', function () {
+  describe('#execute() (single axis)', function () {
+    it('should call ayva.move() with correct parameters <to, duration, value>', function () {
       const value = function () { };
       ayva.$.stroke(0, 1, value).execute();
 
@@ -75,12 +75,12 @@ describe('Move Builder Tests', function () {
       expect(ayva.move.args[0][0]).to.deep.equal({
         axis: 'stroke',
         to: 0,
-        speed: 1,
+        duration: 1,
         value,
       });
     });
 
-    it('should call ayva.move() with correct parameters <to, speed>', function () {
+    it('should call ayva.move() with correct parameters <to, duration>', function () {
       ayva.$.roll(0, 1).execute();
 
       ayva.move.callCount.should.equal(1);
@@ -88,7 +88,7 @@ describe('Move Builder Tests', function () {
       expect(ayva.move.args[0][0]).to.deep.equal({
         axis: 'roll',
         to: 0,
-        speed: 1,
+        duration: 1,
       });
     });
 
@@ -204,7 +204,7 @@ describe('Move Builder Tests', function () {
       await ayva.$.stroke(0, 1).execute();
 
       ayva.$.stroke.value.should.equal(0);
-      ayva.$.stroke.lastValue.should.equal(0.02);
+      ayva.$.stroke.lastValue.should.equal(0.01);
 
       ayva.updateLimits('stroke', 0.1, 0.9);
       ayva.$.stroke.max.should.equal(0.9);
@@ -245,6 +245,23 @@ describe('Move Builder Tests', function () {
         }).should.throw(`Invalid value: ${invalidValue}`);
       });
     });
+
+    it('should allow bulk updates of values directly', function () {
+      ayva.$.stroke.value.should.equal(0.5);
+      ayva.$.twist.value.should.equal(0.5);
+
+      ayva.setValues({
+        stroke: 0.2,
+        twist: 0.4,
+      });
+
+      ayva.$.stroke.value.should.equal(0.2);
+      ayva.$.stroke.lastValue.should.equal(0.5);
+      ayva.$.twist.value.should.equal(0.4);
+      ayva.$.twist.lastValue.should.equal(0.5);
+      write.callCount.should.equal(1);
+      write.args[0][0].should.equal('L02000 R04000\n');
+    });
   });
 
   describe('#execute() (multi axis)', function () {
@@ -257,7 +274,7 @@ describe('Move Builder Tests', function () {
       expect(ayva.move.args[0]).to.deep.equal([{
         axis: 'stroke',
         to: 0,
-        speed: 1,
+        duration: 1,
       }, {
         axis: 'twist',
         to: 0,

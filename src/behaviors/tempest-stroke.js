@@ -324,10 +324,12 @@ class TempestStroke extends GeneratorBehavior {
   }
 
   #setAxisValues (ayva, angleSlice) {
+    const axisValues = {};
+
     Object.keys(this.axes).forEach((axis) => {
       const params = this.axes[axis];
 
-      ayva.$[axis].value = params.motion(
+      axisValues[axis] = params.motion(
         params.$current.from,
         params.$current.to,
         params.phase,
@@ -338,6 +340,8 @@ class TempestStroke extends GeneratorBehavior {
 
       this.#generateNoise(params, this.#angle - angleSlice, angleSlice);
     });
+
+    ayva.setValues(axisValues);
   }
 
   #createMoves () {
