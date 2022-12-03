@@ -12,7 +12,7 @@ describe('Device Protocols', function () {
 
   beforeEach(function () {
     ayva = new Ayva();
-    testAddDevice = createFunctionBinder(ayva, 'addOutputDevices');
+    testAddDevice = createFunctionBinder(ayva, 'addOutput');
   });
 
   afterEach(function () {
@@ -22,42 +22,50 @@ describe('Device Protocols', function () {
   /**
    * Adding Devices
    */
-  describe('#addOutputDevices', function () {
+  describe('#addOutput', function () {
     it('should throw an error when invalid device is added', function () {
       testAddDevice(undefined).should.throw(Error, 'Invalid device: undefined');
       testAddDevice({}).should.throw(Error, 'Invalid device: [object Object]');
       testAddDevice(42).should.throw(Error, 'Invalid device: 42');
       testAddDevice({ write: 42 }).should.throw(Error, 'Invalid device: [object Object]');
 
-      // Happy path.
+      // Happy paths.
       testAddDevice({ write: function () {} }).should.not.throw(Error);
+      testAddDevice(function () {}).should.not.throw(Error);
     });
   });
 
-  it('#getOutputDevices()', function () {
+  it('#getOutput()', function () {
+    // TODO: This test is testing too many things. Break out.
     const device = { write: function () {} };
     const device2 = { write: function () {} };
+    const device3 = function () {};
 
-    ayva.addOutputDevice(device);
+    ayva.addOutput(device);
 
-    let devices = ayva.getOutputDevices();
+    let devices = ayva.getOutput();
 
     devices.length.should.equal(1);
     devices[0].should.equal(device);
 
-    ayva.addOutputDevice(device2);
+    ayva.addOutput(device2);
 
-    devices = ayva.getOutputDevices();
+    devices = ayva.getOutput();
 
     devices.length.should.equal(2);
     devices[0].should.equal(device);
     devices[1].should.equal(device2);
 
-    ayva.removeOutputDevice(device);
+    ayva.removeOutput(device);
 
-    devices = ayva.getOutputDevices();
+    devices = ayva.getOutput();
 
     devices.length.should.equal(1);
     devices[0].should.equal(device2);
+
+    ayva.addOutput(device3);
+    devices = ayva.getOutput();
+    devices.length.should.equal(2);
+    devices[1].should.deep.equal({ write: device3 });
   });
 });

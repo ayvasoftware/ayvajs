@@ -2,7 +2,9 @@
 import '../setup-chai.js';
 import sinon from 'sinon';
 import Ayva from '../../src/ayva.js';
-import { createTestConfig } from '../test-helpers.js';
+import {
+  createTestConfig, createFunctionBinder, mock, spy, mockMove, mockSleep
+} from '../test-helpers.js';
 import { round } from '../../src/util/util.js';
 
 /**
@@ -12,6 +14,7 @@ describe('Motion API Tests', function () {
   let ayva;
   let device;
   let warn; // console.warn
+  let testMove;
 
   /**
    * Helper to check that the specified tcodes were written to the output device.
@@ -47,14 +50,16 @@ describe('Motion API Tests', function () {
     ayva = new Ayva(createTestConfig());
     ayva.defaultRamp = Ayva.RAMP_LINEAR;
 
-    sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve()));
-    warn = sinon.replace(console, 'warn', sinon.fake());
+    testMove = createFunctionBinder(ayva, 'move');
+
+    mockSleep(ayva);
+    warn = mock(console, 'warn');
 
     device = {
       write: sinon.fake(),
     };
 
-    ayva.addOutputDevice(device);
+    ayva.addOutput(device);
   });
 
   afterEach(function () {
@@ -63,20 +68,34 @@ describe('Motion API Tests', function () {
 
   describe('#home()', function () {
     it('should call move() with each axis with a default position', function () {
-      const move = sinon.replace(ayva, 'move', sinon.fake.returns(Promise.resolve()));
+      const move = mockMove(ayva);
 
       ayva.home();
 
       move.callCount.should.equal(1);
 
       const { args } = move.getCall(0);
-      const expectedParams = { to: 0.5, speed: 0.5 };
-      const expectedAxes = ['L0', 'L1', 'L2', 'R0', 'R1', 'R2'];
+      const expectedArgs = ['L0', 'L1', 'L2', 'R0', 'R1', 'R2'].map((axis) => ({
+        // Linear and Rotation axes default to 0.5.
+        axis,
+        to: 0.5,
+        speed: 0.5,
+      }));
 
-      args.length.should.equal(expectedAxes.length);
-      expectedAxes.forEach((axis, index) => {
-        args[index].should.deep.equal({ axis, ...expectedParams });
-      });
+      expectedArgs.unshift(...['B1', 'B2'].map((axis) => ({
+        // Boolean axes default to false.
+        axis,
+        to: false,
+      })));
+
+      expectedArgs.unshift(...['A0', 'A1'].map((axis) => ({
+        // Auxiliary axes default to 0.
+        axis,
+        to: 0,
+        speed: 0.5,
+      })));
+
+      args.should.deep.equal(expectedArgs);
     });
 
     it('should emit a warning when no linear or rotation axes are configured', function () {
@@ -91,7 +110,7 @@ describe('Motion API Tests', function () {
   describe('#sleep', function () {
     it('should fulfill promise after number of seconds specified', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
       await ayva.sleep(0.02).should.become(true);
 
       setTimeout.callCount.should.equal(1);
@@ -101,10 +120,45 @@ describe('Motion API Tests', function () {
 
     it('should cancel sleep when calling ayva.stop()', async function () {
       sinon.restore(); // So we can test actual sleep function.
-      sinon.replace(global, 'setTimeout', sinon.fake(setTimeout));
+      spy(global, 'setTimeout');
 
       setTimeout(() => ayva.stop()); // Perform stop in timeout to ensure it happens after sleep()
       await ayva.sleep(1).should.become(false);
+    });
+  });
+
+  describe('#ready', function () {
+    it('should resolve when there are no actions queued', async function () {
+      await ayva.ready().should.be.fulfilled;
+    });
+
+    it('should resolve when move is finished', async function () {
+      ayva.move({ to: 0, speed: 1 });
+
+      await ayva.ready().should.be.fulfilled;
+
+      expect(ayva.$.stroke.value).to.equal(0);
+    });
+
+    it('should resolve when multiple moves are finished', async function () {
+      ayva.move({ to: 0, speed: 1 });
+      ayva.move({ to: 0.75, speed: 1 });
+
+      await ayva.ready().should.be.fulfilled;
+
+      expect(ayva.$.stroke.value).to.equal(0.75);
+    });
+
+    it('should resolve only when queued actions are finished', async function () {
+      // TODO: Checking that the time has elapsed might not be the best way to do this...
+      sinon.restore(); // So we can test actual sleep function.
+      spy(global, 'setTimeout');
+
+      const startTime = performance.now();
+      ayva.sleep(0.02);
+      await ayva.ready().should.be.fulfilled;
+
+      expect(performance.now() - startTime).to.be.above(20); // Should have waited at least 20ms.
     });
   });
 
@@ -115,49 +169,43 @@ describe('Motion API Tests', function () {
     const invalidNumericValues = [null, undefined, 'bad', '', false, true, () => {}, NaN, Infinity];
 
     it('should throw an error if invalid movement is passed', function () {
-      const testInvalidMovePromises = [...invalidNumericValues, -1, 0, 1].map((
-        value
-      ) => ayva.move(value).should.be.rejectedWith(Error, `Invalid movement: ${value}`));
+      testMove().should.throw(Error, 'Must supply at least one movement.');
 
-      return Promise.all([
-        ayva.move().should.be.rejectedWith(Error, 'Must supply at least one movement.'),
-        ...testInvalidMovePromises,
-      ]);
+      [...invalidNumericValues, -1, 0, 1].forEach((value) => {
+        testMove(value).should.throw(Error, `Invalid movement: ${value}`);
+      });
     });
 
     it('should throw an error if \'to\' parameter is missing or invalid', function () {
       // 0 <= to <= 1
-      const testInvalidMovePromises = [...invalidNumericValues, -1, 2].map(
-        (value) => ayva.move({ to: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'to': ${value}`)
-      );
+      [...invalidNumericValues, -1, 2].forEach((value) => {
+        testMove({ to: value }).should.throw(Error, `Invalid value for parameter 'to': ${value}`);
+      });
 
-      return Promise.all([
-        ayva.move({}).should.be.rejectedWith(Error, 'Must provide a \'to\' property or \'value\' function.'),
-        ayva.move({ to: 0 }).should.be.rejectedWith(Error, 'At least one movement must have a speed or duration.'),
-        ...testInvalidMovePromises,
-      ]);
+      testMove({}).should.throw(Error, 'Must provide a \'to\' property or \'value\' function.');
+      testMove({ to: 0 }).should.throw(Error, 'At least one movement must have a speed or duration.');
     });
 
     it('should throw an error if \'speed\' is invalid', function () {
       // speed > 0
-      return Promise.all([...invalidNumericValues, -1, 0].map(
-        (value) => ayva.move({ to: 0, speed: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'speed': ${value}`)
-      ));
+      [...invalidNumericValues, -1, 0].forEach((value) => {
+        testMove({ to: 0, speed: value }).should.throw(Error, `Invalid value for parameter 'speed': ${value}`);
+      });
     });
 
     it('should throw an error if \'duration\' is invalid', function () {
       // duration > 0
-      return Promise.all([...invalidNumericValues, -1, 0].map(
-        (value) => ayva.move({ to: 0, duration: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'duration': ${value}`)
-      ));
+      [...invalidNumericValues, -1, 0].forEach((value) => {
+        testMove({ to: 0, duration: value }).should.throw(Error, `Invalid value for parameter 'duration': ${value}`);
+      });
     });
 
     it('should throw an error if speed is provided and no target position is specified', function () {
-      return ayva.move({ value: () => {}, speed: 1 }).should.be.rejectedWith(Error, 'Must provide a target position when specifying speed.');
+      testMove({ value: () => {}, speed: 1 }).should.throw(Error, 'Must provide a target position when specifying speed.');
     });
 
     it('should not allow specifying both speed and duration', function () {
-      return ayva.move({ to: 0, duration: 1, speed: 1 }).should.be.rejectedWith(Error, 'Cannot supply both speed and duration.');
+      testMove({ to: 0, duration: 1, speed: 1 }).should.throw(Error, 'Cannot supply both speed and duration.');
     });
 
     it('should throw an error if axis is not specified and there is no default axis', function () {
@@ -165,111 +213,100 @@ describe('Motion API Tests', function () {
       delete configWithoutDefault.defaultAxis;
 
       ayva = new Ayva(configWithoutDefault);
-      ayva.addOutputDevice(device);
-      return ayva.move({ to: 0, speed: 1 }).should.be.rejectedWith(Error, 'No default axis configured. Must specify an axis for each movement.');
+      ayva.addOutput(device);
+      createFunctionBinder(ayva, 'move')({ to: 0, speed: 1 })
+        .should.throw(Error, 'No default axis configured. Must specify an axis for each movement.');
     });
 
     it('should throw an error if axis is invalid', function () {
-      return Promise.all([...invalidNumericValues, 'non-existent', 0, 1, -1].map(
-        (value) => ayva.move({ to: 0, speed: 1, axis: value }).should.be.rejectedWith(Error, `Invalid value for parameter 'axis': ${value}`)
-      ));
+      [...invalidNumericValues, 'non-existent', 0, 1, -1].forEach(
+        (value) => testMove({ to: 0, speed: 1, axis: value }).should.throw(Error, `Invalid value for parameter 'axis': ${value}`)
+      );
     });
 
     it('should throw an error if value is not a function', function () {
-      const testInvalidMovePromises = [...invalidNumericValues, 0, 1, -1].filter((v) => !(v instanceof Function)).map(
-        (value) => ayva.move({ to: 0, speed: 1, value }).should.be.rejectedWith(Error, '\'value\' must be a function.')
+      [...invalidNumericValues, 0, 1, -1].filter((v) => !(v instanceof Function)).forEach(
+        (value) => testMove({ to: 0, speed: 1, value }).should.throw(Error, '\'value\' must be a function.')
       );
-
-      return Promise.all(testInvalidMovePromises);
     });
 
     it('should throw an error if axis specified more than once', function () {
-      return Promise.all([
-        ayva.move({ to: 0, speed: 1 }, { to: 0, speed: 1 })
-          .should.be.rejectedWith(Error, 'Duplicate axis movement: L0'),
-        ayva.move({ axis: 'roll', to: 0, speed: 1 }, { axis: 'roll', to: 0, speed: 1 })
-          .should.be.rejectedWith(Error, 'Duplicate axis movement: roll'),
-      ]);
+      testMove({ to: 0, speed: 1 }, { to: 0, speed: 1 })
+        .should.throw(Error, 'Duplicate axis movement: L0');
+      testMove({ axis: 'roll', to: 0, speed: 1 }, { axis: 'roll', to: 0, speed: 1 })
+        .should.throw(Error, 'Duplicate axis movement: roll');
     });
 
     it('should throw an error if the sync property is invalid data type', function () {
       const invalidValues = [null, undefined, '', ' ', false, true, () => {}, NaN, Infinity, 0, 1, -1];
 
-      const testInvalidMovePromises = invalidValues.map(
-        (value) => ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: value })
-          .should.be.rejectedWith(Error, `Invalid value for parameter 'sync': ${value}`)
+      invalidValues.forEach(
+        (value) => testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: value })
+          .should.throw(Error, `Invalid value for parameter 'sync': ${value}`)
       );
-
-      return Promise.all(testInvalidMovePromises);
     });
 
     it('should throw an error if the sync property is invalid', function () {
       const syncCycleError = 'Sync axes cannot form a cycle.';
 
-      return Promise.all([
-        // Sync with non-existent axis.
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' })
-          .should.be.rejectedWith(Error, 'Cannot sync with axis not specified in movement: twist -> roll'),
+      // Sync with non-existent axis.
+      testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' })
+        .should.throw(Error, 'Cannot sync with axis not specified in movement: twist -> roll');
 
-        // Sync with self.
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'twist' })
-          .should.be.rejectedWith(Error, syncCycleError),
+      // Sync with self.
+      testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'twist' })
+        .should.throw(Error, syncCycleError);
 
-        // Sync cycle (2)
-        ayva.move({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' }, { axis: 'roll', to: 0, sync: 'twist' })
-          .should.be.rejectedWith(Error, syncCycleError),
+      // Sync cycle (2)
+      testMove({ to: 0, speed: 1 }, { axis: 'twist', to: 0, sync: 'roll' }, { axis: 'roll', to: 0, sync: 'twist' })
+        .should.throw(Error, syncCycleError);
 
-        // Sync cycle (3)
-        ayva.move(
-          { to: 0, speed: 1 },
-          { axis: 'twist', to: 0, sync: 'roll' },
-          { axis: 'roll', to: 0, sync: 'left' },
-          { axis: 'left', to: 0, sync: 'twist' },
-        ).should.be.rejectedWith(Error, syncCycleError),
-      ]);
+      // Sync cycle (3)
+      testMove(
+        { to: 0, speed: 1 },
+        { axis: 'twist', to: 0, sync: 'roll' },
+        { axis: 'roll', to: 0, sync: 'sway' },
+        { axis: 'sway', to: 0, sync: 'twist' },
+      ).should.throw(Error, syncCycleError);
     });
 
     it('should throw an error if the sync property is specified with a speed or duration', function () {
-      return Promise.all([
-        ayva.move({ to: 0, speed: 1 }, {
-          axis: 'twist', to: 0, speed: 1, sync: 'stroke',
-        }).should.be.rejectedWith(Error, 'Cannot specify a speed or duration when sync property is present: twist'),
+      testMove({ to: 0, speed: 1 }, {
+        axis: 'twist', to: 0, speed: 1, sync: 'stroke',
+      }).should.throw(Error, 'Cannot specify a speed or duration when sync property is present: twist');
 
-        ayva.move({ to: 0, speed: 1 }, {
-          axis: 'roll', to: 0, duration: 1, sync: 'stroke',
-        }).should.be.rejectedWith(Error, 'Cannot specify a speed or duration when sync property is present: roll'),
-      ]);
+      testMove({ to: 0, speed: 1 }, {
+        axis: 'roll', to: 0, duration: 1, sync: 'stroke',
+      }).should.throw(Error, 'Cannot specify a speed or duration when sync property is present: roll');
     });
 
     it('should allow boolean values for axis type boolean', function () {
       return Promise.all([
-        ayva.move({ axis: 'test-boolean-axis', to: true }).should.be.fulfilled,
-        ayva.move({ axis: 'test-boolean-axis', to: false }).should.be.fulfilled,
+        ayva.move({ axis: 'testBooleanAxis', to: true }).should.be.fulfilled,
+        ayva.move({ axis: 'testBooleanAxis', to: false }).should.be.fulfilled,
       ]);
     });
 
     it('should throw an error if speed is specified for type boolean', function () {
-      const errorMessage = 'Cannot specify speed for boolean axes: test-boolean-axis';
+      const errorMessage = 'Cannot specify speed for boolean axes: testBooleanAxis';
 
-      return Promise.all([
-        ayva.move({ axis: 'test-boolean-axis', to: true, speed: 1 }).should.be.rejectedWith(Error, errorMessage),
+      testMove({ axis: 'testBooleanAxis', to: true, speed: 1 }).should.throw(Error, errorMessage);
 
-        ayva.move({
-          axis: 'test-boolean-axis', to: false, duration: 1,
-        }).should.be.rejectedWith(Error, 'Cannot specify a duration for a boolean axis movement with constant value.'),
+      testMove({
+        axis: 'testBooleanAxis', to: false, duration: 1,
+      }).should.throw(Error, 'Cannot specify a duration for a boolean axis movement with constant value.');
 
-        // Boolean axis should allow duration if providing a value function.
-        ayva.move({ axis: 'test-boolean-axis', value: () => {}, duration: 1 }).should.be.fulfilled,
-      ]);
+      // Boolean axis should allow duration if providing a value function.
+      testMove({ axis: 'testBooleanAxis', value: () => {}, duration: 1 }).should.not.throw(Error);
     });
 
     it('should throw an error if number passed to boolean axis', function () {
-      return ayva.move({ axis: 'test-boolean-axis', to: 1 }).should.be.rejectedWith(Error, 'Invalid value for parameter \'to\': 1');
+      testMove({ axis: 'testBooleanAxis', to: 1 }).should.throw(Error, 'Invalid value for parameter \'to\': 1');
     });
 
     it('should emit a warning when value provider gives invalid values', async function () {
-      await ayva.move({ value: () => ({}), duration: 1 }).should.be.fulfilled;
-      await ayva.move({ value: () => NaN, duration: 1 }).should.be.fulfilled;
+      await ayva.move({ value: () => ({}), duration: 1 });
+      await ayva.move({ value: () => NaN, duration: 1 });
 
       warn.callCount.should.equal(ayva.frequency * 2);
       warn.getCall(0).args[0].should.equal('Invalid value provided: [object Object]');
@@ -279,7 +316,7 @@ describe('Motion API Tests', function () {
     it('should reject movement if value provider throws error', function () {
       const errorMessage = 'All ur cock r belong to us.';
 
-      return ayva.move({
+      ayva.move({
         value: () => {
           throw new Error(errorMessage);
         },
@@ -291,16 +328,16 @@ describe('Motion API Tests', function () {
       ayva = new Ayva(createTestConfig());
       const errorMessage = 'No output devices have been added.';
 
-      return ayva.move({
+      createFunctionBinder(ayva, 'move')({
         to: 0,
         duration: 1,
-      }).should.be.rejectedWith(errorMessage);
+      }).should.throw(Error, errorMessage);
     });
 
     it('should throw an error for invalid tempest motion', function () {
       (function () {
         Ayva.tempestMotion(NaN, 1);
-      }).should.throw('One or more stroke parameters are invalid (NaN, 1, 0, 0, 60, 0)');
+      }).should.throw('One or more motion parameters are invalid (NaN, 1, 0, 0, 60, 0)');
     });
   });
 
@@ -434,17 +471,17 @@ describe('Motion API Tests', function () {
     });
 
     it('should allow sending boolean updates with no duration', async function () {
-      ayva.getAxis('test-boolean-axis').value.should.equal(false);
+      ayva.getAxis('testBooleanAxis').value.should.equal(false);
 
       const result = await ayva.move({
-        axis: 'test-boolean-axis',
+        axis: 'testBooleanAxis',
         to: true,
       });
 
       expect(result).to.be.true;
 
       validateWriteOutput('B19999');
-      ayva.getAxis('test-boolean-axis').value.should.equal(true);
+      ayva.getAxis('testBooleanAxis').value.should.equal(true);
     });
 
     it('should be able to omit duration if at least one other movement has an implicit duration', function () {
@@ -562,7 +599,7 @@ describe('Motion API Tests', function () {
         write: sinon.fake(),
       };
 
-      ayva.addOutputDevice(secondDevice);
+      ayva.addOutput(secondDevice);
 
       ayva.getAxis('R0').value.should.equal(0.5);
 
@@ -603,9 +640,96 @@ describe('Motion API Tests', function () {
     });
 
     it('should allow tempest motion', async function () {
+      // TODO: This doesn't actually test that tempest motion "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
       ayva.getAxis('stroke').value.should.equal(0.5);
 
       const value = Ayva.tempestMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow tempest motion specified with object', async function () {
+      // TODO: This doesn't actually test that tempest motion "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.tempestMotion({ from: 0.5, to: 1 });
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow parabolic motion', async function () {
+      // TODO: This doesn't actually test that parabolic motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.parabolicMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow parabolic motion specified with object', async function () {
+      // TODO: This doesn't actually test that parabolic motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.parabolicMotion({ from: 0.5, to: 1 });
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow linear motion', async function () {
+      // TODO: This doesn't actually test that linear motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.linearMotion(0.5, 1, 0, 0);
+
+      expect(value.from).to.equal(0.5);
+      expect(value.to).to.equal(1);
+      expect(value.phase).to.equal(0);
+      expect(value.ecc).to.equal(0);
+
+      await ayva.move({ value, duration: 1 });
+
+      round(ayva.getAxis('stroke').value, 2).should.equal(0.5); // One cycle of tempest motion should take me back to start.
+    });
+
+    it('should allow linear motion specified with object', async function () {
+      // TODO: This doesn't actually test that linear motion truly "works".
+      //       Feels like somewhat of a code coverage filler. Just tests that there aren't errors.
+      ayva.getAxis('stroke').value.should.equal(0.5);
+
+      const value = Ayva.linearMotion({ from: 0.5, to: 1 });
 
       expect(value.from).to.equal(0.5);
       expect(value.to).to.equal(1);
@@ -878,14 +1002,14 @@ describe('Motion API Tests', function () {
     });
 
     it('should allow sending multiple boolean updates with no duration', async function () {
-      ayva.getAxis('test-boolean-axis').value.should.equal(false);
-      ayva.getAxis('test-boolean-axis-2').value.should.equal(false);
+      ayva.getAxis('testBooleanAxis').value.should.equal(false);
+      ayva.getAxis('testBooleanAxis2').value.should.equal(false);
 
       const result = await ayva.move({
-        axis: 'test-boolean-axis',
+        axis: 'testBooleanAxis',
         to: true,
       }, {
-        axis: 'test-boolean-axis-2',
+        axis: 'testBooleanAxis2',
         to: true,
       });
 
@@ -893,8 +1017,8 @@ describe('Motion API Tests', function () {
 
       validateWriteOutput('B19999 B29999');
 
-      ayva.getAxis('test-boolean-axis').value.should.equal(true);
-      ayva.getAxis('test-boolean-axis-2').value.should.equal(true);
+      ayva.getAxis('testBooleanAxis').value.should.equal(true);
+      ayva.getAxis('testBooleanAxis2').value.should.equal(true);
     });
 
     it('should send valid movements in correct order for multiple calls to move()', async function () {
@@ -993,6 +1117,34 @@ describe('Motion API Tests', function () {
       ayva.getAxis('L0').value.should.equal(0.0);
       ayva.getAxis('R0').value.should.equal(0.500);
       ayva.getAxis('A0').value.should.equal(0.000);
+    });
+
+    it('should reset axes configured with resetOnStop = true', async function () {
+      ayva.configureAxis({
+        name: 'V0',
+        type: 'auxiliary',
+        alias: 'vibe0',
+        resetOnStop: true,
+      });
+
+      ayva.getAxis('L0').value.should.equal(0.5);
+      ayva.getAxis('V0').value.should.equal(0);
+
+      const promise = ayva.move(
+        { axis: 'L0', to: 0, duration: 0.1 },
+        { axis: 'V0', to: 0.5 }
+      );
+
+      ayva.stop();
+
+      const result = await promise;
+
+      expect(result).to.equal(false);
+
+      validateWriteOutput('L04000 V01000', 'V00000');
+
+      ayva.getAxis('L0').value.should.equal(0.4);
+      ayva.getAxis('V0').value.should.equal(0);
     });
   });
 });

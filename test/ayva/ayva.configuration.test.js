@@ -1,18 +1,15 @@
 /* eslint-disable no-unused-expressions */
 import { Blob } from 'buffer';
 import '../setup-chai.js';
-import sinon from 'sinon';
-import { expect } from 'chai';
 import Ayva from '../../src/ayva.js';
 import WorkerTimer from '../../src/util/worker-timer.js';
 import OSR_CONFIG from '../../src/util/osr-config.js';
-import { createTestConfig, createFunctionBinder } from '../test-helpers.js';
+import { createTestConfig, createFunctionBinder, mockSleep } from '../test-helpers.js';
 
 /**
  * Contains all tests for Ayva's Axis Configuration.
  */
 describe('Configuration Tests', function () {
-  const DEFAULT_VALUE = 0.5; // The default value for linear, auxiliary, and rotation axes.
   const TEST_CONFIG = createTestConfig();
 
   describe('#constructor', function () {
@@ -44,10 +41,16 @@ describe('Configuration Tests', function () {
 
         if (storedAxis.type === 'boolean') {
           expect($axis.value).to.equal(false);
+          expect($axis.defaultValue).to.equal(false);
+          expect(storedAxis.defaultValue).to.equal(false);
         } else if (storedAxis.type === 'auxiliary') {
           expect($axis.value).to.equal(0);
+          expect($axis.defaultValue).to.equal(0);
+          expect(storedAxis.defaultValue).to.equal(0);
         } else {
           expect($axis.value).to.equal(0.5);
+          expect($axis.defaultValue).to.equal(0.5);
+          expect(storedAxis.defaultValue).to.equal(0.5);
         }
       }
     });
@@ -73,7 +76,9 @@ describe('Configuration Tests', function () {
         invert: false,
       };
 
-      expectedConfig = { ...config, value: DEFAULT_VALUE, lastValue: DEFAULT_VALUE };
+      expectedConfig = {
+        ...config, value: 0.5, lastValue: 0.5, defaultValue: 0.5,
+      };
 
       ayva = new Ayva();
 
@@ -123,10 +128,43 @@ describe('Configuration Tests', function () {
       );
     });
 
+    it('should throw an error when default value is of an invalid type', function () {
+      config.defaultValue = 42;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = 42`);
+
+      config.defaultValue = false;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = false`);
+
+      // Boolean axis allows boolean default values, but not numerical.
+      config.type = 'boolean';
+      testConfigureAxis(config).should.not.throw(Error);
+      config.defaultValue = 0.5;
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = 0.5`);
+
+      config.type = 'linear';
+      config.defaultValue = {};
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: defaultValue = [object Object]`);
+    });
+
     it('should throw an error when min and max are the same', function () {
       config.min = 1;
       config.max = 1;
       testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: max = 1, min = 1`);
+    });
+
+    it('should throw an error when name or alias is invalid', function () {
+      config.name = '0L';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: name = 0L`);
+
+      config.name = 'L-0';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: name = L-0`);
+
+      config.name = 'L0';
+      config.alias = '0L';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: alias = 0L`);
+
+      config.alias = 'L-0';
+      testConfigureAxis(config).should.throw(Error, `${invalidParametersMessage}: alias = L-0`);
     });
 
     it('should allow a valid configuration to be retrieved by name or alias', function () {
@@ -178,6 +216,22 @@ describe('Configuration Tests', function () {
 
       expect(result.min).to.equal(0);
       expect(result.max).to.equal(1);
+    });
+
+    it('should allow configuring default value', function () {
+      const configWithDefault = {
+        name: 'Z0',
+        type: 'linear',
+        defaultValue: 0.25,
+      };
+
+      ayva.configureAxis(configWithDefault);
+
+      const result = ayva.getAxis('Z0');
+
+      expect(result.defaultValue).to.equal(0.25);
+      expect(result.value).to.equal(0.25);
+      expect(result.lastValue).to.equal(0.25);
     });
 
     it('should only allow linear, rotation, auxiliary, or boolean for axis type', function () {
@@ -239,25 +293,25 @@ describe('Configuration Tests', function () {
     });
 
     it('should retain value after reconfiguring axis', async function () {
-      sinon.replace(ayva, 'sleep', sinon.fake.returns(Promise.resolve())); // Do not actually sleep.
-      ayva.addOutputDevice({ write: () => {} });
+      mockSleep(ayva);
+      ayva.addOutput({ write: () => {} });
 
       ayva.configureAxis({
         name: 'L0',
         type: 'linear',
       });
 
-      ayva.getAxis('L0').value.should.equal(DEFAULT_VALUE);
+      ayva.getAxis('L0').value.should.equal(0.5);
       await ayva.move({ axis: 'L0', to: 0, speed: 1 });
       ayva.getAxis('L0').value.should.equal(0);
 
       ayva.configureAxis({
         name: 'L0',
         type: 'linear',
-        alias: 'new-alias',
+        alias: 'newAlias',
       });
 
-      ayva.getAxis('new-alias').value.should.equal(0);
+      ayva.getAxis('newAlias').value.should.equal(0);
     });
   });
 
@@ -317,7 +371,36 @@ describe('Configuration Tests', function () {
     });
   });
 
-  describe('#defaultConfiguraion', function () {
+  describe('#updateFrequency', function () {
+    it('should throw error if invalid frequency', function () {
+      const ayva = new Ayva(TEST_CONFIG);
+      const expectedInvalidMessage = (value) => `Invalid frequency ${value}. Frequency must be a number between 1 and 250.`;
+
+      (function () {
+        ayva.frequency = 0;
+      }).should.throw(Error, expectedInvalidMessage('0'));
+
+      (function () {
+        ayva.frequency = 251;
+      }).should.throw(Error, expectedInvalidMessage('251'));
+
+      (function () {
+        ayva.frequency = 'what';
+      }).should.throw(Error, expectedInvalidMessage('what'));
+    });
+
+    it('should change frequency', function () {
+      const ayva = new Ayva(TEST_CONFIG);
+
+      expect(ayva.frequency).to.equal(50);
+
+      ayva.frequency = 100;
+
+      expect(ayva.frequency).to.equal(100);
+    });
+  });
+
+  describe('#defaultConfiguration', function () {
     it('should allow using a default configuration', function () {
       const ayva = new Ayva().defaultConfiguration();
 

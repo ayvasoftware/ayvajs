@@ -13,6 +13,10 @@ class WebSerialDevice {
 
   _serial = null;
 
+  _outputClosedPromise = null;
+
+  _inputClosedPromise = null;
+
   /**
    * Create a new WebSerialDevice.
    *
@@ -44,13 +48,14 @@ class WebSerialDevice {
     await port.open({ baudRate: this._baudRate });
 
     const encoder = new TextEncoderStream();
-    encoder.readable.pipeTo(port.writable);
+    this._outputClosedPromise = encoder.readable.pipeTo(port.writable);
 
     const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
+    this._inputClosedPromise = port.readable.pipeTo(decoder.writable);
 
     this._output = encoder.writable.getWriter();
     this._input = decoder.readable.getReader();
+    this._port = port;
     this.connected = true;
 
     const disconnectListener = (event) => {
@@ -67,6 +72,22 @@ class WebSerialDevice {
     return new Promise((resolve) => {
       setTimeout(resolve, 2000);
     });
+  }
+
+  async disconnect () {
+    this.connected = false;
+
+    this._input.cancel();
+    this._output.close();
+
+    await this._inputClosedPromise.catch(() => { /* Ignore the error */ });
+    await this._outputClosedPromise;
+    await this._port.close();
+
+    this._output = null;
+    this._input = null;
+    this._inputClosedPromise = null;
+    this._outputClosedPromise = null;
   }
 
   /**

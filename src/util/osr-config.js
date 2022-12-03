@@ -13,11 +13,11 @@ export default {
     {
       name: 'L1',
       type: 'linear',
-      alias: 'forward',
+      alias: 'surge',
     }, {
       name: 'L2',
       type: 'linear',
-      alias: 'left',
+      alias: 'sway',
     },
     {
       name: 'R0',
@@ -48,16 +48,19 @@ export default {
       name: 'A2',
       alias: 'lube',
       type: 'auxiliary',
+      resetOnStop: true,
     },
     {
       name: 'V0',
       alias: 'vibe0',
       type: 'auxiliary',
+      resetOnStop: true,
     },
     {
       name: 'V1',
       alias: 'vibe1',
       type: 'auxiliary',
+      resetOnStop: true,
     },
   ],
 };

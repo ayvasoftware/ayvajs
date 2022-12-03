@@ -177,9 +177,33 @@ export default {
           if (!Number.isFinite(value) || value < 0 || value > 1) {
             invalid.push(property);
           }
+        } else if (property === 'alias' || property === 'name') {
+          if (!/^[a-zA-Z]+[a-zA-Z0-9]*$/.test(value)) {
+            invalid.push(property);
+          }
         }
       }
     });
+
+    let { defaultValue } = axisConfig;
+
+    if (defaultValue !== undefined && defaultValue !== null) {
+      // Validate user supplied default value.
+      if (axisConfig.type === 'boolean') {
+        if (typeof defaultValue !== 'boolean') {
+          invalid.push('defaultValue');
+        }
+      } else if (!Number.isFinite(defaultValue) || defaultValue < 0 || defaultValue > 1) {
+        invalid.push('defaultValue');
+      }
+    } else if (axisConfig.type === 'boolean') {
+      defaultValue = false;
+    } else if (axisConfig.type === 'auxiliary') {
+      defaultValue = 0;
+    } else {
+      // 0.5 is home position for linear and rotation axes.
+      defaultValue = 0.5;
+    }
 
     if (invalid.length) {
       const message = invalid.sort().map((property) => `${property} = ${axisConfig[property]}`).join(', ');
@@ -190,19 +214,9 @@ export default {
       fail(`Invalid type. Must be linear, rotation, auxiliary, or boolean: ${axisConfig.type}`);
     }
 
-    let defaultValue;
-
-    if (axisConfig.type === 'boolean') {
-      defaultValue = false;
-    } else if (axisConfig.type === 'auxiliary') {
-      defaultValue = 0;
-    } else {
-      // 0.5 is home position for linear and rotation axes.
-      defaultValue = 0.5;
-    }
-
     const resultConfig = {
       ...axisConfig,
+      defaultValue,
       max: axisConfig.max || 1,
       min: axisConfig.min || 0,
       value: defaultValue,
@@ -217,7 +231,9 @@ export default {
     return resultConfig;
   },
 
-  validateTempestParameters (from, to, phase, ecc, bpm, shift) {
+  validateMotionParameters ({
+    from, to, phase, ecc, bpm, shift,
+  }) {
     const valid = validNumber(from, 0, 1)
       && validNumber(to, 0, 1)
       && validNumber(phase)
@@ -226,7 +242,7 @@ export default {
       && validNumber(shift);
 
     if (!valid) {
-      throw new Error(`One or more stroke parameters are invalid (${from}, ${to}, ${phase}, ${ecc}, ${bpm}, ${shift})`);
+      throw new Error(`One or more motion parameters are invalid (${from}, ${to}, ${phase}, ${ecc}, ${bpm}, ${shift})`);
     }
   },
 };

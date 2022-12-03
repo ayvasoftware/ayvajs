@@ -11,9 +11,9 @@ The following codepen examples demonstrate some of the capabilities of Ayva (as 
 
 Features:
 - Perform arbitrarily complex movements across multiple axes using an expressive Motion API.
-- Construct arbitrarily complex behaviors using an action queue based Behavior API.
-- Built-in common motion shapes (cosine, parabolic, linear, tempest).
-- Built-in Classic Stroke behavior and orbital motion based behavior (Tempest Stroke).
+- Construct arbitrarily complex behaviors using a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*" target="_blank">generator function</a> based Behavior API.
+- Built-in common motion shapes (cosine, parabolic, linear).
+- Built-in Classic Stroke behavior and orbital motion based behaviors (Tempest Strokes).
 - Run built-in patterns by name (orbit-grind, vortex-tease, swirl-tease, etc).
 - Configurable. Setup an arbitrary number of axes with limits, alias, and type (linear, rotation, or auxiliary).
 - Supports the OSR2+, SR6, or any device that can be controlled with TCode.

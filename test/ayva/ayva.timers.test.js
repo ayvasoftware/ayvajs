@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { Blob } from 'buffer';
 import Ayva from '../../src/ayva.js';
 import WorkerTimer from '../../src/util/worker-timer.js';
-import { createTestConfig } from '../test-helpers.js';
+import { createTestConfig, spySleep } from '../test-helpers.js';
 
 describe('Timer Tests', function () {
   let ayva;
@@ -22,11 +22,11 @@ describe('Timer Tests', function () {
 
     ayva = new Ayva(createTestConfig());
 
-    ayva.addOutputDevice({
+    ayva.addOutput({
       write: sinon.fake(),
     });
 
-    sinon.replace(ayva, 'sleep', sinon.fake(ayva.sleep));
+    spySleep(ayva);
   });
 
   afterEach(function () {
