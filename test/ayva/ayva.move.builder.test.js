@@ -262,6 +262,18 @@ describe('Move Builder Tests', function () {
       write.callCount.should.equal(1);
       write.args[0][0].should.equal('L02000 R04000\n');
     });
+
+    it('should not allow setting invalid values', function () {
+      ayva.$.stroke.value.should.equal(0.5);
+
+      ayva.setValues({
+        stroke: 0,
+        twist: NaN,
+      });
+
+      ayva.$.stroke.value.should.equal(0);
+      ayva.$.twist.value.should.equal(0.5);
+    });
   });
 
   describe('#execute() (multi axis)', function () {

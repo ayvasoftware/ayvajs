@@ -704,7 +704,7 @@ class Ayva {
     if (tcodes.length) {
       this.#write(`${tcodes.join(' ')}\n`);
 
-      axisValues.forEach(({ axis, value }) => {
+      filteredAxisValues.forEach(({ axis, value }) => {
         this.#axes[axis].lastValue = this.#axes[axis].value;
         this.#axes[axis].value = value;
       });
