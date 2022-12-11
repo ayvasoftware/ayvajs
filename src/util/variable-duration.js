@@ -27,11 +27,13 @@ class VariableDuration {
     if (validNumber(from, 0) && to === undefined) {
       // Allow specifying only a single time unit duration.
       this.#targetElapsed = from * 1000;
-    } else if (!(validNumber(from, 0) && validNumber(to, 0) && from < to)) {
+    } else if (!validNumber(from, 0) || !validNumber(to, 0)) {
       throw new Error(`Invalid duration range: (${from}, ${to})`);
     } else {
       // Pick a random time within the specified range to complete.
-      this.#targetElapsed = (Math.random() * (to - from) + from) * 1000;
+      const min = Math.min(from, to);
+      const max = Math.max(from, to);
+      this.#targetElapsed = (Math.random() * (max - min) + min) * 1000;
     }
 
     this.#startTime = performance.now();

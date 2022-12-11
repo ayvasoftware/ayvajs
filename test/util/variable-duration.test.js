@@ -36,14 +36,6 @@ describe('Variable Duration Tests', function () {
         }).should.throw(`Invalid duration range: (0, ${value}`);
       }
     });
-
-    (function () {
-      new VariableDuration(10, 5);
-    }).should.throw('Invalid duration range: (10, 5)');
-
-    (function () {
-      new VariableDuration(10, 10);
-    }).should.throw('Invalid duration range: (10, 10)');
   });
 
   it('should allow a fake timer function', function () {
@@ -75,8 +67,41 @@ describe('Variable Duration Tests', function () {
     duration.percentage.should.equal(1);
   });
 
+  it('should select a random time in duration and complete when time is up (from > to)', function () {
+    const duration = new VariableDuration(20, 10);
+
+    // Since our random function always returns 0.5, the "randomly" selected duration should be 15 seconds...
+    duration.targetElapsed.should.equal(15000);
+
+    for (let i = 0; i < 7; i++) {
+      duration.complete.should.equal(false);
+
+      const expectedPercentage = ((2 + 2 * i)) / 15; // Each time we call either complete or percentage the clock ticks a second...
+      duration.percentage.should.equal(expectedPercentage);
+    }
+
+    duration.complete.should.equal(true);
+    duration.percentage.should.equal(1);
+  });
+
   it('should allow a constant duration and complete when time is up', function () {
     const duration = new VariableDuration(10);
+
+    duration.targetElapsed.should.equal(10000);
+
+    for (let i = 0; i < 5; i++) {
+      duration.complete.should.equal(false);
+
+      const expectedPercentage = ((2 + 2 * i)) / 10; // Each time we call either complete or percentage the clock ticks a second...
+      duration.percentage.should.equal(expectedPercentage);
+    }
+
+    duration.complete.should.equal(true);
+    duration.percentage.should.equal(1);
+  });
+
+  it('should allow a constant duration and complete when time is up (same parameters)', function () {
+    const duration = new VariableDuration(10, 10);
 
     duration.targetElapsed.should.equal(10000);
 
