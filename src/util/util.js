@@ -71,3 +71,5 @@ export function fail (error) {
 export function isGeneratorFunction (value) {
   return value.constructor.name === 'GeneratorFunction';
 }
+
+export { default as cloneDeep } from './lodash.clonedeep.js';

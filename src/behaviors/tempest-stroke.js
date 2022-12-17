@@ -3,9 +3,9 @@
 import GeneratorBehavior from './generator-behavior.js';
 import Ayva from '../ayva.js';
 import StrokeParameterProvider from '../util/stroke-parameter-provider.js';
-import tempestStrokeLibrary from '../util/tempest-stroke-library.js';
+import defaultTempestStrokeLibrary from '../util/tempest-stroke-library.js';
 import {
-  createConstantProperty, has, validNumber
+  createConstantProperty, cloneDeep, has, validNumber
 } from '../util/util.js';
 
 /**
@@ -60,7 +60,7 @@ class TempestStroke extends GeneratorBehavior {
 
   static #granularity = 36;
 
-  static #library = JSON.parse(JSON.stringify(tempestStrokeLibrary));
+  static #library = cloneDeep(defaultTempestStrokeLibrary);
 
   /**
    * How many slices to divide a stroke (180 degrees) into.
@@ -94,10 +94,27 @@ class TempestStroke extends GeneratorBehavior {
     return () => performance.now() / 1000;
   }
 
-  static get library () {
-    // TODO: Deep clone more efficiently.
-    return JSON.parse(JSON.stringify(TempestStroke.#library));
-  }
+  static library = new Proxy({}, {
+    get: function (target, key, receiver) {
+      if (key in TempestStroke.#library) {
+        return cloneDeep(TempestStroke.#library[key]);
+      }
+
+      return Reflect.get(target, key, receiver);
+    },
+
+    ownKeys: function () {
+      return Object.keys(TempestStroke.#library);
+    },
+
+    getOwnPropertyDescriptor: function (target, key) {
+      if (key in TempestStroke.#library) {
+        return { enumerable: true, configurable: true, value: this[key] };
+      }
+
+      return undefined;
+    },
+  });
 
   static computeTargetAngle (angle, startAngle) {
     const traversed = Math.abs(angle - startAngle);
@@ -113,8 +130,7 @@ class TempestStroke extends GeneratorBehavior {
   }
 
   static update (key, value) {
-    // TODO: Deep clone more efficiently.
-    TempestStroke.#library[key] = JSON.parse(JSON.stringify(value));
+    TempestStroke.#library[key] = cloneDeep(value);
   }
 
   static remove (key) {
@@ -122,7 +138,7 @@ class TempestStroke extends GeneratorBehavior {
   }
 
   static restoreLibrary () {
-    TempestStroke.#library = JSON.parse(JSON.stringify(tempestStrokeLibrary));
+    TempestStroke.#library = cloneDeep(defaultTempestStrokeLibrary);
   }
 
   /**
