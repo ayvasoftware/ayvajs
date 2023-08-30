@@ -10,7 +10,7 @@
     "dist/*.js"
   ],
   "scripts": {
-    "test": "c8 --all --src src --exclude src/devices/web-serial-device.js --exclude src/util/lodash.clonedeep.js --exclude test --reporter html -o test-output/coverage mocha test/**/*.test.js --reporter mochawesome --reporter-options reportDir=test-output,reportFilename=test-results",
+    "test": "c8 --all --src src --exclude src/devices --exclude src/util/lodash.clonedeep.js --exclude test --reporter html -o test-output/coverage mocha test/**/*.test.js --reporter mochawesome --reporter-options reportDir=test-output,reportFilename=test-results",
     "lint": "eslint --format html -o test-output/eslint.html --fix src/* test/* ",
     "release": "npx webpack"
   },
