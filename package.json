@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ayvajs/ayvajs.git"
+    "url": "git+https://github.com/ayvasoftware/ayvajs.git"
   },
   "keywords": [
     "osr",
@@ -28,9 +28,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ayvajs/ayva/issues"
+    "url": "https://github.com/ayvasoftware/ayvajs/issues"
   },
-  "homepage": "https://github.com/ayvajs/ayva#readme",
+  "homepage": "https://github.com/ayvasoftware/ayvajs#readme",
   "devDependencies": {
     "c8": "^7.10.0",
     "chai": "4.3.4",
