@@ -7,7 +7,10 @@ import Ayva from '../ayva.js';
 const noteRegex = /([0-9]+)\/([0-9]+)/;
 
 const getNoteValue = (value) => {
-  // TODO: match single numbers.
+  if (Number.isFinite(value)) {
+    return value;
+  }
+
   const match = value.match(noteRegex);
 
   return Number(match[1]) / Number(match[2]);
