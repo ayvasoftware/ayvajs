@@ -43,6 +43,10 @@ class WebSerialDevice {
    * @returns {Promise} a promise that resolves when the device is connected, and rejects if the device failed to connect.
    */
   async requestConnection () {
+    if (!this._serial) {
+      throw new Error('Web Serial is not supported in this browser.');
+    }
+
     const port = await this._serial.requestPort();
 
     await port.open({ baudRate: this._baudRate });

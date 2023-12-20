@@ -39,6 +39,10 @@ class BLEDevice {
    * @returns {Promise} a promise that resolves when the device is connected, and rejects if the device failed to connect.
    */
   async requestConnection () {
+    if (!this._bluetooth) {
+      throw new Error('Web Bluetooth is not supported in this browser.');
+    }
+
     const device = await this._bluetooth.requestDevice({
       filters: [{
         services: [BLEDevice.SERVICE_UUID],
