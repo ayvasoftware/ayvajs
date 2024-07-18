@@ -43,4 +43,29 @@ describe('Timer Tests', function () {
 
     ayva.$.stroke.value.should.equal(0);
   });
+
+  it('should allow custom timers', async function () {
+    const timer = {
+      seconds: 0,
+      sleep (seconds = 0) {
+        this.seconds += seconds;
+        return Promise.resolve();
+      },
+      now () {
+        return this.seconds;
+      },
+    };
+
+    ayva.setTimer(timer);
+    ayva.addOutput({
+      write: sinon.fake(),
+    });
+
+    expect(ayva.getTimer()).to.equal(timer);
+
+    await ayva.move({ to: 0, speed: 1 });
+
+    ayva.$.stroke.value.should.equal(0);
+    timer.seconds.should.equal(0.5);
+  });
 });

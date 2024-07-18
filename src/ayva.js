@@ -134,6 +134,13 @@ class Ayva {
   }
 
   /**
+   * Set the timer that Ayva uses to time movements.
+   */
+  setTimer (timer) {
+    this.#timer = timer;
+  }
+
+  /**
    * Perform the specified behavior until it completes or is explicitly stopped.
    * If another behavior is running, it will be stopped.
    *
